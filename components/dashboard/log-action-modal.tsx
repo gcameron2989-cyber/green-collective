@@ -1,7 +1,19 @@
 import React from "react"
 
-export function LogActionModal({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
-  if (!isOpen) return null
+export interface LoggedAction {
+  categoryId: string
+  note?: string
+}
+
+interface LogActionModalProps {
+  open?: boolean
+  isOpen?: boolean
+  onClose?: () => void
+  onSubmit?: (action: LoggedAction) => Promise<void> | void
+}
+
+export function LogActionModal({ open, isOpen, onClose }: LogActionModalProps) {
+  if (!open && !isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
