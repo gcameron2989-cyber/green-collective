@@ -16,18 +16,26 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.greencollective.ca'),
   title: {
-    default: 'Green Collective | Track & Log Climate Habits',
+    default: 'Green Collective | Share, Track & Inspire Climate Action',
     template: '%s | Green Collective',
   },
   description:
-    'Green Collective is an eco-action platform where users log sustainable habits, track CO2 savings, and join local climate groups.',
-  keywords: ['green collective', 'eco habit tracker', 'climate action', 'sustainability app'],
+    'The social platform for sustainability. Share your everyday green habits, discover what friends and businesses are doing, track your environmental impact, and build a climate-focused community together.',
+  keywords: [
+    'green collective',
+    'eco social network',
+    'sustainability sharing',
+    'climate action',
+    'eco habit tracker',
+    'corporate sustainability',
+  ],
   alternates: {
     canonical: 'https://www.greencollective.ca',
   },
   openGraph: {
-    title: 'Green Collective | Track & Log Climate Habits',
-    description: 'Log daily sustainable habits, earn eco-points, and measure your climate impact.',
+    title: 'Green Collective | Share, Track & Inspire Climate Action',
+    description:
+      'Share your eco-habits, explore community climate action, and track your environmental impact with friends and local businesses.',
     url: 'https://www.greencollective.ca',
     siteName: 'Green Collective',
     locale: 'en_CA',
@@ -37,10 +45,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  verification:{
-    google:'5xgy3LOswrjRTjiRwg-FBGvxnLHoldySKNwCIw4233w', 
-},
+  verification: {
+    google: '5xgy3LOswrjRTjiRwg-FBGvxnLHoldySKNwCIw4233w',
+  },
 }
+
 export const viewport: Viewport = {
   colorScheme: 'light',
   themeColor: '#0f382c',
