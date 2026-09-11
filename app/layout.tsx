@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans, Bricolage_Grotesque } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/auth-provider'
@@ -35,7 +34,6 @@ export default function RootLayout({
     <html lang="en" className={`${dmSans.variable} ${bricolage.variable} bg-background`}>
       <body className="font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
