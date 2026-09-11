@@ -1,11 +1,11 @@
 import React from "react"
 
-export type MarketplaceViewProps = {
+export interface MarketplaceViewProps {
   ecoPoints?: number
   [key: string]: any
 }
 
-export function MarketplaceView({ ecoPoints }: MarketplaceViewProps) {
+export const MarketplaceView: React.FC<MarketplaceViewProps> = ({ ecoPoints }) => {
   return (
     <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
       <h3 className="font-semibold text-lg">Local Green Marketplace</h3>
@@ -14,3 +14,5 @@ export function MarketplaceView({ ecoPoints }: MarketplaceViewProps) {
     </div>
   )
 }
+
+export default MarketplaceView
