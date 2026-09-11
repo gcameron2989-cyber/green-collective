@@ -51,8 +51,8 @@ export function Sidebar({ active, onSelect, onLogin }: SidebarProps) {
                     : 'text-emerald-200/80 hover:bg-emerald-900/50 hover:text-white'
                 }`}
               >
-                <Icon className={`size-5 ${isActive ? 'text-emerald-300' : 'text-emerald-400/80'}`} />
-                <span>{item.label}</span>
+                <Icon className={`size-5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-emerald-400/80'}`} />
+                <span className="text-left leading-tight truncate">{item.label}</span>
               </button>
             )
           })}
@@ -66,14 +66,14 @@ export function Sidebar({ active, onSelect, onLogin }: SidebarProps) {
           onClick={onLogin}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-emerald-200 hover:bg-emerald-900/60 hover:text-white transition-colors"
         >
-          <div className="grid size-8 place-items-center rounded-lg bg-emerald-900/80 text-emerald-300 font-bold border border-emerald-700/50">
-            MC
+          <div className="grid size-8 place-items-center shrink-0 rounded-lg bg-emerald-900/80 text-emerald-300 font-bold border border-emerald-700/50">
+            GC
           </div>
-          <div className="text-left flex-1">
-            <p className="text-white font-medium">Guest User</p>
-            <p className="text-[10px] text-emerald-400">Click to Sign In</p>
+          <div className="text-left flex-1 min-w-0">
+            <p className="text-white font-medium truncate">Guest User</p>
+            <p className="text-[10px] text-emerald-400 truncate">Click to Sign In</p>
           </div>
-          <LogIn className="size-4 text-emerald-400" />
+          <LogIn className="size-4 shrink-0 text-emerald-400" />
         </button>
       </div>
     </aside>
