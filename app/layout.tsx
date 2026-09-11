@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     locale: 'en_CA',
     type: 'website',
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export const viewport: Viewport = {
