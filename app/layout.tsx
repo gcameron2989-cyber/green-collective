@@ -14,10 +14,25 @@ const bricolage = Bricolage_Grotesque({
 })
 
 export const metadata: Metadata = {
-  title: 'Green Collective — Sustainable Habits Dashboard',
+  metadataBase: new URL('https://www.greencollective.ca'),
+  title: {
+    default: 'Green Collective | Track & Log Climate Habits',
+    template: '%s | Green Collective',
+  },
   description:
-    'Track green habits, join sub-collectives, and redeem eco-points in the Green Collective marketplace.',
-  generator: 'v0.app',
+    'Green Collective is an eco-action platform where users log sustainable habits, track CO2 savings, and join local climate groups.',
+  keywords: ['green collective', 'eco habit tracker', 'climate action', 'sustainability app'],
+  alternates: {
+    canonical: 'https://www.greencollective.ca',
+  },
+  openGraph: {
+    title: 'Green Collective | Track & Log Climate Habits',
+    description: 'Log daily sustainable habits, earn eco-points, and measure your climate impact.',
+    url: 'https://www.greencollective.ca',
+    siteName: 'Green Collective',
+    locale: 'en_CA',
+    type: 'website',
+  },
 }
 
 export const viewport: Viewport = {
