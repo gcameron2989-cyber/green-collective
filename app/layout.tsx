@@ -39,8 +39,8 @@ export const metadata: Metadata = {
   },
   verification:{
     google:'5xgy3LOswrjRTjiRwg-FBGvxnLHoldySKNwCIw4233w', 
+},
 }
-
 export const viewport: Viewport = {
   colorScheme: 'light',
   themeColor: '#0f382c',
