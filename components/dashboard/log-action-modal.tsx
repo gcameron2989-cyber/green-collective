@@ -1,41 +1,33 @@
 import React from "react"
 
-export type TabId = 'dashboard' | 'collectives' | 'marketplace' | 'profile'
-
-export interface SidebarProps {
-  active?: TabId
-  onSelect?: (id: TabId) => void
-  collapsed?: boolean
-  onToggle?: () => void
-  onLogin?: () => void
+export interface LoggedAction {
+  categoryId: string
+  note?: string
 }
 
-export function Sidebar({ active, onSelect }: SidebarProps) {
+export interface LogActionModalProps {
+  open?: boolean
+  isOpen?: boolean
+  onClose?: () => void
+  onSubmit?: (action: LoggedAction) => Promise<void> | void
+}
+
+export const LogActionModal: React.FC<LogActionModalProps> = ({ open, isOpen, onClose }) => {
+  if (!open && !isOpen) return null
+
   return (
-    <aside className="w-64 border-r bg-background h-screen p-4 flex flex-col justify-between">
-      <div className="space-y-4">
-        <div className="px-3 py-2">
-          <h2 className="text-lg font-semibold tracking-tight text-emerald-700">
-            Green Collective
-          </h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-background rounded-xl p-6 max-w-md w-full space-y-4 border shadow-lg">
+        <h3 className="font-semibold text-lg">Log Sustainable Action</h3>
+        <p className="text-sm text-muted-foreground">Record your habit or local purchase here.</p>
+        <div className="flex justify-end gap-2 pt-4">
+          <button type="button" onClick={onClose} className="px-4 py-2 border rounded-md text-sm font-medium">
+            Cancel
+          </button>
         </div>
-        <nav className="space-y-1">
-          {(['dashboard', 'collectives', 'marketplace', 'profile'] as TabId[]).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => onSelect?.(tab)}
-              className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg capitalize ${
-                active === tab ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-muted'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
       </div>
-    </aside>
+    </div>
   )
 }
 
-export default Sidebar
+export default LogActionModal
