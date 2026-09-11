@@ -2,7 +2,7 @@ import React from "react"
 
 export type TabId = 'dashboard' | 'collectives' | 'marketplace' | 'profile'
 
-interface SidebarProps {
+export interface SidebarProps {
   active?: TabId
   onSelect?: (id: TabId) => void
   collapsed?: boolean
@@ -23,6 +23,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
           {(['dashboard', 'collectives', 'marketplace', 'profile'] as TabId[]).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => onSelect?.(tab)}
               className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg capitalize ${
                 active === tab ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-muted'
