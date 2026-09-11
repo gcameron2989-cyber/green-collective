@@ -1,6 +1,16 @@
-import Link from "next/link"
+import React from "react"
 
-export function Sidebar() {
+export type TabId = 'dashboard' | 'collectives' | 'marketplace' | 'profile'
+
+interface SidebarProps {
+  active?: TabId
+  onSelect?: (id: TabId) => void
+  collapsed?: boolean
+  onToggle?: () => void
+  onLogin?: () => void
+}
+
+export function Sidebar({ active, onSelect }: SidebarProps) {
   return (
     <aside className="w-64 border-r bg-background h-screen p-4 flex flex-col justify-between">
       <div className="space-y-4">
@@ -10,24 +20,17 @@ export function Sidebar() {
           </h2>
         </div>
         <nav className="space-y-1">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50 hover:text-emerald-700 transition-all"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/vendors"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50 hover:text-emerald-700 transition-all"
-          >
-            Local Vendors
-          </Link>
-          <Link
-            href="/habits"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-emerald-50 hover:text-emerald-700 transition-all"
-          >
-            Habit Log
-          </Link>
+          {(['dashboard', 'collectives', 'marketplace', 'profile'] as TabId[]).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onSelect?.(tab)}
+              className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg capitalize ${
+                active === tab ? 'bg-emerald-100 text-emerald-800' : 'hover:bg-muted'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </nav>
       </div>
     </aside>
