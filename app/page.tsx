@@ -36,12 +36,12 @@ export default function HomePage() {
           Sustainable Development & Strategy
         </span>
 
-        {/* Combined Headline (Options 2 & 3) */}
+        {/* Combined Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
           The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
         </h1>
 
-        {/* Sub-headline (Option 4) */}
+        {/* Sub-headline */}
         <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
           Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
         </p>
@@ -64,22 +64,31 @@ export default function HomePage() {
 
         {/* Feature Pillar Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
+          {/* Pillar 1 */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">⚡</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
-            <p className="text-xs text-muted-foreground">Log green choices, track personal streaks, and share habit momentum with your network.</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Log green choices, track personal streaks, and share habit momentum with your network.
+            </p>
           </div>
 
+          {/* Pillar 2 */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">📊</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
-            <p className="text-xs text-muted-foreground">Empower universities, enterprises, and governments with actionable Scope 3 behavioral data.</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
+            </p>
           </div>
 
+          {/* Pillar 3 */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">🌿</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
-            <p className="text-xs text-muted-foreground">Connect local partners and communities to build measurable, long-term environmental balance.</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
+            </p>
           </div>
         </div>
       </main>
