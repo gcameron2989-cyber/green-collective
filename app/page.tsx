@@ -30,68 +30,56 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-4xl mx-auto z-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-4xl mx-auto z-10">
         <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-6 border border-emerald-200 shadow-sm">
           <span className="size-1.5 rounded-full bg-emerald-600" />
-          The Eco-Social Network
+          Sustainable Development & Strategy
         </span>
 
-        {/* Featured Blurb Header */}
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight max-w-3xl mb-6 text-foreground">
-          The social platform for sustainability.
+        {/* Combined Headline (Options 2 & 3) */}
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
+          The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
         </h1>
 
-        {/* Core Featured Blurb */}
-        <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
-          Share your everyday green habits, discover what friends and businesses are doing, track your environmental impact, and build a climate-focused community together.
+        {/* Sub-headline (Option 4) */}
+        <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
+          Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
         </p>
 
         {/* Call to Action */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-16">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12">
           <Link
             href="/dashboard"
             className="bg-[#0f382c] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-900 transition text-center shadow-lg shadow-emerald-950/15"
           >
-            Join as an Individual
+            Start Logging Habits
           </Link>
           <Link
             href="/dashboard"
             className="border border-emerald-900/20 bg-background/60 backdrop-blur font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-50/50 transition text-center"
           >
-            Register a Business
+            Explore Enterprise Solutions
           </Link>
         </div>
 
-        {/* Enhanced Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full">
-          <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition">
-            <div className="size-10 rounded-xl bg-emerald-100 flex items-center justify-center text-xl mb-4">
-              📸
-            </div>
-            <h2 className="font-semibold text-lg mb-1.5 text-foreground">Share Action Feeds</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Post daily sustainable habits, commutes, and meal logs just like your favorite social feed.
-            </p>
+        {/* Feature Pillar Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
+          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+            <div className="text-2xl mb-2">⚡</div>
+            <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
+            <p className="text-xs text-muted-foreground">Log green choices, track personal streaks, and share habit momentum with your network.</p>
           </div>
 
-          <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition">
-            <div className="size-10 rounded-xl bg-emerald-100 flex items-center justify-center text-xl mb-4">
-              📊
-            </div>
-            <h2 className="font-semibold text-lg mb-1.5 text-foreground">Track Real Impact</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Quantify CO₂ saved and waste diverted over time with automated carbon metrics.
-            </p>
+          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+            <div className="text-2xl mb-2">📊</div>
+            <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
+            <p className="text-xs text-muted-foreground">Empower universities, enterprises, and governments with actionable Scope 3 behavioral data.</p>
           </div>
 
-          <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition">
-            <div className="size-10 rounded-xl bg-emerald-100 flex items-center justify-center text-xl mb-4">
-              🏢
-            </div>
-            <h2 className="font-semibold text-lg mb-1.5 text-foreground">Business & Groups</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Follow local businesses, participate in corporate challenges, and unlock eco-rewards.
-            </p>
+          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+            <div className="text-2xl mb-2">🌿</div>
+            <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
+            <p className="text-xs text-muted-foreground">Connect local partners and communities to build measurable, long-term environmental balance.</p>
           </div>
         </div>
       </main>
