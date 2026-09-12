@@ -32,7 +32,7 @@ export default function DashboardPage() {
           <HabitLogger />
         </div>
 
-        {/* Real-Time Feed & Leaderboard - Right Column */}
+        {/* Real-Time Feed & Faculty Standings - Right Column */}
         <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card shadow-sm">
           <CampusFeed />
         </div>
