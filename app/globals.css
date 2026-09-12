@@ -18,6 +18,13 @@
 }
 
 body {
-  background-color: #071914;
-  color: #f8fafc;
+  background-color: #071914 !important;
+  color: #f8fafc !important;
+}
+
+/* Force layer styling for cards and containers */
+[class*="bg-card"], [class*="bg-slate-900"], [class*="bg-zinc-900"] {
+  background-color: #0a231b !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
 }
