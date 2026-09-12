@@ -10,32 +10,34 @@ const dmSans = DM_Sans({
 
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
-  variable: '--font-bricolage',
+  variable: '--font-[#bricolage]',
 })
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.greencollective.ca'),
   title: {
-    default: 'Green Collective | Share, Track & Inspire Climate Action',
+    default: 'Green Collective | Empowering Sustainable Development, Strategy & Action',
     template: '%s | Green Collective',
   },
   description:
-    'The social platform for sustainability. Share your everyday green habits, discover what friends and businesses are doing, track your environmental impact, and build a climate-focused community together.',
+    'The central platform powering sustainable development, behavioral strategy, and ecological coexistence. Empowering individuals, communities, enterprises, and institutions to drive measurable environmental progress together.',
   keywords: [
     'green collective',
-    'eco social network',
-    'sustainability sharing',
-    'climate action',
-    'eco habit tracker',
-    'corporate sustainability',
+    'sustainable development platform',
+    'sustainability strategy software',
+    'ecological coexistence network',
+    'scope 3 engagement platform',
+    'enterprise sustainability hub',
+    'community environmental action',
+    'sustainable habit analytics',
   ],
   alternates: {
     canonical: 'https://www.greencollective.ca',
   },
   openGraph: {
-    title: 'Green Collective | Share, Track & Inspire Climate Action',
+    title: 'Green Collective | Empowering Sustainable Development, Strategy & Action',
     description:
-      'Share your eco-habits, explore community climate action, and track your environmental impact with friends and local businesses.',
+      'The central platform for habit analytics, sustainable development, and ecological coexistence. Connecting people, businesses, and institutions for real environmental progress.',
     url: 'https://www.greencollective.ca',
     siteName: 'Green Collective',
     locale: 'en_CA',
