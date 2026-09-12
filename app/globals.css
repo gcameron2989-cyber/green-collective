@@ -1,24 +1,21 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: #071914;
-    --foreground: #f8fafc;
-    --card: #0a231b;
-    --card-foreground: #f8fafc;
-    --primary: #10b981;
-    --primary-foreground: #071914;
-    --muted: #0f382c;
-    --muted-foreground: #6ee7b7;
-    --border: rgba(16, 185, 129, 0.2);
-  }
+@theme {
+  --color-background: #071914;
+  --color-foreground: #f8fafc;
+  --color-card: #0a231b;
+  --color-card-foreground: #f8fafc;
+  --color-primary: #10b981;
+  --color-primary-foreground: #071914;
+  --color-emerald-custom: #0f382c;
 }
 
-/* Force dark emerald background regardless of CSS variable resolution */
-html, body {
-  background-color: #071914 !important;
-  color: #f8fafc !important;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+@layer base {
+  html, body {
+    background-color: #071914 !important;
+    color: #f8fafc !important;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
 }
