@@ -1,94 +1,59 @@
-import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Bricolage_Grotesque } from 'next/font/google'
-import { AuthProvider } from '@/components/auth/auth-provider'
-import './globals.css'
+'use client'
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-dm-sans',
-})
+import Link from 'next/link'
+import { Leaf, User, LayoutDashboard, ShieldCheck, ArrowLeft } from 'lucide-react'
 
-const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'],
-  variable: '--font-bricolage',
-})
-
-export const metadata: Metadata = {
-  metadataBase: new URL('https://www.greencollective.ca'),
-  title: {
-    default: 'Green Collective | Sustainable Development, Strategy & Action',
-    template: '%s | Green Collective',
-  },
-  description:
-    'The platform uniting people, communities, and institutions for sustainable progress.',
-  keywords: [
-    'green collective',
-    'sustainable development platform',
-    'sustainability strategy software',
-    'ecological coexistence network',
-    'scope 3 engagement platform',
-    'enterprise sustainability hub',
-    'community environmental action',
-    'sustainable habit analytics',
-  ],
-  alternates: {
-    canonical: 'https://www.greencollective.ca',
-  },
-  openGraph: {
-    title: 'Green Collective | Sustainable Development, Strategy & Action',
-    description:
-      'The platform uniting people, communities, and institutions for sustainable progress.',
-    url: 'https://www.greencollective.ca',
-    siteName: 'Green Collective',
-    locale: 'en_CA',
-    type: 'website',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  verification: {
-    google: '5xgy3LOswrjRTjiRwg-FBGvxnLHoldySKNwCIw4233w',
-  },
-}
-
-export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#0f382c',
-}
-
-export default function RootLayout({
+export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
-  // Schema markup payload for Google indexing
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Green Collective',
-    url: 'https://www.greencollective.ca',
-    logo: 'https://www.greencollective.ca/logo.png',
-    sameAs: [
-      'https://www.linkedin.com/company/greencollective',
-      'https://github.com/greencollective',
-    ],
-    description:
-      'The platform uniting people, communities, and institutions for sustainable progress.',
-  }
-
+}) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${bricolage.variable} bg-background`}>
-      <head>
-        {/* ADDITION: Standard structured data injection for Google */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
-      <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
+    <div className="min-h-screen bg-[#071914] text-slate-100 flex flex-col font-sans antialiased">
+      {/* Top Professional Header Bar */}
+      <header className="border-b border-emerald-500/20 bg-[#0a231b]/90 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          
+          {/* Brand & Back Button */}
+          <div className="flex items-center gap-6">
+            <Link 
+              href="/" 
+              className="flex items-center gap-2 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-950/60 px-3 py-1.5 rounded-full border border-emerald-500/30"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Back to Green Collective</span>
+            </Link>
+
+            <div className="h-4 w-px bg-emerald-500/20 hidden sm:block" />
+
+            <div className="flex items-center gap-2">
+              <div className="size-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+                <Leaf className="size-4 text-emerald-400" />
+              </div>
+              <span className="font-bold text-sm tracking-wide text-white">
+                GC <span className="text-emerald-400 font-light">| Campus Hub</span>
+              </span>
+            </div>
+          </div>
+
+          {/* User / Org Metadata */}
+          <div className="flex items-center gap-3">
+            <span className="hidden md:inline-flex items-center gap-1.5 text-[11px] font-medium bg-emerald-900/40 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30">
+              <ShieldCheck className="size-3 text-emerald-400" />
+              UBC Pilot • Faculty of Science
+            </span>
+            <div className="size-8 rounded-full bg-emerald-800/40 border border-emerald-500/40 flex items-center justify-center text-xs font-semibold text-emerald-200">
+              ER
+            </div>
+          </div>
+
+        </div>
+      </header>
+
+      {/* Main Page Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {children}
+      </main>
+    </div>
   )
 }
