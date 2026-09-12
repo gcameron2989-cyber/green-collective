@@ -1,21 +1,23 @@
-@import "tailwindcss";
-
-@theme {
-  --color-background: #071914;
-  --color-foreground: #f8fafc;
-  --color-card: #0a231b;
-  --color-card-foreground: #f8fafc;
-  --color-primary: #10b981;
-  --color-primary-foreground: #071914;
-  --color-emerald-custom: #0f382c;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
-  html, body {
-    background-color: #071914 !important;
-    color: #f8fafc !important;
-    min-height: 100vh;
-    margin: 0;
-    padding: 0;
+  :root {
+    --background: 162 57% 6%;
+    --foreground: 0 0% 98%;
+    --card: 162 55% 9%;
+    --card-foreground: 0 0% 98%;
+    --primary: 158 64% 32%;
+    --primary-foreground: 0 0% 98%;
+    --muted: 162 30% 18%;
+    --muted-foreground: 158 20% 65%;
+    --border: 158 40% 20%;
+    --radius: 0.75rem;
   }
+}
+
+body {
+  background-color: #071914;
+  color: #f8fafc;
 }
