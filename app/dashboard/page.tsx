@@ -1,4 +1,5 @@
 import { HabitLogger } from '@/components/dashboard/habit-logger'
+import { CampusFeed } from '@/components/dashboard/campus-feed'
 
 export default function DashboardPage() {
   return (
@@ -26,15 +27,14 @@ export default function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Habit Logger - Left Column (2 Cols) */}
         <div className="lg:col-span-2 p-6 border border-emerald-900/10 rounded-2xl bg-card shadow-sm">
           <HabitLogger />
         </div>
 
+        {/* Real-time Network Feed - Right Column (1 Col) */}
         <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card shadow-sm">
-          <h3 className="font-semibold text-sm mb-4">Campus Feed Highlights</h3>
-          <div className="p-8 border border-dashed border-emerald-900/20 rounded-xl flex items-center justify-center text-xs text-muted-foreground">
-            [ Real-time Network Feed Component ]
-          </div>
+          <CampusFeed />
         </div>
       </div>
     </div>
