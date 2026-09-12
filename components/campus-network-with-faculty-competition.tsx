@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Flame, MessageSquare, Share2, ShieldCheck, Trophy, CheckCircle2, Camera, QrCode } from 'lucide-react'
+import { Flame, ShieldCheck, Trophy, Camera, QrCode } from 'lucide-react'
 
 interface FacultyRank {
   name: string
-  scorePerCapita: number // normalized score
+  scorePerCapita: number
   totalImpactKg: number
   activeUsers: number
   trend: 'up' | 'down' | 'steady'
@@ -64,7 +64,7 @@ const mockFeedItems: FeedItem[] = [
   },
 ]
 
-export function CampusNetworkWithFacultyCompetition() {
+export function CampusFeed() {
   const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard'>('leaderboard')
   const [feed] = useState<FeedItem[]>(mockFeedItems)
 
@@ -128,7 +128,7 @@ export function CampusNetworkWithFacultyCompetition() {
           </button>
         </div>
         <span className="text-[10px] font-medium text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-full border border-emerald-200">
-          Normalized Per-Capita Scoring
+          Normalized Per-Capita
         </span>
       </div>
 
@@ -136,7 +136,7 @@ export function CampusNetworkWithFacultyCompetition() {
       {activeTab === 'leaderboard' && (
         <div className="space-y-3">
           <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-900/10 text-xs text-muted-foreground flex items-center justify-between">
-            <span>Inter-Faculty Standings (Term 1)</span>
+            <span>Inter-Faculty Standings</span>
             <span className="font-semibold text-emerald-800">1.5x Multiplier for Verified Actions</span>
           </div>
 
@@ -164,7 +164,7 @@ export function CampusNetworkWithFacultyCompetition() {
                       {idx === 0 && <Trophy className="size-3 text-amber-600 fill-amber-500" />}
                     </h4>
                     <p className="text-[10px] text-muted-foreground">
-                      {faculty.activeUsers} active participants • {faculty.totalImpactKg} kg total CO₂e
+                      {faculty.activeUsers} participants • {faculty.totalImpactKg} kg CO₂e
                     </p>
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export function CampusNetworkWithFacultyCompetition() {
         </div>
       )}
 
-      {/* TAB 2: ACTIVITY FEED WITH VERIFICATION BADGES */}
+      {/* TAB 2: ACTIVITY FEED */}
       {activeTab === 'feed' && (
         <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
           {feed.map((item) => (
@@ -219,10 +219,6 @@ export function CampusNetworkWithFacultyCompetition() {
                 <div className="flex items-center gap-1">
                   <Flame className="size-3.5 text-emerald-600" />
                   <span>{item.cheersCount} Cheers</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button className="hover:text-foreground">Discuss</button>
-                  <button className="hover:text-foreground">Share</button>
                 </div>
               </div>
             </div>
