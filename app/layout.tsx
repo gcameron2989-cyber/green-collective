@@ -10,7 +10,7 @@ const dmSans = DM_Sans({
 
 const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
-  variable: '--font-[#bricolage]',
+  variable: '--font-bricolage',
 })
 
 export const metadata: Metadata = {
