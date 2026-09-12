@@ -16,11 +16,11 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.greencollective.ca'),
   title: {
-    default: 'Green Collective | Empowering Sustainable Development, Strategy & Action',
+    default: 'Green Collective | Sustainable Development, Strategy & Action',
     template: '%s | Green Collective',
   },
   description:
-    'The central platform powering sustainable development, behavioral strategy, and ecological coexistence. Empowering individuals, communities, enterprises, and institutions to drive measurable environmental progress together.',
+    'The platform uniting people, communities, and institutions for sustainable progress.',
   keywords: [
     'green collective',
     'sustainable development platform',
@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     canonical: 'https://www.greencollective.ca',
   },
   openGraph: {
-    title: 'Green Collective | Empowering Sustainable Development, Strategy & Action',
+    title: 'Green Collective | Sustainable Development, Strategy & Action',
     description:
-      'The central platform for habit analytics, sustainable development, and ecological coexistence. Connecting people, businesses, and institutions for real environmental progress.',
+      'The platform uniting people, communities, and institutions for sustainable progress.',
     url: 'https://www.greencollective.ca',
     siteName: 'Green Collective',
     locale: 'en_CA',
