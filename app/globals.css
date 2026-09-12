@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -16,8 +14,11 @@
   }
 }
 
+/* Force dark emerald background regardless of CSS variable resolution */
 html, body {
   background-color: #071914 !important;
   color: #f8fafc !important;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
