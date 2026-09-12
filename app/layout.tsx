@@ -62,8 +62,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Schema markup payload for Google indexing
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Green Collective',
+    url: 'https://www.greencollective.ca',
+    logo: 'https://www.greencollective.ca/logo.png',
+    sameAs: [
+      'https://www.linkedin.com/company/greencollective',
+      'https://github.com/greencollective',
+    ],
+    description:
+      'The platform uniting people, communities, and institutions for sustainable progress.',
+  }
+
   return (
     <html lang="en" className={`${dmSans.variable} ${bricolage.variable} bg-background`}>
+      <head>
+        {/* ADDITION: Standard structured data injection for Google */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>
