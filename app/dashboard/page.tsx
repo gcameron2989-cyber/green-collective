@@ -27,12 +27,12 @@ export default function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Habit Logger - Left Column (2 Cols) */}
+        {/* Habit Logger - Main Left Column */}
         <div className="lg:col-span-2 p-6 border border-emerald-900/10 rounded-2xl bg-card shadow-sm">
           <HabitLogger />
         </div>
 
-        {/* Real-time Network Feed - Right Column (1 Col) */}
+        {/* Real-Time Feed & Leaderboard - Right Column */}
         <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card shadow-sm">
           <CampusFeed />
         </div>
