@@ -1,179 +1,230 @@
 'use client'
 
 import { useState } from 'react'
-import { Flame, MessageSquare, Share2, ShieldCheck, Users, TreePine, Award } from 'lucide-react'
+import { Flame, ShieldCheck, Trophy, Camera, QrCode } from 'lucide-react'
+
+interface FacultyRank {
+  name: string
+  scorePerCapita: number
+  totalImpactKg: number
+  activeUsers: number
+  trend: 'up' | 'down' | 'steady'
+}
 
 interface FeedItem {
   id: string
   author: string
   role: string
+  faculty: string
   avatar: string
-  badge?: string
+  verificationType: 'sso' | 'photo' | 'qr' | 'unverified'
   action: string
-  category: 'transit' | 'energy' | 'food' | 'waste' | 'circularity' | 'initiative'
+  category: 'transit' | 'energy' | 'food' | 'waste' | 'initiative'
   timeAgo: string
   impactMetric: string
   content?: string
   cheersCount: number
 }
 
+const mockFacultyRanks: FacultyRank[] = [
+  { name: 'Faculty of Forestry', scorePerCapita: 142.8, totalImpactKg: 1240, activeUsers: 320, trend: 'up' },
+  { name: 'Faculty of Science', scorePerCapita: 128.4, totalImpactKg: 3820, activeUsers: 1420, trend: 'up' },
+  { name: 'Sauder School of Business', scorePerCapita: 115.1, totalImpactKg: 1980, activeUsers: 850, trend: 'down' },
+  { name: 'Faculty of Arts', scorePerCapita: 98.6, totalImpactKg: 2150, activeUsers: 1100, trend: 'steady' },
+]
+
 const mockFeedItems: FeedItem[] = [
   {
     id: '1',
-    author: 'UBC Cycling Club',
-    role: 'Campus Organization',
-    avatar: '🚲',
-    badge: 'Verified Org',
-    action: 'launched a group initiative',
-    category: 'initiative',
+    author: 'Elena R.',
+    role: 'Student',
+    faculty: 'Faculty of Science',
+    avatar: 'ER',
+    verificationType: 'qr',
+    action: 'logged campus transit choice',
+    category: 'transit',
     timeAgo: '12m ago',
-    impactMetric: '42 participants registered',
-    content: 'Join us for the Fall Bike Commuter Challenge! Log your zero-emission commutes all week to power UBC’s regional transit offset metrics.',
-    cheersCount: 38,
+    impactMetric: '2.4 kg CO₂e',
+    content: 'Scanned QR at North Parkade Bike Shelter. Commuted via bike from Kitsilano.',
+    cheersCount: 18,
   },
   {
     id: '2',
-    author: 'Elena R.',
-    role: 'Faculty of Science',
-    avatar: 'ER',
-    action: 'logged 2 green choices',
-    category: 'transit',
-    timeAgo: '45m ago',
-    impactMetric: '2.4 kg CO₂e offset',
-    content: 'Biked to campus and used a reusable coffee cup at Blue Chip.',
-    cheersCount: 14,
-  },
-  {
-    id: '3',
-    author: 'Department of Economics',
-    role: 'Institutional Partner',
-    avatar: '📊',
-    badge: 'Scope 1-3 Leader',
-    action: 'achieved 85% paperless operations',
-    category: 'waste',
-    timeAgo: '2h ago',
-    impactMetric: '120 kg paper saved',
-    content: 'Successfully completed the digital-first grading transition across all undergraduate seminars this term.',
-    cheersCount: 52,
-  },
-  {
-    id: '4',
     author: 'Marcus T.',
-    role: 'Faculty of Forestry',
+    role: 'Student',
+    faculty: 'Faculty of Forestry',
     avatar: 'MT',
-    action: 'logged a green choice',
+    verificationType: 'photo',
+    action: 'logged sustainable dining choice',
     category: 'food',
-    timeAgo: '3h ago',
-    impactMetric: '1.2 kg CO₂e offset',
-    content: 'Opted for a locally-sourced plant-based lunch at the Nest.',
-    cheersCount: 9,
+    timeAgo: '1h ago',
+    impactMetric: '1.2 kg CO₂e',
+    content: 'Opted for plant-based lunch with reusable container at the Nest.',
+    cheersCount: 11,
   },
 ]
 
 export function CampusFeed() {
-  const [feed, setFeed] = useState<FeedItem[]>(mockFeedItems)
-  const [cheeredIds, setCheeredIds] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard'>('leaderboard')
+  const [feed] = useState<FeedItem[]>(mockFeedItems)
 
-  const toggleCheer = (id: string) => {
-    setFeed((prevFeed) =>
-      prevFeed.map((item) => {
-        if (item.id === id) {
-          const hasCheered = cheeredIds.includes(id)
-          return {
-            ...item,
-            cheersCount: hasCheered ? item.cheersCount - 1 : item.cheersCount + 1,
-          }
-        }
-        return item
-      })
-    )
-
-    setCheeredIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    )
+  const renderVerificationBadge = (type: FeedItem['verificationType']) => {
+    switch (type) {
+      case 'qr':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] bg-[#0f382c]/10 text-[#0f382c] px-1.5 py-0.5 rounded font-medium border border-[#0f382c]/20">
+            <QrCode className="size-2.5 text-emerald-700" />
+            QR Verified
+          </span>
+        )
+      case 'photo':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded font-medium border border-blue-200">
+            <Camera className="size-2.5 text-blue-600" />
+            Photo Verified
+          </span>
+        )
+      case 'sso':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] bg-purple-50 text-purple-800 px-1.5 py-0.5 rounded font-medium border border-purple-200">
+            <ShieldCheck className="size-2.5 text-purple-600" />
+            SSO / Auto
+          </span>
+        )
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
+            Self-Reported
+          </span>
+        )
+    }
   }
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* Navigation Header */}
       <div className="flex items-center justify-between pb-3 border-b border-emerald-900/10">
-        <div className="flex items-center gap-2">
-          <Users className="size-4 text-emerald-700" />
-          <h3 className="font-semibold text-sm text-foreground">Campus Network Feed</h3>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('leaderboard')}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              activeTab === 'leaderboard'
+                ? 'bg-[#0f382c] text-white'
+                : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+            }`}
+          >
+            <Trophy className="size-3.5" />
+            Faculty Cup
+          </button>
+          <button
+            onClick={() => setActiveTab('feed')}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+              activeTab === 'feed'
+                ? 'bg-[#0f382c] text-white'
+                : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+            }`}
+          >
+            Activity Feed
+          </button>
         </div>
-        <span className="text-[11px] font-medium text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-          UBC Hub Live
+        <span className="text-[10px] font-medium text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-full border border-emerald-200">
+          Normalized Per-Capita
         </span>
       </div>
 
-      {/* Feed List */}
-      <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
-        {feed.map((item) => {
-          const hasCheered = cheeredIds.includes(item.id)
+      {/* TAB 1: FACULTY LEADERBOARD */}
+      {activeTab === 'leaderboard' && (
+        <div className="space-y-3">
+          <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-900/10 text-xs text-muted-foreground flex items-center justify-between">
+            <span>Inter-Faculty Standings</span>
+            <span className="font-semibold text-emerald-800">1.5x Multiplier for Verified Actions</span>
+          </div>
 
-          return (
+          <div className="space-y-2">
+            {mockFacultyRanks.map((faculty, idx) => (
+              <div
+                key={faculty.name}
+                className="p-3.5 rounded-xl border border-emerald-900/10 bg-card/60 flex items-center justify-between transition-all hover:border-emerald-500/30"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`size-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                      idx === 0
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                        : idx === 1
+                        ? 'bg-slate-200 text-slate-800'
+                        : 'bg-emerald-900/10 text-foreground'
+                    }`}
+                  >
+                    #{idx + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      {faculty.name}
+                      {idx === 0 && <Trophy className="size-3 text-amber-600 fill-amber-500" />}
+                    </h4>
+                    <p className="text-[10px] text-muted-foreground">
+                      {faculty.activeUsers} participants • {faculty.totalImpactKg} kg CO₂e
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100/80 px-2 py-1 rounded-md">
+                    {faculty.scorePerCapita} pts / cap
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: ACTIVITY FEED */}
+      {activeTab === 'feed' && (
+        <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+          {feed.map((item) => (
             <div
               key={item.id}
-              className="p-4 rounded-xl border border-emerald-900/10 bg-card/60 backdrop-blur-sm space-y-2.5 transition-all hover:border-emerald-500/20"
+              className="p-4 rounded-xl border border-emerald-900/10 bg-card/60 space-y-2.5"
             >
-              {/* Author Row */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-8 rounded-full bg-[#0f382c] text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                  <div className="size-8 rounded-full bg-[#0f382c] text-white flex items-center justify-center font-semibold text-xs">
                     {item.avatar}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-xs text-foreground">{item.author}</span>
-                      {item.badge && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] bg-emerald-100 text-[#0f382c] px-1.5 py-0.2 rounded font-medium border border-emerald-200">
-                          <ShieldCheck className="size-2.5 text-emerald-600" />
-                          {item.badge}
-                        </span>
-                      )}
+                      <span className="text-[10px] text-muted-foreground">({item.faculty})</span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">{item.role} • {item.timeAgo}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {renderVerificationBadge(item.verificationType)}
+                      <span className="text-[10px] text-muted-foreground">• {item.timeAgo}</span>
+                    </div>
                   </div>
                 </div>
 
-                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+                <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                   {item.impactMetric}
                 </span>
               </div>
 
-              {/* Action Description */}
-              <p className="text-xs text-foreground/90 leading-normal">
+              <p className="text-xs text-foreground/90">
                 <span className="text-muted-foreground">{item.action}: </span>
                 {item.content}
               </p>
 
-              {/* Action Footer */}
-              <div className="flex items-center justify-between pt-1 border-t border-emerald-900/5 text-[11px]">
-                <button
-                  onClick={() => toggleCheer(item.id)}
-                  className={`flex items-center gap-1.5 font-medium transition-colors ${
-                    hasCheered ? 'text-emerald-700 font-semibold' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Flame className={`size-3.5 ${hasCheered ? 'fill-emerald-600 text-emerald-600' : ''}`} />
-                  <span>{item.cheersCount} Momentum Cheers</span>
-                </button>
-
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <button className="hover:text-foreground transition-colors flex items-center gap-1">
-                    <MessageSquare className="size-3" />
-                    <span>Discuss</span>
-                  </button>
-                  <button className="hover:text-foreground transition-colors flex items-center gap-1">
-                    <Share2 className="size-3" />
-                    <span>Share</span>
-                  </button>
+              <div className="flex items-center justify-between pt-2 border-t border-emerald-900/5 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Flame className="size-3.5 text-emerald-600" />
+                  <span>{item.cheersCount} Cheers</span>
                 </div>
               </div>
             </div>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
