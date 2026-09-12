@@ -36,7 +36,7 @@ export default function HomePage() {
           Sustainable Development & Strategy
         </span>
 
-        {/* Combined Headline */}
+        {/* Headline */}
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
           The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
         </h1>
@@ -64,16 +64,16 @@ export default function HomePage() {
 
         {/* Feature Pillar Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
-          {/* Pillar 1 */}
+          {/* Pillar 1: Habit Analytics */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">⚡</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Log green choices, track personal streaks, and share habit momentum with your network.
+              Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
             </p>
           </div>
 
-          {/* Pillar 2 */}
+          {/* Pillar 2: Institutional Strategy */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">📊</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
@@ -82,7 +82,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Pillar 3 */}
+          {/* Pillar 3: Ecological Coexistence */}
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
             <div className="text-2xl mb-2">🌿</div>
             <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
