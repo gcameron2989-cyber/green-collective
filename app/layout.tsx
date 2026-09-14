@@ -1,94 +1,45 @@
-import type { Metadata, Viewport } from 'next'
-import { DM_Sans, Bricolage_Grotesque } from 'next/font/google'
-import { AuthProvider } from '@/components/auth/auth-provider'
-import './globals.css'
+@import "tailwindcss";
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-dm-sans',
-})
-
-const bricolage = Bricolage_Grotesque({
-  subsets: ['latin'],
-  variable: '--font-bricolage',
-})
-
-export const metadata: Metadata = {
-  metadataBase: new URL('https://www.greencollective.ca'),
-  title: {
-    default: 'Green Collective | Sustainable Development, Strategy & Action',
-    template: '%s | Green Collective',
-  },
-  description:
-    'The platform uniting people, communities, and institutions for sustainable progress.',
-  keywords: [
-    'green collective',
-    'sustainable development platform',
-    'sustainability strategy software',
-    'ecological coexistence network',
-    'scope 3 engagement platform',
-    'enterprise sustainability hub',
-    'community environmental action',
-    'sustainable habit analytics',
-  ],
-  alternates: {
-    canonical: 'https://www.greencollective.ca',
-  },
-  openGraph: {
-    title: 'Green Collective | Sustainable Development, Strategy & Action',
-    description:
-      'The platform uniting people, communities, and institutions for sustainable progress.',
-    url: 'https://www.greencollective.ca',
-    siteName: 'Green Collective',
-    locale: 'en_CA',
-    type: 'website',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  verification: {
-    google: '5xgy3LOswrjRTjiRwg-FBGvxnLHoldySKNwCIw4233w',
-  },
-}
-
-export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#0f382c',
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  // Schema markup payload for Google indexing
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Green Collective',
-    url: 'https://www.greencollective.ca',
-    logo: 'https://www.greencollective.ca/logo.png',
-    sameAs: [
-      'https://www.linkedin.com/company/greencollective',
-      'https://github.com/greencollective',
-    ],
-    description:
-      'The platform uniting people, communities, and institutions for sustainable progress.',
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 158 64% 32%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 158 64% 92%;
+    --accent-foreground: 158 64% 20%;
+    --destructive: 0 84.2% 60.2%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 158 64% 32%;
+    --radius: 0.75rem;
   }
+}
 
-  return (
-    <html lang="en" className={`${dmSans.variable} ${bricolage.variable} bg-background`}>
-      <head>
-        {/* ADDITION: Standard structured data injection for Google */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
-      <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
-  )
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
 }
