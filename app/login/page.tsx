@@ -5,36 +5,57 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type AuthView = "signin" | "signup" | "forgot";
+
 export default function LoginPage() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [view, setView] = useState<AuthView>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [institution, setInstitution] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const supabase = createClient();
 
-  // Helper to toggle sign in vs sign up and clear form state cleanly
-  const toggleAuthMode = (signUpMode: boolean) => {
-    setIsSignUp(signUpMode);
+  const switchView = (newView: AuthView) => {
+    setView(newView);
     setEmail("");
     setPassword("");
     setInstitution("");
     setErrorMsg(null);
+    setInfoMsg(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setInfoMsg(null);
     setLoading(true);
 
-    if (isSignUp) {
+    if (view === "forgot") {
+      const origin = window.location.origin;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/reset-password`,
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+      } else {
+        setInfoMsg("Password reset link sent! Check your inbox.");
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (view === "signup") {
+      const origin = window.location.origin;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${origin}/login`,
           data: {
             institution: institution || "Independent Member",
           },
@@ -47,8 +68,9 @@ export default function LoginPage() {
         return;
       }
 
+      // Supabase requires email confirmation by default
       if (data.user && !data.session) {
-        setErrorMsg("Check your email for the confirmation link!");
+        setInfoMsg("Verification link sent! Please check your email to activate your account.");
         setLoading(false);
         return;
       }
@@ -88,10 +110,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md border border-emerald-900/10 rounded-2xl bg-card/90 backdrop-blur p-8 shadow-xl">
           <div className="text-center mb-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
-              {isSignUp ? "Join the Network" : "Welcome Back"}
+              {view === "signup" ? "Join the Network" : view === "forgot" ? "Account Recovery" : "Welcome Back"}
             </span>
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-              {isSignUp ? "Create your account" : "Sign in to Green Collective"}
+              {view === "signup"
+                ? "Create your account"
+                : view === "forgot"
+                ? "Reset your password"
+                : "Sign in to Green Collective"}
             </h1>
           </div>
 
@@ -101,8 +127,14 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" key={isSignUp ? "signup-form" : "signin-form"}>
-            {isSignUp && (
+          {infoMsg && (
+            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-800 text-center font-medium">
+              {infoMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4" key={view}>
+            {view === "signup" && (
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">
                   Institution / Organization (Optional)
@@ -130,43 +162,71 @@ export default function LoginPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">Password</label>
-              <input
-                type="password"
-                required
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-              />
-            </div>
+            {view !== "forgot" && (
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-foreground">Password</label>
+                  {view === "signin" && (
+                    <button
+                      type="button"
+                      onClick={() => switchView("forgot")}
+                      className="text-[11px] font-medium text-emerald-800 hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="password"
+                  required
+                  autoComplete={view === "signup" ? "new-password" : "current-password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
             >
-              {loading ? "Processing..." : isSignUp ? "Create Account & Continue" : "Sign In"}
+              {loading
+                ? "Processing..."
+                : view === "signup"
+                ? "Create Account & Continue"
+                : view === "forgot"
+                ? "Send Password Reset Link"
+                : "Sign In"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-muted-foreground pt-4 border-t border-emerald-900/10">
-            {isSignUp ? (
-              <span>
+          <div className="mt-6 text-center text-xs text-muted-foreground pt-4 border-t border-emerald-900/10 space-y-2">
+            {view === "signup" && (
+              <div>
                 Already have an account?{" "}
-                <button onClick={() => toggleAuthMode(false)} className="font-bold text-[#0f382c] hover:underline">
+                <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
                   Sign In
                 </button>
-              </span>
-            ) : (
-              <span>
+              </div>
+            )}
+            {view === "signin" && (
+              <div>
                 New to Green Collective?{" "}
-                <button onClick={() => toggleAuthMode(true)} className="font-bold text-[#0f382c] hover:underline">
+                <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline">
                   Create Account
                 </button>
-              </span>
+              </div>
+            )}
+            {view === "forgot" && (
+              <div>
+                Remembered your password?{" "}
+                <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
+                  Back to Sign In
+                </button>
+              </div>
             )}
           </div>
         </div>
