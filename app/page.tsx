@@ -15,13 +15,13 @@ export default function HomePage() {
         </div>
         <div className="flex gap-4 items-center">
           <Link
-            href="/dashboard"
-            className="text-sm font-medium hover:text-[#0f382c] transition px-3 py-2"
+            href="/login"
+            className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2"
           >
             Log In
           </Link>
           <Link
-            href="/dashboard"
+            href="/login"
             className="text-sm font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10"
           >
             Get Started
@@ -82,7 +82,7 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Pillar 2: Institutional Strategy (Houses Campus Pilot Map) */}
+            {/* Pillar 2: Institutional Strategy */}
             <Link
               href="/institution"
               className="group p-5 border border-emerald-900/10 hover:border-emerald-700/30 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
