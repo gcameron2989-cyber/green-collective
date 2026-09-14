@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import PilotMap from "@/components/PilotMap"
 
 export default function HomePage() {
   return (
@@ -30,67 +31,74 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-4xl mx-auto z-10">
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-6 border border-emerald-200 shadow-sm">
-          <span className="size-1.5 rounded-full bg-emerald-600" />
-          Sustainable Development & Strategy
-        </span>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-5xl mx-auto z-10 w-full space-y-12">
+        <div className="flex flex-col items-center">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-6 border border-emerald-200 shadow-sm">
+            <span className="size-1.5 rounded-full bg-emerald-600" />
+            Sustainable Development & Strategy
+          </span>
 
-        {/* Headline */}
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
-          The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
-        </h1>
+          {/* Headline */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
+            The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
+          </h1>
 
-        {/* Sub-headline */}
-        <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
-          Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
-        </p>
+          {/* Sub-headline */}
+          <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
+            Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
+          </p>
 
-        {/* Call to Action */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12">
-          <Link
-            href="/dashboard"
-            className="bg-[#0f382c] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-900 transition text-center shadow-lg shadow-emerald-950/15"
-          >
-            Start Logging Habits
-          </Link>
-          <Link
-            href="/dashboard"
-            className="border border-emerald-900/20 bg-background/60 backdrop-blur font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-50/50 transition text-center"
-          >
-            Explore Enterprise Solutions
-          </Link>
+          {/* Call to Action */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12">
+            <Link
+              href="/dashboard"
+              className="bg-[#0f382c] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-900 transition text-center shadow-lg shadow-emerald-950/15"
+            >
+              Start Logging Habits
+            </Link>
+            <Link
+              href="/dashboard"
+              className="border border-emerald-900/20 bg-background/60 backdrop-blur font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-50/50 transition text-center"
+            >
+              Explore Enterprise Solutions
+            </Link>
+          </div>
+
+          {/* Feature Pillar Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
+            {/* Pillar 1: Habit Analytics */}
+            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+              <div className="text-2xl mb-2">⚡</div>
+              <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
+              </p>
+            </div>
+
+            {/* Pillar 2: Institutional Strategy */}
+            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+              <div className="text-2xl mb-2">📊</div>
+              <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
+              </p>
+            </div>
+
+            {/* Pillar 3: Ecological Coexistence */}
+            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
+              <div className="text-2xl mb-2">🌿</div>
+              <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Feature Pillar Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
-          {/* Pillar 1: Habit Analytics */}
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-            <div className="text-2xl mb-2">⚡</div>
-            <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
-            </p>
-          </div>
-
-          {/* Pillar 2: Institutional Strategy */}
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-            <div className="text-2xl mb-2">📊</div>
-            <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
-            </p>
-          </div>
-
-          {/* Pillar 3: Ecological Coexistence */}
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-            <div className="text-2xl mb-2">🌿</div>
-            <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
-            </p>
-          </div>
-        </div>
+        {/* Interactive Pilot Map Integration */}
+        <section className="w-full text-left pt-6">
+          <PilotMap />
+        </section>
       </main>
 
       {/* Footer */}
