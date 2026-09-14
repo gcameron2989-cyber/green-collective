@@ -16,6 +16,15 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Helper to toggle sign in vs sign up and clear form state cleanly
+  const toggleAuthMode = (signUpMode: boolean) => {
+    setIsSignUp(signUpMode);
+    setEmail("");
+    setPassword("");
+    setInstitution("");
+    setErrorMsg(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -92,7 +101,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" key={isSignUp ? "signup-form" : "signin-form"}>
             {isSignUp && (
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">
@@ -113,6 +122,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
+                autoComplete="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -125,6 +135,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                autoComplete={isSignUp ? "new-password" : "current-password"}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -145,14 +156,14 @@ export default function LoginPage() {
             {isSignUp ? (
               <span>
                 Already have an account?{" "}
-                <button onClick={() => setIsSignUp(false)} className="font-bold text-[#0f382c] hover:underline">
+                <button onClick={() => toggleAuthMode(false)} className="font-bold text-[#0f382c] hover:underline">
                   Sign In
                 </button>
               </span>
             ) : (
               <span>
                 New to Green Collective?{" "}
-                <button onClick={() => setIsSignUp(true)} className="font-bold text-[#0f382c] hover:underline">
+                <button onClick={() => toggleAuthMode(true)} className="font-bold text-[#0f382c] hover:underline">
                   Create Account
                 </button>
               </span>
