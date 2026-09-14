@@ -56,15 +56,18 @@ export default function PilotMap() {
     if (typeof window === "undefined" || !mapRef.current || leafletMap.current) return;
 
     import("leaflet").then((L) => {
-      // Initialize map instance
+      // Initialize map instance centered on UBC campus
       const map = L.map(mapRef.current!).setView([49.264, -123.250], 14);
       leafletMap.current = map;
 
-      // Dark theme map tile layer
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-      }).addTo(map);
+      // Free Esri Dark Gray Canvas tile layer (No API key required)
+      L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        {
+          attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+          maxZoom: 16,
+        }
+      ).addTo(map);
 
       // Custom marker icon
       const customIcon = L.icon({
@@ -77,7 +80,7 @@ export default function PilotMap() {
         shadowSize: [41, 41],
       });
 
-      // Add pins
+      // Add interactive pins
       ZONES.forEach((zone) => {
         const marker = L.marker([zone.lat, zone.lng], { icon: customIcon }).addTo(map);
         marker.bindPopup(`
