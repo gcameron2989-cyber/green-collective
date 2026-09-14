@@ -10,7 +10,7 @@ interface Habit {
   co2SavedKg: number;
   unit: string;
   completedToday: boolean;
-  momentumScore: number; // Replaced streak with momentum tracking
+  momentumScore: number;
   icon: string;
 }
 
@@ -116,7 +116,7 @@ export default function HabitAnalyticsPage() {
       <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
         <span>⚡ <strong>Interactive Preview Mode:</strong> You are testing live features. Create an account to permanently save your progress and impact metrics.</span>
         <Link
-          href="/dashboard"
+          href="/login"
           className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
         >
           Create Free Account &rarr;
