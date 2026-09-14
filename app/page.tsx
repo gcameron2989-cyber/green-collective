@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import PilotMap from "@/components/PilotMap"
 
 export default function HomePage() {
   return (
@@ -51,54 +50,73 @@ export default function HomePage() {
           {/* Call to Action */}
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-12">
             <Link
-              href="/dashboard"
+              href="/habits"
               className="bg-[#0f382c] text-white font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-900 transition text-center shadow-lg shadow-emerald-950/15"
             >
               Start Logging Habits
             </Link>
             <Link
-              href="/dashboard"
+              href="/institution"
               className="border border-emerald-900/20 bg-background/60 backdrop-blur font-semibold px-8 py-3.5 rounded-full hover:bg-emerald-50/50 transition text-center"
             >
               Explore Enterprise Solutions
             </Link>
           </div>
 
-          {/* Feature Pillar Grid */}
+          {/* Interactive Feature Pillar Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left w-full">
             {/* Pillar 1: Habit Analytics */}
-            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-              <div className="text-2xl mb-2">⚡</div>
-              <h2 className="font-semibold text-base mb-1 text-foreground">Habit Analytics</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
-              </p>
-            </div>
+            <Link
+              href="/habits"
+              className="group p-5 border border-emerald-900/10 hover:border-emerald-700/30 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200 inline-block">⚡</div>
+                <h2 className="font-semibold text-base mb-1 text-foreground flex items-center justify-between">
+                  Habit Analytics
+                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity">Explore &rarr;</span>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
+                </p>
+              </div>
+            </Link>
 
-            {/* Pillar 2: Institutional Strategy */}
-            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-              <div className="text-2xl mb-2">📊</div>
-              <h2 className="font-semibold text-base mb-1 text-foreground">Institutional Strategy</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
-              </p>
-            </div>
+            {/* Pillar 2: Institutional Strategy (Houses Campus Pilot Map) */}
+            <Link
+              href="/institution"
+              className="group p-5 border border-emerald-900/10 hover:border-emerald-700/30 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200 inline-block">📊</div>
+                <h2 className="font-semibold text-base mb-1 text-foreground flex items-center justify-between">
+                  Institutional Strategy
+                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity">Explore &rarr;</span>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
+                </p>
+              </div>
+            </Link>
 
             {/* Pillar 3: Ecological Coexistence */}
-            <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm">
-              <div className="text-2xl mb-2">🌿</div>
-              <h2 className="font-semibold text-base mb-1 text-foreground">Ecological Coexistence</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
-              </p>
-            </div>
+            <Link
+              href="/coexistence"
+              className="group p-5 border border-emerald-900/10 hover:border-emerald-700/30 rounded-2xl bg-card/80 backdrop-blur shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200 inline-block">🌿</div>
+                <h2 className="font-semibold text-base mb-1 text-foreground flex items-center justify-between">
+                  Ecological Coexistence
+                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity">Explore &rarr;</span>
+                </h2>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
-
-        {/* Interactive Pilot Map Integration */}
-        <section className="w-full text-left pt-6">
-          <PilotMap />
-        </section>
       </main>
 
       {/* Footer */}
