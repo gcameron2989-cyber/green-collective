@@ -10,7 +10,7 @@ interface Habit {
   co2SavedKg: number;
   unit: string;
   completedToday: boolean;
-  streakDays: number;
+  momentumScore: number; // Replaced streak with momentum tracking
   icon: string;
 }
 
@@ -22,7 +22,7 @@ const INITIAL_HABITS: Habit[] = [
     co2SavedKg: 2.4,
     unit: "trip",
     completedToday: false,
-    streakDays: 4,
+    momentumScore: 68,
     icon: "🚲",
   },
   {
@@ -32,7 +32,7 @@ const INITIAL_HABITS: Habit[] = [
     co2SavedKg: 1.6,
     unit: "meal",
     completedToday: false,
-    streakDays: 7,
+    momentumScore: 84,
     icon: "🥗",
   },
   {
@@ -42,7 +42,7 @@ const INITIAL_HABITS: Habit[] = [
     co2SavedKg: 0.8,
     unit: "day",
     completedToday: true,
-    streakDays: 12,
+    momentumScore: 92,
     icon: "♻️",
   },
   {
@@ -52,7 +52,7 @@ const INITIAL_HABITS: Habit[] = [
     co2SavedKg: 0.6,
     unit: "load",
     completedToday: false,
-    streakDays: 2,
+    momentumScore: 45,
     icon: "🧺",
   },
 ];
@@ -69,9 +69,9 @@ export default function HabitAnalyticsPage() {
           return {
             ...habit,
             completedToday: newlyCompleted,
-            streakDays: newlyCompleted
-              ? habit.streakDays + 1
-              : Math.max(0, habit.streakDays - 1),
+            momentumScore: newlyCompleted
+              ? Math.min(100, habit.momentumScore + 5)
+              : Math.max(0, habit.momentumScore - 5),
           };
         }
         return habit;
@@ -84,6 +84,9 @@ export default function HabitAnalyticsPage() {
     .reduce((acc, curr) => acc + curr.co2SavedKg, 0);
 
   const completedCount = habits.filter((h) => h.completedToday).length;
+  const avgMomentum = Math.round(
+    habits.reduce((acc, h) => acc + h.momentumScore, 0) / habits.length
+  );
 
   const filteredHabits = habits.filter(
     (h) => filter === "All" || h.category === filter
@@ -91,7 +94,7 @@ export default function HabitAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
-      {/* Background Radial Glow & Grid Overlay */}
+      {/* Background FX */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
@@ -109,15 +112,25 @@ export default function HabitAnalyticsPage() {
         </span>
       </header>
 
-      {/* Main Content Area */}
+      {/* Hybrid Mode Banner */}
+      <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
+        <span>⚡ <strong>Interactive Preview Mode:</strong> You are testing live features. Create an account to permanently save your progress and impact metrics.</span>
+        <Link
+          href="/dashboard"
+          className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
+        >
+          Create Free Account &rarr;
+        </Link>
+      </div>
+
+      {/* Main Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10">
-        {/* Title Section */}
         <div className="mb-8 text-left">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">
-            Personal Habit Tracker & Analytics
+            Personal Impact & Momentum Analytics
           </h1>
           <p className="text-sm text-muted-foreground font-normal">
-            Log daily eco-actions to build streaks and measure your cumulative environmental footprint reduction.
+            Log your daily eco-actions, measure cumulative carbon reduction, and build long-term sustainability momentum.
           </p>
         </div>
 
@@ -126,10 +139,10 @@ export default function HabitAnalyticsPage() {
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm flex justify-between items-center">
             <div>
               <span className="text-xs uppercase tracking-wider font-semibold text-emerald-800 block mb-1">
-                CO₂ Diverted Today
+                Measured CO₂ Diverted
               </span>
               <span className="text-3xl font-extrabold text-[#0f382c]">
-                {totalCO2SavedToday.toFixed(1)} <span className="text-sm font-medium text-muted-foreground">kg</span>
+                {totalCO2SavedToday.toFixed(1)} <span className="text-sm font-medium text-muted-foreground">kg today</span>
               </span>
             </div>
             <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">🌱</div>
@@ -150,13 +163,13 @@ export default function HabitAnalyticsPage() {
           <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm flex justify-between items-center">
             <div>
               <span className="text-xs uppercase tracking-wider font-semibold text-emerald-800 block mb-1">
-                Active Habit Streak
+                Overall Momentum Index
               </span>
               <span className="text-3xl font-extrabold text-[#0f382c]">
-                {Math.max(...habits.map((h) => h.streakDays))} <span className="text-sm font-medium text-muted-foreground">days</span>
+                {avgMomentum}% <span className="text-xs font-medium text-emerald-700">High Progress</span>
               </span>
             </div>
-            <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">🔥</div>
+            <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">📈</div>
           </div>
         </div>
 
@@ -165,7 +178,6 @@ export default function HabitAnalyticsPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <h2 className="text-lg font-bold text-foreground">Daily Actions</h2>
 
-            {/* Category Filters */}
             <div className="flex flex-wrap gap-2">
               {["All", "Transport", "Waste", "Energy", "Food"].map((cat) => (
                 <button
@@ -183,7 +195,6 @@ export default function HabitAnalyticsPage() {
             </div>
           </div>
 
-          {/* Habits Grid */}
           <div className="space-y-3">
             {filteredHabits.map((habit) => (
               <div
@@ -214,12 +225,11 @@ export default function HabitAnalyticsPage() {
                         -{habit.co2SavedKg} kg CO₂ / {habit.unit}
                       </span>
                       <span>•</span>
-                      <span>🔥 {habit.streakDays} day streak</span>
+                      <span>Momentum: {habit.momentumScore}%</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Checkbox State */}
                 <button
                   aria-label={`Mark ${habit.title} as completed`}
                   className={`size-6 rounded-md border flex items-center justify-center font-bold text-xs transition ${
@@ -236,7 +246,6 @@ export default function HabitAnalyticsPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
