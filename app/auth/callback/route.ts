@@ -1,26 +1,19 @@
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  // Default to /reset-password if no next query param is present
-  const next = searchParams.get("next") ?? "/reset-password";
+  const code = searchParams.get('code');
+  const next = searchParams.get('next') ?? '/dashboard'; // Change '/dashboard' to wherever you want them to land
 
   if (code) {
     const supabase = await createClient();
-    
-    // Exchange the temporal code for a logged-in session
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    
     if (!error) {
-      // Forward the authenticated user to the reset password form
       return NextResponse.redirect(`${origin}${next}`);
     }
   }
 
-  // Return user to login page with an error message if the code exchange fails or expires
-  return NextResponse.redirect(
-    `${origin}/login?error=Invalid+or+expired+reset+link`
-  );
+  // Return the user to an error page if code exchange failed
+  return NextResponse.redirect(`${origin}/login?error=auth-code-error`);
 }
