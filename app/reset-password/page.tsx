@@ -18,14 +18,14 @@ export default function ResetPasswordPage() {
   const supabase = createClient();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event triggered when clicking the email link
+    // Listen for the PASSWORD_RECOVERY event when returning from the email link
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecoveryMode(true);
       }
     });
 
-    // Check if user is already in an active session (e.g., forwarded from callback)
+    // Check if a session already exists (e.g., set up by app/auth/callback/route.ts)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsRecoveryMode(true);
@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
     setLoading(false);
   };
 
-  // Step 2: Update Password After Email Link Click
+  // Step 2: Set New Password After Clicking Email Link
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -132,7 +132,6 @@ export default function ResetPasswordPage() {
           )}
 
           {isRecoveryMode ? (
-            /* Form shown AFTER clicking the email link */
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">New Password</label>
@@ -169,7 +168,6 @@ export default function ResetPasswordPage() {
               </button>
             </form>
           ) : (
-            /* Form shown BEFORE email is sent */
             <form onSubmit={handleSendResetEmail} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1">Email Address</label>
