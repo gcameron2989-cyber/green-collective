@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,6 +17,50 @@ export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  useEffect(() => {
+    // Listen for the PASSWORD_RECOVERY event triggered when clicking the email link
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecoveryMode(true);
+      }
+    });
+
+    // Check if user is already in an active session (e.g., forwarded from callback)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsRecoveryMode(true);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  // Step 1: Request Password Reset Email
+  const handleSendResetEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setMessage(null);
+    setLoading(true);
+
+    const origin = window.location.origin;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setMessage("Reset link sent! Please check your email inbox.");
+    setLoading(false);
+  };
+
+  // Step 2: Update Password After Email Link Click
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -63,7 +109,14 @@ export default function ResetPasswordPage() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
               Account Security
             </span>
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Set New Password</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+              {isRecoveryMode ? "Set New Password" : "Reset Your Password"}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isRecoveryMode
+                ? "Enter your new password below to complete the reset."
+                : "Enter your account email to receive a password recovery link."}
+            </p>
           </div>
 
           {errorMsg && (
@@ -78,41 +131,74 @@ export default function ResetPasswordPage() {
             </div>
           )}
 
-          <form onSubmit={handlePasswordReset} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">New Password</label>
-              <input
-                type="password"
-                required
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-              />
-            </div>
+          {isRecoveryMode ? (
+            /* Form shown AFTER clicking the email link */
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">New Password</label>
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">Confirm New Password</label>
-              <input
-                type="password"
-                required
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+                />
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
-            >
-              {loading ? "Updating..." : "Update Password"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          ) : (
+            /* Form shown BEFORE email is sent */
+            <form onSubmit={handleSendResetEmail} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
+              >
+                {loading ? "Sending Link..." : "Send Reset Link"}
+              </button>
+
+              <div className="text-center pt-2">
+                <Link href="/login" className="text-xs text-muted-foreground hover:text-foreground transition">
+                  Back to Login
+                </Link>
+              </div>
+            </form>
+          )}
         </div>
       </main>
 
