@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -63,20 +63,14 @@ export default function DashboardPage() {
     }
     setUserEmail(user.email ?? "Member");
 
-    // Fetch user habit logs
-    const { data: logsData } = await supabase
-      .from("user_habits")
-      .select("*")
-      .order("completed_at", { ascending: true });
+    // Fetch user habit logs & custom habits concurrently
+    const [logsRes, customRes] = await Promise.all([
+      supabase.from("user_habits").select("*").order("completed_at", { ascending: true }),
+      supabase.from("custom_habits").select("*").order("created_at", { ascending: false })
+    ]);
 
-    // Fetch custom user habits
-    const { data: customData } = await supabase
-      .from("custom_habits")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (logsData) setUserLogs(logsData);
-    if (customData) setCustomHabits(customData);
+    if (logsRes.data) setUserLogs(logsRes.data);
+    if (customRes.data) setCustomHabits(customRes.data);
     setLoading(false);
   };
 
@@ -116,20 +110,25 @@ export default function DashboardPage() {
     router.refresh();
   };
 
-  const totalCO2Saved = userLogs.reduce((acc, log) => acc + Number(log.co2_saved_kg || 0), 0);
+  const totalCO2Saved = useMemo(() => {
+    return userLogs.reduce((acc, log) => acc + Number(log.co2_saved_kg || 0), 0);
+  }, [userLogs]);
+
   const totalActionsCount = userLogs.length;
   const momentumScore = Math.min(100, 50 + totalActionsCount * 5);
 
-  const chartData = userLogs.reduce((acc: { date: string; co2: number }[], log) => {
-    const dateStr = new Date(log.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    const existing = acc.find((d) => d.date === dateStr);
-    if (existing) {
-      existing.co2 = Number((existing.co2 + Number(log.co2_saved_kg)).toFixed(1));
-    } else {
-      acc.push({ date: dateStr, co2: Number(log.co2_saved_kg) });
-    }
-    return acc;
-  }, []);
+  const chartData = useMemo(() => {
+    return userLogs.reduce((acc: { date: string; co2: number }[], log) => {
+      const dateStr = new Date(log.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const existing = acc.find((d) => d.date === dateStr);
+      if (existing) {
+        existing.co2 = Number((existing.co2 + Number(log.co2_saved_kg)).toFixed(1));
+      } else {
+        acc.push({ date: dateStr, co2: Number(log.co2_saved_kg) });
+      }
+      return acc;
+    }, []);
+  }, [userLogs]);
 
   if (loading) {
     return (
@@ -292,50 +291,53 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-foreground">Create Custom Action</h2>
             <form onSubmit={handleCreateCustomHabit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold mb-1">Action Title</label>
+                <label htmlFor="customTitle" className="block text-xs font-semibold mb-1">Action Title</label>
                 <input
+                  id="customTitle"
                   type="text"
                   required
                   placeholder="e.g. Solar Power Charging"
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background"
+                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Category</label>
+                <label htmlFor="customCategory" className="block text-xs font-semibold mb-1">Category</label>
                 <input
+                  id="customCategory"
                   type="text"
                   required
                   placeholder="e.g. Energy, Materials, Food"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background"
+                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">CO₂ Offset (kg)</label>
+                <label htmlFor="customCO2" className="block text-xs font-semibold mb-1">CO₂ Offset (kg)</label>
                 <input
+                  id="customCO2"
                   type="number"
                   step="0.1"
                   required
                   value={customCO2}
                   onChange={(e) => setCustomCO2(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background"
+                  className="w-full px-3 py-2 text-xs border border-emerald-900/20 rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-900/20 hover:bg-emerald-100/50"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-emerald-900/20 hover:bg-emerald-100/50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={modalLoading}
-                  className="px-3 py-1.5 bg-[#0f382c] text-white text-xs font-semibold rounded-lg hover:bg-emerald-900 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-[#0f382c] text-white text-xs font-semibold rounded-lg hover:bg-emerald-900 transition disabled:opacity-50"
                 >
                   {modalLoading ? "Saving..." : "Save Action"}
                 </button>
