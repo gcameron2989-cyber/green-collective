@@ -32,12 +32,22 @@ const FACULTIES = [
 ]
 
 const ECO_ACTIONS = [
-  { id: 'home-meal', title: 'Brought Lunch/Snacks from Home (Zero Packaging)', points: 30 },
-  { id: 'home-beverage', title: 'Brought Coffee/Tea from Home', points: 25 },
-  { id: 'reusable-mug-buy', title: 'Bought Beverage using Reusable Mug/Cup', points: 15 },
-  { id: 'refillable-water', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
-  { id: 'sustainable-commute', title: 'Commuted via Transit, Bike, or Walking', points: 20 },
-  { id: 'waste-sorting', title: 'Properly Sorted Compost and Recyclables', points: 10 },
+  // Zero-Waste & Food
+  { id: 'home-meal', category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
+  { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
+  { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug for Retail Purchase', points: 15 },
+  { id: 'refillable-water', category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
+  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining Option', points: 20 },
+
+  // Sustainable Mobility
+  { id: 'sustainable-commute', category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
+  { id: 'carpool-trip', category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
+  { id: 'stairs-instead-elevator', category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator (3+ Floors)', points: 10 },
+
+  // Circular Economy & Resource Conservation
+  { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost, Recyclables & Soft Plastics', points: 10 },
+  { id: 'thrift-borrow-gear', category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear or Clothes', points: 30 },
+  { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in Campus Clean-up / Eco Event', points: 50 },
 ]
 
 export default function SubmitActionPage() {
@@ -104,10 +114,8 @@ export default function SubmitActionPage() {
 
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Background Radial Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      {/* Header Navigation */}
       <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
         <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
@@ -118,7 +126,6 @@ export default function SubmitActionPage() {
         </Link>
       </header>
 
-      {/* Main Container */}
       <main className="flex-1 max-w-xl mx-auto w-full px-6 py-10 z-10 space-y-6">
         <div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
@@ -145,7 +152,6 @@ export default function SubmitActionPage() {
         )}
 
         <form onSubmit={handleSubmit} className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-5">
-          {/* Select Faculty */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#0f382c]">Select Your Faculty</label>
             <select
@@ -163,7 +169,6 @@ export default function SubmitActionPage() {
             </select>
           </div>
 
-          {/* Select Action */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#0f382c]">Select Eco-Action</label>
             <select
@@ -172,16 +177,15 @@ export default function SubmitActionPage() {
               required
               className="w-full px-3 py-2.5 rounded-xl border border-emerald-900/10 bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
             >
-              <option value="">-- Choose Action --</option>
+              <option value="">-- Choose Eco-Action --</option>
               {ECO_ACTIONS.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.title} (+{a.points} pts)
+                  [{a.category}] {a.title} (+{a.points} pts)
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Quantity */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#0f382c]">Quantity / Times Performed</label>
             <input
@@ -195,7 +199,6 @@ export default function SubmitActionPage() {
             />
           </div>
 
-          {/* Upload Photo Proof */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#0f382c]">
               Attach Photo Proof (Optional)
@@ -218,7 +221,6 @@ export default function SubmitActionPage() {
         </form>
       </main>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
