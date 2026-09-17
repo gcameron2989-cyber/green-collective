@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// Instantiate the Supabase client once outside the render lifecycle
+const supabase = createClient();
+
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,17 +18,18 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event when returning from the email link
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    // Safely listen for the PASSWORD_RECOVERY event
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecoveryMode(true);
       }
     });
 
-    // Check if a session already exists (e.g., set up by app/auth/callback/route.ts)
+    // Check if an authenticated session already exists (e.g., set up by /auth/callback)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsRecoveryMode(true);
@@ -33,9 +37,9 @@ export default function ResetPasswordPage() {
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, []);
 
   // Step 1: Request Password Reset Email
   const handleSendResetEmail = async (e: React.FormEvent) => {
