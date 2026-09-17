@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -50,88 +50,121 @@ export default function CompetitionLeaderboardPage() {
   const maxPoints = leaderboard.length > 0 ? Math.max(...leaderboard.map(f => f.total_points), 1) : 1
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12 font-sans">
-      <header className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-slate-800 gap-4">
-        <div>
-          <Link href="/institution" className="text-xs text-emerald-400 hover:underline mb-2 inline-block">
-            ← Back to Institutional Hub
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-            UBC Sustainability Challenge 🌿
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Faculty vs. Faculty Live Scoreboard
-          </p>
-        </div>
+    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
+      {/* Background Radial Glow & Grid Overlay */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+      {/* Header Navigation */}
+      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
+        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
+          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
+          Green Collective
+        </Link>
         <Link
           href="/competition/submit"
-          className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-5 py-2.5 rounded-lg transition shadow-md shadow-emerald-950"
+          className="text-xs font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10"
         >
           + Log Eco-Action
         </Link>
       </header>
 
-      <main className="max-w-4xl mx-auto mt-8">
-        {loading ? (
-          <div className="flex justify-center py-16 text-slate-400 animate-pulse">
-            Loading live standings...
+      {/* Main Leaderboard Section */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10 z-10 space-y-8">
+        <div>
+          <Link href="/institution" className="text-xs font-semibold text-emerald-800 hover:underline mb-2 inline-block">
+            ← Back to Institutional Hub
+          </Link>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
+                🏆 Campus Competition
+              </span>
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+                UBC Sustainability Challenge
+              </h1>
+            </div>
           </div>
-        ) : leaderboard.length === 0 ? (
-          <div className="text-center py-16 bg-slate-900/50 rounded-xl border border-slate-800">
-            <p className="text-slate-400">No score data logged yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {leaderboard.map((faculty, index) => {
-              const percentage = Math.round((faculty.total_points / maxPoints) * 100)
-              const rank = index + 1
+        </div>
 
-              return (
-                <div
-                  key={faculty.faculty_id}
-                  className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm transition hover:border-slate-700"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`font-black text-sm w-7 h-7 rounded-full flex items-center justify-center ${
-                          rank === 1
-                            ? 'bg-amber-400 text-slate-950'
-                            : rank === 2
-                            ? 'bg-slate-300 text-slate-950'
-                            : rank === 3
-                            ? 'bg-amber-700 text-white'
-                            : 'bg-slate-800 text-slate-400'
-                        }`}
-                      >
-                        {rank}
-                      </span>
-                      <h2 className="text-lg font-bold text-slate-100">
-                        {faculty.faculty_name}
-                      </h2>
+        {/* Live Standings Container */}
+        <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-emerald-900/10">
+            <h2 className="text-base font-bold text-[#0f382c]">Faculty Live Standings</h2>
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              Realtime Sync Active
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12 text-xs font-medium text-muted-foreground animate-pulse">
+              Fetching live scores...
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="text-center py-12 text-xs text-muted-foreground">
+              No faculty actions recorded yet. Be the first to log points!
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard.map((faculty, index) => {
+                const percentage = Math.round((faculty.total_points / maxPoints) * 100)
+                const rank = index + 1
+
+                return (
+                  <div
+                    key={faculty.faculty_id}
+                    className="p-4 rounded-xl border border-emerald-900/10 bg-background/60 space-y-3 transition hover:border-emerald-700/30"
+                  >
+                    <div className="flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`font-black w-6 h-6 rounded-full flex items-center justify-center text-[11px] ${
+                            rank === 1
+                              ? 'bg-amber-400 text-slate-950 font-bold'
+                              : rank === 2
+                              ? 'bg-slate-300 text-slate-950 font-bold'
+                              : rank === 3
+                              ? 'bg-amber-700 text-white font-bold'
+                              : 'bg-emerald-100 text-[#0f382c]'
+                          }`}
+                        >
+                          #{rank}
+                        </span>
+                        <div>
+                          <h3 className="font-bold text-foreground text-sm">{faculty.faculty_name}</h3>
+                          <span className="text-[10px] text-muted-foreground">
+                            {faculty.total_actions} total action{faculty.total_actions === 1 ? '' : 's'} logged
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-base font-extrabold text-[#0f382c] block">
+                          {faculty.total_points} <span className="text-xs font-normal text-muted-foreground">pts</span>
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xl font-extrabold text-emerald-400">
-                        {faculty.total_points} <span className="text-xs font-normal text-slate-400">pts</span>
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        {faculty.total_actions} actions logged
-                      </div>
+
+                    {/* Progress Bar matching overall theme */}
+                    <div className="w-full bg-emerald-950/10 h-2 rounded-full overflow-hidden">
+                      <div
+                        className="bg-[#0f382c] h-full rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${Math.max(percentage, 3)}%` }}
+                      />
                     </div>
                   </div>
-
-                  <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(percentage, 2)}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                )
+              })}
+            </div>
+          )}
+        </div>
       </main>
+
+      {/* Footer */}
+      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
+        © {new Date().getFullYear()} Green Collective. All rights reserved.
+      </footer>
     </div>
   )
 }
