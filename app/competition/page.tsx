@@ -47,15 +47,18 @@ export default function CompetitionLeaderboardPage() {
     }
   }, [])
 
+  const totalCampusActions = leaderboard.reduce((acc, curr) => acc + curr.total_actions, 0)
+  const totalCampusPoints = leaderboard.reduce((acc, curr) => acc + curr.total_points, 0)
   const maxPoints = leaderboard.length > 0 ? Math.max(...leaderboard.map(f => f.total_points), 1) : 1
+
+  // Calculated Impact Metrics
+  const estimatedCo2SavedKg = Math.round(totalCampusPoints * 0.45)
+  const estimatedSingleUseDiverted = Math.round(totalCampusActions * 1.8)
 
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
-      {/* Background Radial Glow & Grid Overlay */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-      {/* Header Navigation */}
       <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
         <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
@@ -69,7 +72,6 @@ export default function CompetitionLeaderboardPage() {
         </Link>
       </header>
 
-      {/* Main Leaderboard Section */}
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         <div>
           <Link href="/institution" className="text-xs font-semibold text-emerald-800 hover:underline mb-2 inline-block">
@@ -84,6 +86,22 @@ export default function CompetitionLeaderboardPage() {
                 UBC Sustainability Challenge
               </h1>
             </div>
+          </div>
+        </div>
+
+        {/* Aggregate Impact Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total Actions</span>
+            <p className="text-2xl font-extrabold text-[#0f382c] mt-1">{totalCampusActions}</p>
+          </div>
+          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Est. CO₂ Offset</span>
+            <p className="text-2xl font-extrabold text-emerald-700 mt-1">{estimatedCo2SavedKg} kg</p>
+          </div>
+          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Packaging Diverted</span>
+            <p className="text-2xl font-extrabold text-[#0f382c] mt-1">{estimatedSingleUseDiverted} items</p>
           </div>
         </div>
 
@@ -146,7 +164,6 @@ export default function CompetitionLeaderboardPage() {
                       </div>
                     </div>
 
-                    {/* Progress Bar matching overall theme */}
                     <div className="w-full bg-emerald-950/10 h-2 rounded-full overflow-hidden">
                       <div
                         className="bg-[#0f382c] h-full rounded-full transition-all duration-500 ease-out"
@@ -161,7 +178,6 @@ export default function CompetitionLeaderboardPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
