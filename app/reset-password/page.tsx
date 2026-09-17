@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// Instantiate the Supabase client once outside the render lifecycle
-const supabase = createClient();
-
 export default function ResetPasswordPage() {
+  // Move client creation inside component / useMemo to prevent state leakage
+  const [supabase] = useState(() => createClient());
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Safely listen for the PASSWORD_RECOVERY event
+    // 1. Listen for auth state change
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
@@ -29,7 +29,7 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Check if an authenticated session already exists (e.g., set up by /auth/callback)
+    // 2. Check session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setIsRecoveryMode(true);
@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   // Step 1: Request Password Reset Email
   const handleSendResetEmail = async (e: React.FormEvent) => {
