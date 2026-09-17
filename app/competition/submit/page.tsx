@@ -31,7 +31,7 @@ export default function SubmitActionPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const supabase = createClient()
-  const router = Router = useRouter()
+  const router = useRouter()
 
   useEffect(() => {
     async function loadFormData() {
