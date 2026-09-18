@@ -1,35 +1,14 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-const FACULTIES = [
-  { id: 'applied-science', name: 'Faculty of Applied Science' },
-  { id: 'arts', name: 'Faculty of Arts' },
-  { id: 'audiology-speech', name: 'School of Audiology and Speech Sciences' },
-  { id: 'sauder', name: 'Sauder School of Business' },
-  { id: 'community-regional-planning', name: 'School of Community and Regional Planning' },
-  { id: 'dentistry', name: 'Faculty of Dentistry' },
-  { id: 'education', name: 'Faculty of Education' },
-  { id: 'forestry', name: 'Faculty of Forestry' },
-  { id: 'graduate-postdoctoral', name: 'Faculty of Graduate and Postdoctoral Studies' },
-  { id: 'journalism-media', name: 'School of Journalism, Writing, and Media' },
-  { id: 'kinesiology', name: 'School of Kinesiology' },
-  { id: 'land-food-systems', name: 'Faculty of Land and Food Systems' },
-  { id: 'allard-law', name: 'Peter A. Allard School of Law' },
-  { id: 'information', name: 'School of Information' },
-  { id: 'medicine', name: 'Faculty of Medicine' },
-  { id: 'music', name: 'School of Music' },
-  { id: 'nursing', name: 'School of Nursing' },
-  { id: 'pharmaceutical-sciences', name: 'Faculty of Pharmaceutical Sciences' },
-  { id: 'population-public-health', name: 'School of Population and Public Health' },
-  { id: 'public-policy', name: 'School of Public Policy and Global Affairs' },
-  { id: 'science', name: 'Faculty of Science' },
-  { id: 'social-work', name: 'School of Social Work' },
-  { id: 'vancouver-economics', name: 'Vancouver School of Economics' },
-]
+interface Faculty {
+  id: string
+  name: string
+}
 
 const ECO_ACTIONS = [
   // Zero-Waste & Food
@@ -51,6 +30,7 @@ const ECO_ACTIONS = [
 ]
 
 export default function SubmitActionPage() {
+  const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
   const [selectedAction, setSelectedAction] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
@@ -61,6 +41,21 @@ export default function SubmitActionPage() {
 
   const supabase = createClient()
   const router = useRouter()
+
+  // Fetch true UUIDs from faculties table
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      const { data, error } = await supabase
+        .from('faculties')
+        .select('id, name')
+        .order('name', { ascending: true })
+
+      if (!error && data) {
+        setFaculties(data)
+      }
+    }
+    fetchFaculties()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,7 +89,7 @@ export default function SubmitActionPage() {
       }
 
       const { error: insertError } = await supabase.from('submissions').insert({
-        faculty_id: selectedFaculty,
+        faculty_id: selectedFaculty, // This now inserts the true UUID matching faculties.id
         action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
@@ -105,12 +100,11 @@ export default function SubmitActionPage() {
 
       setMessage({ type: 'success', text: 'Eco-action logged successfully! Redirecting...' })
       
-      // Force Next.js client router cache refresh before navigating back
       router.refresh()
       
       setTimeout(() => {
-        router.push('/competition')
-      }, 1000)
+        window.location.href = '/competition'
+      }, 800)
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Failed to submit action.' })
     } finally {
@@ -167,7 +161,7 @@ export default function SubmitActionPage() {
               className="w-full px-3 py-2.5 rounded-xl border border-emerald-900/10 bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
             >
               <option value="">-- Choose Faculty --</option>
-              {FACULTIES.map((f) => (
+              {faculties.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.name}
                 </option>
