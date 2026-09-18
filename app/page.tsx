@@ -38,12 +38,20 @@ export default function HomePage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-      {/* Navigation Header with Quick Return Options */}
+      {/* Clean Navigation Header housing brand, core pages, and auth actions */}
       <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10 sticky top-0 shadow-sm">
         <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2 hover:opacity-80 transition">
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Green Collective
         </Link>
+        
+        {/* Core Nav Links moved cleanly into the header */}
+        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
+          <Link href="/" className="hover:text-[#0f382c] transition">Home</Link>
+          <Link href="/about" className="hover:text-[#0f382c] transition">About</Link>
+          <Link href="/contact" className="hover:text-[#0f382c] transition">Contact</Link>
+        </nav>
+
         <div className="flex gap-4 items-center text-xs font-semibold">
           {!loadingAuth && (
             isAuthenticated ? (
@@ -70,18 +78,6 @@ export default function HomePage() {
             ) : (
               <>
                 <Link
-                  href="/about"
-                  className="text-muted-foreground hover:text-[#0f382c] transition px-2 py-1"
-                >
-                  About
-                </Link>
-                <Link
-                  href="/contact"
-                  className="text-muted-foreground hover:text-[#0f382c] transition px-2 py-1"
-                >
-                  Contact
-                </Link>
-                <Link
                   href="/login"
                   className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2"
                 >
@@ -99,7 +95,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with Interactive Glow Hover Effects */}
+      {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-5xl mx-auto z-10 w-full space-y-12">
         <div className="flex flex-col items-center">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-[#0f382c] rounded-full mb-6 border border-emerald-200/60 shadow-sm backdrop-blur-md">
@@ -107,17 +103,14 @@ export default function HomePage() {
             Sustainable Development & Strategy
           </span>
 
-          {/* Headline */}
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
             The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
           </h1>
 
-          {/* Sub-headline */}
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
             Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
           </p>
 
-          {/* Call to Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-16">
             <Link
               href="/habits"
@@ -133,9 +126,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Interactive Feature Pillar Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full">
-            {/* Pillar 1: Habit Analytics */}
             <Link
               href="/habits"
               className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
@@ -152,7 +143,6 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Pillar 2: Institutional Strategy */}
             <Link
               href="/institution"
               className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
@@ -169,7 +159,6 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Pillar 3: Ecological Coexistence */}
             <Link
               href="/coexistence"
               className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
@@ -189,16 +178,9 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Rich Footer with Navigation Backlinks */}
-      <footer className="py-8 px-6 text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur-md z-10">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span>© {new Date().getFullYear()} Green Collective. All rights reserved.</span>
-          <div className="flex items-center gap-6 font-medium">
-            <Link href="/" className="hover:text-[#0f382c] transition">Home</Link>
-            <Link href="/about" className="hover:text-[#0f382c] transition">About Us</Link>
-            <Link href="/contact" className="hover:text-[#0f382c] transition">Contact</Link>
-          </div>
-        </div>
+      {/* Minimalist Footer without duplicated navigation links */}
+      <footer className="py-6 px-6 text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur-md z-10 text-center">
+        <span>© {new Date().getFullYear()} Green Collective. All rights reserved.</span>
       </footer>
     </div>
   )
