@@ -54,7 +54,7 @@ export default function SubmitActionPage() {
       }
     }
     fetchFaculties()
-  }, [])
+  }, [supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,6 +70,11 @@ export default function SubmitActionPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
       let photoUrl = null
 
@@ -93,11 +98,11 @@ export default function SubmitActionPage() {
 
       const { error: insertError } = await supabase.from('submissions').insert({
         faculty_id: selectedFaculty,
-        action_id: selectedAction,
+        eco_action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
         status: 'approved',
-        user_id: user ? user.id : null,
+        user_id: user.id,
       })
 
       if (insertError) throw insertError
@@ -106,7 +111,6 @@ export default function SubmitActionPage() {
       
       router.refresh()
       
-      // Redirect straight to profile so user sees their updated points instantly without loops
       setTimeout(() => {
         window.location.href = '/profile'
       }, 800)
