@@ -17,7 +17,6 @@ export default function AboutPage() {
         </Link>
         <div className="flex gap-4 items-center text-xs font-semibold">
           <Link href="/" className="text-muted-foreground hover:text-[#0f382c] transition px-2 py-1">Home</Link>
-          <Link href="/dashboard" className="text-muted-foreground hover:text-[#0f382c] transition px-2 py-1">Dashboard</Link>
           <Link href="/contact" className="text-muted-foreground hover:text-[#0f382c] transition px-2 py-1">Contact</Link>
         </div>
       </header>
@@ -79,7 +78,6 @@ export default function AboutPage() {
           <span>© {new Date().getFullYear()} Green Collective. All rights reserved.</span>
           <div className="flex items-center gap-6 font-medium">
             <Link href="/" className="hover:text-[#0f382c] transition">Home</Link>
-            <Link href="/dashboard" className="hover:text-[#0f382c] transition">Dashboard</Link>
             <Link href="/about" className="hover:text-[#0f382c] transition">About Us</Link>
             <Link href="/contact" className="hover:text-[#0f382c] transition">Contact</Link>
           </div>
