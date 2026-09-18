@@ -42,7 +42,6 @@ export default function SubmitActionPage() {
   const supabase = createClient()
   const router = useRouter()
 
-  // Fetch true UUIDs from faculties table
   useEffect(() => {
     const fetchFaculties = async () => {
       const { data, error } = await supabase
@@ -68,7 +67,6 @@ export default function SubmitActionPage() {
     setMessage(null)
 
     try {
-      // 1. Get current authenticated user so we can attach user_id
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -93,7 +91,6 @@ export default function SubmitActionPage() {
         photoUrl = urlData.publicUrl
       }
 
-      // 2. Insert submission using action_id (matching your database schema cache)
       const { error: insertError } = await supabase.from('submissions').insert({
         faculty_id: selectedFaculty,
         action_id: selectedAction,
@@ -105,12 +102,13 @@ export default function SubmitActionPage() {
 
       if (insertError) throw insertError
 
-      setMessage({ type: 'success', text: 'Eco-action logged successfully! Redirecting...' })
+      setMessage({ type: 'success', text: 'Eco-action logged successfully! Redirecting to your Impact Hub...' })
       
       router.refresh()
       
+      // Redirect straight to profile so user sees their updated points instantly without loops
       setTimeout(() => {
-        window.location.href = '/competition'
+        window.location.href = '/profile'
       }, 800)
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Failed to submit action.' })
@@ -133,7 +131,7 @@ export default function SubmitActionPage() {
             👤 My Profile
           </Link>
           <Link href="/competition" className="text-emerald-800 hover:underline">
-            ← Back to Leaderboard
+            Leaderboard →
           </Link>
         </div>
       </header>
