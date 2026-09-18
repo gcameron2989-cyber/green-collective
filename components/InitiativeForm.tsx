@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { createInitiative } from '@/actions/initiatives'
+import { createInitiative } from '@/initiatives'
 
 export default function InitiativeForm() {
   const [loading, setLoading] = useState(false)
