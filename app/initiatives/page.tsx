@@ -27,14 +27,26 @@ const localInitiatives = [
 
 export default function InitiativesPage() {
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:24px_24px]">
+    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
+      {/* Exact Grid Square Pattern Background */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px'
+        }}
+      />
+
       {/* Absolute Glow Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
 
       <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full space-y-10 z-10">
         <div className="flex justify-between items-center">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
               📍 Local Geolocation Strategy
             </span>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c]">Vancouver Sustainability Initiatives</h1>
@@ -87,7 +99,7 @@ export default function InitiativesPage() {
           {localInitiatives.map((item, idx) => (
             <div key={idx} className="bg-card/90 backdrop-blur p-6 rounded-2xl border border-emerald-900/10 shadow-sm flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100/80 text-emerald-800 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100/90 text-emerald-800 px-2.5 py-1 rounded-full">
                   {item.category}
                 </span>
                 <h2 className="text-base font-bold text-foreground mt-3">{item.title}</h2>
