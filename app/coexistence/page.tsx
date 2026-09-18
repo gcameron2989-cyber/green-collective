@@ -5,25 +5,26 @@ import Link from "next/link";
 
 export default function CoexistencePage() {
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          Green Collective
-        </Link>
-        <Link href="/dashboard" className="text-xs font-semibold px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition">
-          Go to Dashboard
-        </Link>
-      </header>
+    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
+      {/* Background FX */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px'
+        }}
+      />
 
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
             🌿 Pillar 3: Ecological Coexistence
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Community Network & Live Action Feed</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c]">Community Network & Live Action Feed</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -58,7 +59,7 @@ export default function CoexistencePage() {
         </div>
       </main>
 
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
+      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
     </div>
