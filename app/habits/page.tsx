@@ -70,6 +70,9 @@ export default function HabitAnalyticsPage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // Opt-in state for competition (defaults to false so general users aren't lumped in)
+  const [joinCompetition, setJoinCompetition] = useState(false);
 
   const supabase = createClient();
 
@@ -93,6 +96,10 @@ export default function HabitAnalyticsPage() {
               return matched ? { ...habit, completedToday: true } : habit;
             })
           );
+          // If previous submissions for today included a faculty_id, toggle competition opt-in on
+          if (subs.some((s: any) => s.faculty_id)) {
+            setJoinCompetition(true);
+          }
         }
       }
       setLoadingUser(false);
@@ -129,11 +136,9 @@ export default function HabitAnalyticsPage() {
     setSuccessMessage("");
 
     const today = new Date().toISOString().split('T')[0];
-
-    // Get currently selected habits
     const selectedHabits = habits.filter(h => h.completedToday);
 
-    // Clear existing today's submissions and insert fresh selected batch
+    // Clear existing today's submissions
     await supabase
       .from('submissions')
       .delete()
@@ -146,14 +151,15 @@ export default function HabitAnalyticsPage() {
         eco_action_id: h.actionId,
         quantity: 1,
         status: 'approved',
-        faculty_id: user.user_metadata?.faculty_id || null,
+        // Only assign faculty_id if the user explicitly opted into the competition
+        faculty_id: joinCompetition ? (user.user_metadata?.faculty_id || "general-comp") : null,
       }));
 
       await supabase.from('submissions').insert(inserts);
     }
 
     setSubmitting(false);
-    setSuccessMessage("✨ Eco-actions successfully submitted and logged to your profile!");
+    setSuccessMessage("✨ Eco-actions successfully submitted!");
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
@@ -203,10 +209,10 @@ export default function HabitAnalyticsPage() {
         </div>
       </header>
 
-      {/* Hybrid Mode Banner (Only shown if guest) */}
+      {/* Hybrid Mode Banner */}
       {!loadingUser && !user && (
         <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
-          <span>⚡ <strong>Interactive Preview Mode:</strong> You are testing live features. Create an account to permanently save your progress and impact metrics.</span>
+          <span>⚡ <strong>Interactive Preview Mode:</strong> Test live features before signing up.</span>
           <Link
             href="/login"
             className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
@@ -298,7 +304,7 @@ export default function HabitAnalyticsPage() {
             </div>
           </div>
 
-          <div className="space-y-3 mb-8">
+          <div className="space-y-3 mb-6">
             {filteredHabits.map((habit) => (
               <div
                 key={habit.id}
@@ -345,6 +351,21 @@ export default function HabitAnalyticsPage() {
                 </button>
               </div>
             ))}
+          </div>
+
+          {/* Competition Opt-in Toggle */}
+          <div className="mb-6 p-4 rounded-xl bg-emerald-50/60 border border-emerald-900/10 flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="competition-opt-in"
+              checked={joinCompetition}
+              onChange={(e) => setJoinCompetition(e.target.checked)}
+              className="mt-0.5 size-4 accent-[#0f382c] rounded cursor-pointer"
+            />
+            <label htmlFor="competition-opt-in" className="text-xs text-foreground cursor-pointer select-none">
+              <strong className="block text-[#0f382c] font-semibold mb-0.5">Include these actions in the UBC Sustainability Challenge Leaderboard</strong>
+              Check this box to contribute your metrics to your faculty's team score. Leave unchecked to keep your logs strictly personal and private.
+            </label>
           </div>
 
           {/* Submit Actions Button Bar */}
