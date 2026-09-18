@@ -35,10 +35,12 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path
 
+  // Only show the guest bar if NOT loading, NOT authenticated, AND NOT on the homepage
+  const showGuestBanner = !loadingAuth && !isAuthenticated && pathname !== '/'
+
   return (
     <div className="w-full sticky top-0 z-50">
-      {/* Guest Preview Bar - Renders ONLY when NOT logged in and done loading */}
-      {!loadingAuth && !isAuthenticated && (
+      {showGuestBanner && (
         <div className="bg-emerald-900 text-emerald-100 text-xs py-2 px-6 flex justify-between items-center border-b border-emerald-950/20">
           <span className="font-medium">Previewing Green Collective as a guest</span>
           <Link href="/login" className="underline hover:text-white font-semibold transition">
