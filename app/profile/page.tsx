@@ -10,8 +10,23 @@ interface UserSubmission {
   created_at: string
   quantity: number
   status: 'pending' | 'approved' | 'rejected'
-  faculties: { name: string } | null
-  eco_actions: { title: string; points: number; category: string } | null
+  faculty_id: string
+  eco_action_id: string
+}
+
+// Map eco_action_id to details since we are querying flat
+const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
+  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
+  'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
+  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug for Retail Purchase', points: 15 },
+  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
+  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining Option', points: 20 },
+  'sustainable-commute': { category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
+  'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
+  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator (3+ Floors)', points: 10 },
+  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost, Recyclables & Soft Plastics', points: 10 },
+  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear or Clothes', points: 30 },
+  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up / Eco Event', points: 50 },
 }
 
 export default function UserProfilePage() {
@@ -39,22 +54,17 @@ export default function UserProfilePage() {
 
       setUserEmail(user.email || 'UBC Participant')
 
-      // 2. Fetch submissions strictly tied to this user's UUID
+      // 2. Fetch submissions strictly tied to this user's UUID using flat select
       const { data: userSubmissions, error } = await supabase
         .from('submissions')
-        .select(`
-          id,
-          created_at,
-          quantity,
-          status,
-          faculties ( name ),
-          eco_actions ( title, points, category )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (!error && userSubmissions) {
         setSubmissions(userSubmissions as unknown as UserSubmission[])
+      } else if (error) {
+        console.error('Error fetching submissions:', error)
       }
 
       setLoading(false)
@@ -71,18 +81,18 @@ export default function UserProfilePage() {
   // Calculate Personal Aggregates
   const approvedSubmissions = submissions.filter((s) => s.status === 'approved')
   const totalPoints = approvedSubmissions.reduce(
-    (sum, s) => sum + (s.eco_actions?.points || 0) * s.quantity,
+    (sum, s) => sum + (ECO_ACTIONS_MAP[s.eco_action_id]?.points || 0) * s.quantity,
     0
   )
   const totalActionsLogged = approvedSubmissions.reduce((sum, s) => sum + s.quantity, 0)
 
   // Sub-category Metrics
   const zeroWasteCount = approvedSubmissions
-    .filter((s) => s.eco_actions?.category === 'Zero Waste & Dining')
+    .filter((s) => ECO_ACTIONS_MAP[s.eco_action_id]?.category === 'Zero Waste & Dining')
     .reduce((sum, s) => sum + s.quantity, 0)
 
   const transitCount = approvedSubmissions
-    .filter((s) => s.eco_actions?.category === 'Mobility & Energy')
+    .filter((s) => ECO_ACTIONS_MAP[s.eco_action_id]?.category === 'Mobility & Energy')
     .reduce((sum, s) => sum + s.quantity, 0)
 
   // Estimated Impact Calculations
@@ -244,7 +254,8 @@ export default function UserProfilePage() {
             ) : (
               <div className="space-y-3">
                 {submissions.map((sub) => {
-                  const points = (sub.eco_actions?.points || 0) * sub.quantity
+                  const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
+                  const points = (actionDetails?.points || 0) * sub.quantity
 
                   return (
                     <div
@@ -254,7 +265,7 @@ export default function UserProfilePage() {
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-foreground">
-                            {sub.eco_actions?.title || 'Eco Action'}
+                            {actionDetails?.title || 'Eco Action'}
                           </span>
                           <span
                             className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
@@ -269,7 +280,7 @@ export default function UserProfilePage() {
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground">
-                          {sub.faculties?.name || 'Faculty'} • Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
+                          Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
                         </p>
                       </div>
 
