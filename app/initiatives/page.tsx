@@ -46,9 +46,36 @@ export default function InitiativesPage() {
         </Link>
       </div>
 
-      {/* Interactive Map Section */}
-      <div className="border border-emerald-900/10 rounded-2xl overflow-hidden bg-card shadow-sm p-4 h-[350px]">
-        <PilotMap />
+      {/* Interactive Map Section with Side Info Panel */}
+      <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card shadow-sm flex flex-col lg:flex-row">
+        {/* Map Area */}
+        <div className="relative w-full lg:w-3/5 h-[350px] lg:h-[450px]">
+          <PilotMap />
+        </div>
+
+        {/* Featured Initiative Details Panel */}
+        <div className="w-full lg:w-2/5 p-6 md:p-8 flex flex-col justify-between bg-gradient-to-br from-[#0f382c] to-emerald-950 text-white">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-1.5 text-emerald-300 font-semibold text-xs tracking-wider uppercase">
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              Featured Project Spotlight
+            </div>
+            <h2 className="text-xl font-bold">Engineering Quad Solar Array</h2>
+            <p className="text-emerald-100/80 text-xs leading-relaxed">
+              Rooftop solar photovoltaic array powering local lab equipment and reducing campus grid reliance.
+            </p>
+          </div>
+          
+          <div className="pt-6 border-t border-emerald-800/60 mt-4 flex justify-between items-center text-xs">
+            <div>
+              <span className="text-[10px] text-emerald-300 block uppercase tracking-wider">Measured Impact</span>
+              <span className="font-bold text-white text-sm">45 kWh generated today</span>
+            </div>
+            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-[10px] font-semibold border border-emerald-400/30">
+              Active
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Initiative Cards Grid */}
