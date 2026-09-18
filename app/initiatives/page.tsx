@@ -27,14 +27,14 @@ const localInitiatives = [
 
 export default function InitiativesPage() {
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
-      {/* Absolute Glow & Grid Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:24px_24px]">
+      {/* Absolute Glow Background */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
       <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full space-y-10 z-10">
         <div className="flex justify-between items-center">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md">
               📍 Local Geolocation Strategy
             </span>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c]">Vancouver Sustainability Initiatives</h1>
@@ -51,7 +51,7 @@ export default function InitiativesPage() {
         </div>
 
         {/* Interactive Map Section with Side Info Panel */}
-        <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm flex flex-col lg:flex-row">
+        <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card/90 backdrop-blur shadow-sm flex flex-col lg:flex-row">
           {/* Map Area */}
           <div className="relative w-full lg:w-3/5 h-[350px] lg:h-[450px]">
             <PilotMap />
@@ -85,9 +85,9 @@ export default function InitiativesPage() {
         {/* Initiative Cards Grid */}
         <div className="grid gap-6 md:grid-cols-3">
           {localInitiatives.map((item, idx) => (
-            <div key={idx} className="bg-card/80 backdrop-blur p-6 rounded-2xl border border-emerald-900/10 shadow-sm flex flex-col justify-between">
+            <div key={idx} className="bg-card/90 backdrop-blur p-6 rounded-2xl border border-emerald-900/10 shadow-sm flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100/80 text-emerald-800 px-2.5 py-1 rounded-full">
                   {item.category}
                 </span>
                 <h2 className="text-base font-bold text-foreground mt-3">{item.title}</h2>
@@ -102,7 +102,7 @@ export default function InitiativesPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
+      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
     </div>
