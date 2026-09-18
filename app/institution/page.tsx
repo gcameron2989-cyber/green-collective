@@ -10,6 +10,7 @@ interface Submission {
   status: string
   faculty_id: string
   eco_action_id: string
+  user_id: string
 }
 
 interface Faculty {
@@ -42,7 +43,7 @@ const ECO_ACTIONS_MAP: Record<string, { points: number; carbonKg: number }> = {
 export default function InstitutionPage() {
   const [loading, setLoading] = useState(true)
   const [totalCo2, setTotalCo2] = useState(0)
-  const [totalActionsCount, setTotalActionsCount] = useState(0)
+  const [calculatedEngagement, setCalculatedEngagement] = useState(0)
   const [rankings, setRankings] = useState<FacultyRanking[]>([])
   
   const supabase = createClient()
@@ -61,7 +62,6 @@ export default function InstitutionPage() {
 
       if (facultiesData && submissionsData) {
         let cumulativeCo2 = 0
-        let totalActions = 0
 
         // Map data per faculty
         const facultyMap: Record<string, { co2: number; users: Set<string> }> = {}
@@ -75,24 +75,29 @@ export default function InstitutionPage() {
           const subCo2 = actionMeta.carbonKg * sub.quantity
           
           cumulativeCo2 += subCo2
-          totalActions += sub.quantity
 
           if (facultyMap[sub.faculty_id]) {
             facultyMap[sub.faculty_id].co2 += subCo2
-            // We can track unique submissions/actions or mock active participants count
-            facultyMap[sub.faculty_id].users.add(sub.faculty_id + sub.id)
+            if (sub.user_id) {
+              facultyMap[sub.faculty_id].users.add(sub.user_id)
+            }
           }
         })
 
         setTotalCo2(cumulativeCo2)
-        setTotalActionsCount(totalActions)
+
+        // Calculate real engagement percentage based on unique active student users vs a 100-student pilot target
+        const uniqueParticipantsCount = new Set(submissionsData.map((s: Submission) => s.user_id)).size
+        const targetPilotStudents = 100
+        const engagementPercent = Math.min(Math.round((uniqueParticipantsCount / targetPilotStudents) * 100), 100)
+        setCalculatedEngagement(engagementPercent)
 
         // Build rankings array
         const computedRankings: FacultyRanking[] = facultiesData.map((f: Faculty) => ({
           id: f.id,
           name: f.name,
           co2: facultyMap[f.id]?.co2 || 0,
-          activeCount: Math.max(facultyMap[f.id]?.users.size || 0, facultyMap[f.id]?.co2 > 0 ? 1 : 0),
+          activeCount: facultyMap[f.id]?.users.size || 0,
         }))
 
         // Sort descending by CO2 / points saved
@@ -105,9 +110,6 @@ export default function InstitutionPage() {
 
     fetchInstitutionData()
   }, [])
-
-  // Engagement approximation based on live actions logged vs target baseline
-  const calculatedEngagement = Math.min(Math.round((totalActionsCount * 8) + 12), 99)
 
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
