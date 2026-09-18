@@ -13,7 +13,13 @@ export default function HomePage() {
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Green Collective
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-4 items-center text-xs font-semibold">
+          <Link
+            href="/profile"
+            className="text-emerald-800 hover:underline"
+          >
+            👤 My Profile
+          </Link>
           <Link
             href="/login"
             className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2"
