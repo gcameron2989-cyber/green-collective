@@ -68,6 +68,12 @@ export default function SubmitActionPage() {
     setMessage(null)
 
     try {
+      // 1. Get current authenticated user so we can attach user_id
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
       let photoUrl = null
 
       if (file) {
@@ -88,12 +94,14 @@ export default function SubmitActionPage() {
         photoUrl = urlData.publicUrl
       }
 
+      // 2. Insert submission with user_id attached
       const { error: insertError } = await supabase.from('submissions').insert({
-        faculty_id: selectedFaculty, // This now inserts the true UUID matching faculties.id
+        faculty_id: selectedFaculty,
         action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
         status: 'approved',
+        user_id: user ? user.id : null, // Fixes profile page filtering
       })
 
       if (insertError) throw insertError
