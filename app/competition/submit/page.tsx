@@ -115,7 +115,8 @@ export default function SubmitActionPage() {
         window.location.href = '/profile'
       }, 800)
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to submit action.' })
+      console.error('Full Submission Error Details:', err)
+      setMessage({ type: 'error', text: err?.message || JSON.stringify(err) || 'Failed to submit action.' })
     } finally {
       setLoading(false)
     }
