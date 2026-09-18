@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "Green Collective | Measurable Climate Impact & Eco-Action Platform",
@@ -14,7 +16,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
+        {/* Shared Global Header */}
+        <Navbar />
+
+        {/* Dynamic Page Views */}
+        <main className="flex-1 flex flex-col w-full">
+          {children}
+        </main>
+
+        {/* Shared Global Footer */}
+        <Footer />
+      </body>
     </html>
   );
 }
