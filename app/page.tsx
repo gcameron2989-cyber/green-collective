@@ -178,8 +178,12 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
-        © {new Date().getFullYear()} Green Collective. All rights reserved.
+      <footer className="py-6 px-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10 flex flex-col sm:flex-row items-center justify-between max-w-5xl mx-auto w-full">
+        <span>© {new Date().getFullYear()} Green Collective. All rights reserved.</span>
+        <div className="flex items-center gap-4 mt-2 sm:mt-0">
+          <Link href="/about" className="hover:text-[#0f382c] transition">About Us</Link>
+          <Link href="/contact" className="hover:text-[#0f382c] transition">Contact</Link>
+        </div>
       </footer>
     </div>
   )
