@@ -64,8 +64,8 @@ export default function InitiativesPage() {
 
         {/* Interactive Map Section with Side Info Panel */}
         <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card/90 backdrop-blur shadow-sm flex flex-col lg:flex-row">
-          {/* Map Area */}
-          <div className="relative w-full lg:w-3/5 h-[350px] lg:h-[450px]">
+          {/* Map Area - flush fit */}
+          <div className="relative w-full lg:w-3/5 h-[400px] lg:h-auto min-h-[400px] overflow-hidden">
             <PilotMap />
           </div>
 
