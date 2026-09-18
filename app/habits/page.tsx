@@ -62,7 +62,6 @@ const INITIAL_HABITS: Habit[] = [
     icon: "🧺",
     actionId: "cold-water-wash",
   },
-  // Add any other official competition actions here (e.g., LED lighting, reusable cups, etc.)
 ];
 
 export default function HabitAnalyticsPage() {
@@ -206,45 +205,27 @@ export default function HabitAnalyticsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden pb-24">
+    <div className="min-h-screen bg-white text-foreground flex flex-col justify-between relative overflow-hidden pb-24">
       {/* Background FX */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
-      {/* Top Header */}
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link
-          href="/"
-          className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2 hover:opacity-80 transition"
-        >
-          <span className="size-3 rounded-full bg-emerald-500 inline-block" />
-          Green Collective
-        </Link>
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          {user ? (
-            <>
-              <Link href="/profile" className="text-emerald-800 hover:underline">
-                👤 My Profile
-              </Link>
-              <Link href="/dashboard" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
-                Go to Dashboard
-              </Link>
-            </>
-          ) : (
-            <Link href="/login" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
-              Sign In
-            </Link>
-          )}
-        </div>
-      </header>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px'
+        }}
+      />
 
       {/* Main Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10">
         <div className="mb-8 text-left">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
             ⚡ Habit Analytics & Competition Log
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c] mb-2">
             Personal Impact & Momentum Analytics
           </h1>
           <p className="text-sm text-muted-foreground font-normal">
@@ -410,7 +391,7 @@ export default function HabitAnalyticsPage() {
         </div>
       </main>
 
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
+      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
     </div>
