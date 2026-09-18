@@ -14,9 +14,14 @@ export default function InstitutionPage() {
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Green Collective
         </Link>
-        <Link href="/dashboard" className="text-xs font-semibold px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition">
-          Go to Dashboard
-        </Link>
+        <div className="flex items-center gap-4 text-xs font-semibold">
+          <Link href="/profile" className="text-emerald-800 hover:underline">
+            👤 My Profile
+          </Link>
+          <Link href="/dashboard" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
+            Go to Dashboard
+          </Link>
+        </div>
       </header>
 
       {/* Main Content */}
