@@ -93,10 +93,10 @@ export default function SubmitActionPage() {
         photoUrl = urlData.publicUrl
       }
 
-      // 2. Insert submission using eco_action_id to align with the profile view relation join
+      // 2. Insert submission using action_id (matching your database schema cache)
       const { error: insertError } = await supabase.from('submissions').insert({
         faculty_id: selectedFaculty,
-        eco_action_id: selectedAction,
+        action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
         status: 'approved',
