@@ -13,13 +13,14 @@ interface Habit {
   completedToday: boolean;
   momentumScore: number;
   icon: string;
-  actionId: string;
+  actionId: string; // Must match the competition's official eco_action_ids
 }
 
+// Updated to match the official competition action registry
 const INITIAL_HABITS: Habit[] = [
   {
     id: "h1",
-    title: "Commute via Transit / Bike",
+    title: "Active / Sustainable Transit Commute",
     category: "Transport",
     co2SavedKg: 1.5,
     unit: "trip",
@@ -41,7 +42,7 @@ const INITIAL_HABITS: Habit[] = [
   },
   {
     id: "h3",
-    title: "Zero Waste / Compost Sorting",
+    title: "Zero Waste & Organic Composting",
     category: "Waste",
     co2SavedKg: 0.5,
     unit: "day",
@@ -52,7 +53,7 @@ const INITIAL_HABITS: Habit[] = [
   },
   {
     id: "h4",
-    title: "Cold Water Laundry Wash",
+    title: "Cold Water Laundry Cycle",
     category: "Energy",
     co2SavedKg: 0.6,
     unit: "load",
@@ -61,6 +62,7 @@ const INITIAL_HABITS: Habit[] = [
     icon: "🧺",
     actionId: "cold-water-wash",
   },
+  // Add any other official competition actions here (e.g., LED lighting, reusable cups, etc.)
 ];
 
 export default function HabitAnalyticsPage() {
@@ -72,7 +74,6 @@ export default function HabitAnalyticsPage() {
   const [deleting, setDeleting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   
-  // Opt-in state for competition (defaults to false so general users aren't lumped in)
   const [joinCompetition, setJoinCompetition] = useState(false);
 
   const supabase = createClient();
@@ -138,7 +139,6 @@ export default function HabitAnalyticsPage() {
     const today = new Date().toISOString().split('T')[0];
     const selectedHabits = habits.filter(h => h.completedToday);
 
-    // Clear existing today's submissions before inserting fresh batch
     await supabase
       .from('submissions')
       .delete()
@@ -162,7 +162,6 @@ export default function HabitAnalyticsPage() {
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
-  // Handler to clear / delete all submissions made today (great for clearing test actions)
   const handleClearTodaySubmissions = async () => {
     if (!user) return;
     
@@ -178,7 +177,6 @@ export default function HabitAnalyticsPage() {
       .gte('created_at', today);
 
     if (!error) {
-      // Uncheck all habits locally
       setHabits((prev) =>
         prev.map((habit) => ({
           ...habit,
@@ -240,24 +238,11 @@ export default function HabitAnalyticsPage() {
         </div>
       </header>
 
-      {/* Hybrid Mode Banner */}
-      {!loadingUser && !user && (
-        <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
-          <span>⚡ <strong>Interactive Preview Mode:</strong> Test live features before signing up.</span>
-          <Link
-            href="/login"
-            className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
-          >
-            Create Free Account &rarr;
-          </Link>
-        </div>
-      )}
-
       {/* Main Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10">
         <div className="mb-8 text-left">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
-            ⚡ Habit Analytics
+            ⚡ Habit Analytics & Competition Log
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">
             Personal Impact & Momentum Analytics
@@ -267,7 +252,6 @@ export default function HabitAnalyticsPage() {
           </p>
         </div>
 
-        {/* Success Alert */}
         {successMessage && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
             <span>{successMessage}</span>
@@ -316,7 +300,7 @@ export default function HabitAnalyticsPage() {
         {/* Filter Bar & Interactive Habit List */}
         <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-lg font-bold text-foreground">Daily Actions</h2>
+            <h2 className="text-lg font-bold text-foreground">Official Competition Actions</h2>
 
             <div className="flex flex-wrap gap-2">
               {["All", "Transport", "Waste", "Energy", "Food"].map((cat) => (
