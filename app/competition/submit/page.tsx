@@ -71,7 +71,6 @@ export default function SubmitActionPage() {
       // 1. Get current authenticated user so we can attach user_id
       const {
         data: { user },
-        error: userError,
       } = await supabase.auth.getUser()
 
       let photoUrl = null
@@ -94,14 +93,14 @@ export default function SubmitActionPage() {
         photoUrl = urlData.publicUrl
       }
 
-      // 2. Insert submission with user_id attached
+      // 2. Insert submission using eco_action_id to align with the profile view relation join
       const { error: insertError } = await supabase.from('submissions').insert({
         faculty_id: selectedFaculty,
-        action_id: selectedAction,
+        eco_action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
         status: 'approved',
-        user_id: user ? user.id : null, // Fixes profile page filtering
+        user_id: user ? user.id : null,
       })
 
       if (insertError) throw insertError
