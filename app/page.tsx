@@ -1,6 +1,37 @@
+'use client'
+
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [loadingAuth, setLoadingAuth] = useState<boolean>(true)
+  const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setIsAuthenticated(!!session)
+      setLoadingAuth(false)
+    }
+    checkUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session)
+      setLoadingAuth(false)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+  }
+
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
       {/* Background Radial Glow & Grid Overlay */}
@@ -8,30 +39,51 @@ export default function HomePage() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
       {/* Navigation Header */}
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
+      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10 sticky top-0">
         <div className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Green Collective
         </div>
         <div className="flex gap-4 items-center text-xs font-semibold">
-          <Link
-            href="/profile"
-            className="text-emerald-800 hover:underline"
-          >
-            👤 My Profile
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2"
-          >
-            Log In
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10"
-          >
-            Get Started
-          </Link>
+          {!loadingAuth && (
+            isAuthenticated ? (
+              <>
+                <Link
+                  href="/profile"
+                  className="text-emerald-800 hover:underline flex items-center gap-1 font-bold"
+                >
+                  👤 My Profile
+                </Link>
+                <Link
+                  href="/competition/submit"
+                  className="text-emerald-800 hover:underline"
+                >
+                  + Log Action
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="text-red-600 hover:underline font-medium px-2 py-1"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10"
+                >
+                  Get Started
+                </Link>
+              </>
+            )
+          )}
         </div>
       </header>
 
