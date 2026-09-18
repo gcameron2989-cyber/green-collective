@@ -5,9 +5,21 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:24px_24px]">
+    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
+      {/* Exact Grid Square Pattern Background */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-60"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px'
+        }}
+      />
+
       {/* Absolute Glow Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-5xl mx-auto z-10 w-full space-y-12">
