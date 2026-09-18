@@ -49,12 +49,6 @@ export default function HomePage() {
             isAuthenticated ? (
               <>
                 <Link
-                  href="/dashboard"
-                  className="text-emerald-800 hover:text-[#0f382c] transition font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
                   href="/profile"
                   className="text-emerald-800 hover:underline flex items-center gap-1 font-bold"
                 >
@@ -195,13 +189,12 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Rich Footer with Full Navigation Backlinks */}
+      {/* Rich Footer with Navigation Backlinks */}
       <footer className="py-8 px-6 text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur-md z-10">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span>© {new Date().getFullYear()} Green Collective. All rights reserved.</span>
           <div className="flex items-center gap-6 font-medium">
             <Link href="/" className="hover:text-[#0f382c] transition">Home</Link>
-            <Link href="/dashboard" className="hover:text-[#0f382c] transition">Dashboard</Link>
             <Link href="/about" className="hover:text-[#0f382c] transition">About Us</Link>
             <Link href="/contact" className="hover:text-[#0f382c] transition">Contact</Link>
           </div>
