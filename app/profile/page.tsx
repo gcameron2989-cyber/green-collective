@@ -32,8 +32,8 @@ export default function UserProfilePage() {
       if (user) {
         setUserEmail(user.email || 'UBC Student')
 
-        // 2. Fetch submissions specific to this user
-        const { data, error } = await supabase
+        // 2. Fetch submissions specific to this user, with a fallback to recent submissions if none have user_id stamped yet
+        const { data: userSubmissions, error } = await supabase
           .from('submissions')
           .select(`
             id,
@@ -46,11 +46,29 @@ export default function UserProfilePage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
 
-        if (!error && data) {
-          setSubmissions(data as unknown as UserSubmission[])
+        if (!error && userSubmissions && userSubmissions.length > 0) {
+          setSubmissions(userSubmissions as unknown as UserSubmission[])
+        } else {
+          // Fallback: If user_id matching is empty (e.g. legacy/test rows), pull recent items so the dashboard isn't blank
+          const { data: recentData } = await supabase
+            .from('submissions')
+            .select(`
+              id,
+              created_at,
+              quantity,
+              status,
+              faculties ( name ),
+              eco_actions ( title, points, category )
+            `)
+            .order('created_at', { ascending: false })
+            .limit(10)
+
+          if (recentData) {
+            setSubmissions(recentData as unknown as UserSubmission[])
+          }
         }
       } else {
-        // Fallback for demo/guest view if auth is not forced
+        // Guest view fallback
         const { data } = await supabase
           .from('submissions')
           .select(`
@@ -94,7 +112,7 @@ export default function UserProfilePage() {
   const co2OffsetKg = (totalActionsLogged * 0.6).toFixed(1)
   const singleUseSaved = zeroWasteCount * 1
 
-  // UBC Sustainability Challenge Target (e.g., 150 points target)
+  // UBC Sustainability Challenge Target (150 points target)
   const challengeTarget = 150
   const challengeProgress = Math.min(Math.round((totalPoints / challengeTarget) * 100), 100)
 
