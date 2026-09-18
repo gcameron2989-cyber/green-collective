@@ -69,6 +69,7 @@ export default function HabitAnalyticsPage() {
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   
   // Opt-in state for competition (defaults to false so general users aren't lumped in)
@@ -96,7 +97,6 @@ export default function HabitAnalyticsPage() {
               return matched ? { ...habit, completedToday: true } : habit;
             })
           );
-          // If previous submissions for today included a faculty_id, toggle competition opt-in on
           if (subs.some((s: any) => s.faculty_id)) {
             setJoinCompetition(true);
           }
@@ -138,7 +138,7 @@ export default function HabitAnalyticsPage() {
     const today = new Date().toISOString().split('T')[0];
     const selectedHabits = habits.filter(h => h.completedToday);
 
-    // Clear existing today's submissions
+    // Clear existing today's submissions before inserting fresh batch
     await supabase
       .from('submissions')
       .delete()
@@ -151,7 +151,6 @@ export default function HabitAnalyticsPage() {
         eco_action_id: h.actionId,
         quantity: 1,
         status: 'approved',
-        // Only assign faculty_id if the user explicitly opted into the competition
         faculty_id: joinCompetition ? (user.user_metadata?.faculty_id || "general-comp") : null,
       }));
 
@@ -160,6 +159,38 @@ export default function HabitAnalyticsPage() {
 
     setSubmitting(false);
     setSuccessMessage("✨ Eco-actions successfully submitted!");
+    setTimeout(() => setSuccessMessage(""), 4000);
+  };
+
+  // Handler to clear / delete all submissions made today (great for clearing test actions)
+  const handleClearTodaySubmissions = async () => {
+    if (!user) return;
+    
+    setDeleting(true);
+    setSuccessMessage("");
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { error } = await supabase
+      .from('submissions')
+      .delete()
+      .eq('user_id', user.id)
+      .gte('created_at', today);
+
+    if (!error) {
+      // Uncheck all habits locally
+      setHabits((prev) =>
+        prev.map((habit) => ({
+          ...habit,
+          completedToday: false,
+        }))
+      );
+      setSuccessMessage("🗑️ Today's test actions cleared successfully!");
+    } else {
+      setSuccessMessage("⚠️ Failed to clear actions. Please try again.");
+    }
+
+    setDeleting(false);
     setTimeout(() => setSuccessMessage(""), 4000);
   };
 
@@ -368,18 +399,29 @@ export default function HabitAnalyticsPage() {
             </label>
           </div>
 
-          {/* Submit Actions Button Bar */}
+          {/* Submit & Clear Action Buttons Bar */}
           <div className="pt-4 border-t border-emerald-900/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <span className="text-xs text-muted-foreground">
               {completedCount} action{completedCount === 1 ? '' : 's'} selected for submission today.
             </span>
-            <button
-              onClick={handleBatchSubmit}
-              disabled={submitting}
-              className="w-full sm:w-auto px-6 py-3 bg-[#0f382c] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting ? 'Submitting Actions...' : '🚀 Submit Selected Eco-Actions'}
-            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {user && (
+                <button
+                  onClick={handleClearTodaySubmissions}
+                  disabled={deleting}
+                  className="px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? 'Clearing...' : '🗑️ Clear Today’s Logs'}
+                </button>
+              )}
+              <button
+                onClick={handleBatchSubmit}
+                disabled={submitting}
+                className="flex-1 sm:flex-none px-6 py-3 bg-[#0f382c] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {submitting ? 'Submitting Actions...' : '🚀 Submit Selected Eco-Actions'}
+              </button>
+            </div>
           </div>
         </div>
       </main>
