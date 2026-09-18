@@ -68,6 +68,8 @@ export default function HabitAnalyticsPage() {
   const [filter, setFilter] = useState<string>("All");
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const supabase = createClient();
 
@@ -77,7 +79,6 @@ export default function HabitAnalyticsPage() {
       setUser(user);
 
       if (user) {
-        // Fetch user's submissions for today to sync completed state
         const today = new Date().toISOString().split('T')[0];
         const { data: subs } = await supabase
           .from('submissions')
@@ -100,46 +101,60 @@ export default function HabitAnalyticsPage() {
     checkUserAndSubmissions();
   }, [supabase]);
 
-  const toggleHabit = async (habit: Habit) => {
-    const newlyCompleted = !habit.completedToday;
-
-    // Optimistic UI update
+  const toggleHabitLocally = (id: string) => {
     setHabits((prev) =>
-      prev.map((h) => {
-        if (h.id === habit.id) {
+      prev.map((habit) => {
+        if (habit.id === id) {
+          const newlyCompleted = !habit.completedToday;
           return {
-            ...h,
+            ...habit,
             completedToday: newlyCompleted,
             momentumScore: newlyCompleted
-              ? Math.min(100, h.momentumScore + 5)
-              : Math.max(0, h.momentumScore - 5),
+              ? Math.min(100, habit.momentumScore + 5)
+              : Math.max(0, habit.momentumScore - 5),
           };
         }
-        return h;
+        return habit;
       })
     );
+  };
 
-    // If logged in, sync with database submissions table
-    if (user) {
-      if (newlyCompleted) {
-        await supabase.from('submissions').insert({
-          user_id: user.id,
-          eco_action_id: habit.actionId,
-          quantity: 1,
-          status: 'approved',
-          faculty_id: user.user_metadata?.faculty_id || null,
-        });
-      } else {
-        // Remove today's submission for this action if toggled off
-        const today = new Date().toISOString().split('T')[0];
-        await supabase
-          .from('submissions')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('eco_action_id', habit.actionId)
-          .gte('created_at', today);
-      }
+  const handleBatchSubmit = async () => {
+    if (!user) {
+      window.location.href = "/login";
+      return;
     }
+
+    setSubmitting(true);
+    setSuccessMessage("");
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Get currently selected habits
+    const selectedHabits = habits.filter(h => h.completedToday);
+
+    // Clear existing today's submissions and insert fresh selected batch
+    await supabase
+      .from('submissions')
+      .delete()
+      .eq('user_id', user.id)
+      .gte('created_at', today);
+
+    if (selectedHabits.length > 0) {
+      const inserts = selectedHabits.map(h => ({
+        user_id: user.id,
+        eco_action_id: h.actionId,
+        quantity: 1,
+        status: 'approved',
+        faculty_id: user.user_metadata?.faculty_id || null,
+      }));
+
+      await supabase.from('submissions').insert(inserts);
+    }
+
+    setSubmitting(false);
+    setSuccessMessage("✨ Eco-actions successfully submitted and logged to your profile!");
+    setTimeout(() => setSuccessMessage(""), 4000);
   };
 
   const totalCO2SavedToday = habits
@@ -156,7 +171,7 @@ export default function HabitAnalyticsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden pb-24">
       {/* Background FX */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
@@ -214,6 +229,13 @@ export default function HabitAnalyticsPage() {
             Log your daily eco-actions, measure cumulative carbon reduction, and build long-term sustainability momentum.
           </p>
         </div>
+
+        {/* Success Alert */}
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {/* Analytics Summary Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -276,11 +298,11 @@ export default function HabitAnalyticsPage() {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 mb-8">
             {filteredHabits.map((habit) => (
               <div
                 key={habit.id}
-                onClick={() => toggleHabit(habit)}
+                onClick={() => toggleHabitLocally(habit.id)}
                 className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                   habit.completedToday
                     ? "bg-emerald-100/40 border-emerald-300 shadow-inner"
@@ -323,6 +345,20 @@ export default function HabitAnalyticsPage() {
                 </button>
               </div>
             ))}
+          </div>
+
+          {/* Submit Actions Button Bar */}
+          <div className="pt-4 border-t border-emerald-900/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-xs text-muted-foreground">
+              {completedCount} action{completedCount === 1 ? '' : 's'} selected for submission today.
+            </span>
+            <button
+              onClick={handleBatchSubmit}
+              disabled={submitting}
+              className="w-full sm:w-auto px-6 py-3 bg-[#0f382c] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {submitting ? 'Submitting Actions...' : '🚀 Submit Selected Eco-Actions'}
+            </button>
           </div>
         </div>
       </main>
