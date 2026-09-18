@@ -129,9 +129,14 @@ export default function SubmitActionPage() {
           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
           Green Collective
         </Link>
-        <Link href="/competition" className="text-xs font-semibold text-emerald-800 hover:underline">
-          ← Back to Leaderboard
-        </Link>
+        <div className="flex items-center gap-4 text-xs font-semibold">
+          <Link href="/profile" className="text-emerald-800 hover:underline">
+            👤 My Profile
+          </Link>
+          <Link href="/competition" className="text-emerald-800 hover:underline">
+            ← Back to Leaderboard
+          </Link>
+        </div>
       </header>
 
       <main className="flex-1 max-w-xl mx-auto w-full px-6 py-10 z-10 space-y-6">
