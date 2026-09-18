@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function createInitiative(formData: FormData) {
@@ -33,4 +33,33 @@ export async function createInitiative(formData: FormData) {
   }
 
   revalidatePath('/')
+}
+
+export async function upvoteInitiative(initiativeId: string) {
+  const supabase = await createClient()
+  
+  // Fetch current upvotes
+  const { data: initiative, error: fetchError } = await supabase
+    .from('initiatives')
+    .select('upvotes')
+    .eq('id', initiativeId)
+    .single()
+
+  if (fetchError) {
+    throw new Error(fetchError.message)
+  }
+
+  const currentVotes = initiative?.upvotes || 0
+
+  // Increment upvote count
+  const { error } = await supabase
+    .from('initiatives')
+    .update({ upvotes: currentVotes + 1 })
+    .eq('id', initiativeId)
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/initiatives')
 }
