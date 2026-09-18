@@ -14,7 +14,7 @@ interface FacultyLeaderboard {
 export default function CompetitionLeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<FacultyLeaderboard[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  
+
   // Memoize client to prevent re-creation during re-renders
   const supabase = useMemo(() => createClient(), [])
 
@@ -41,13 +41,16 @@ export default function CompetitionLeaderboardPage() {
       .channel('realtime-competition')
       .on(
         'postgres_changes',
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'submissions' 
+        {
+          event: '*',
+          schema: 'public',
+          table: 'submissions'
         },
         () => {
-          fetchLeaderboard()
+          // Delay allows database view aggregation to complete before fetching
+          setTimeout(() => {
+            fetchLeaderboard()
+          }, 150)
         }
       )
       .subscribe((status) => {
