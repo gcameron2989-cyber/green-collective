@@ -46,6 +46,9 @@ export default function InstitutionPage() {
   const [calculatedEngagement, setCalculatedEngagement] = useState(0)
   const [rankings, setRankings] = useState<FacultyRanking[]>([])
   
+  // Faculty-specific filtering state
+  const [selectedFaculty, setSelectedFaculty] = useState<string>('all')
+  
   const supabase = createClient()
 
   useEffect(() => {
@@ -111,9 +114,30 @@ export default function InstitutionPage() {
     fetchInstitutionData()
   }, [])
 
+  // Filter rankings array based on selected department dropdown value
+  const filteredRankings = selectedFaculty === 'all' 
+    ? rankings 
+    : rankings.filter(r => r.id === selectedFaculty)
+
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+
+      {/* Header */}
+      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
+        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
+          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
+          Green Collective
+        </Link>
+        <div className="flex items-center gap-4 text-xs font-semibold">
+          <Link href="/profile" className="text-emerald-800 hover:underline">
+            👤 My Profile
+          </Link>
+          <Link href="/dashboard" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
+            Go to Dashboard
+          </Link>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 z-10 space-y-8">
@@ -179,26 +203,43 @@ export default function InstitutionPage() {
           </div>
         </div>
 
-        {/* Institutional Leaderboard List */}
-        <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
+        {/* Institutional Leaderboard List with Faculty Filter */}
+        <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-lg font-bold text-foreground">Institutional Impact Ranking</h2>
-            <Link href="/competition" className="text-xs font-semibold text-emerald-700 hover:underline">
-              See Full Competition Standings →
-            </Link>
+            
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* Faculty Filter Dropdown */}
+              <select
+                value={selectedFaculty}
+                onChange={(e) => setSelectedFaculty(e.target.value)}
+                className="text-xs bg-background border border-emerald-900/20 rounded-lg px-3 py-1.5 font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="all">All Faculties & Departments</option>
+                {rankings.map((faculty) => (
+                  <option key={faculty.id} value={faculty.id}>
+                    {faculty.name}
+                  </option>
+                ))}
+              </select>
+
+              <Link href="/competition" className="text-xs font-semibold text-emerald-700 hover:underline whitespace-nowrap">
+                Full Standings →
+              </Link>
+            </div>
           </div>
           
           {loading ? (
             <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
               Aggregating live institutional data...
             </div>
-          ) : rankings.length === 0 ? (
+          ) : filteredRankings.length === 0 ? (
             <div className="py-8 text-center text-xs text-muted-foreground">
-              No faculty data available yet.
+              No faculty data matches your filter.
             </div>
           ) : (
             <div className="space-y-3">
-              {rankings.map((inst, index) => (
+              {filteredRankings.map((inst, index) => (
                 <div key={inst.id || index} className="p-4 rounded-xl border border-emerald-900/10 bg-background/60 flex justify-between items-center text-xs">
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-[#0f382c] w-6">#{index + 1}</span>
