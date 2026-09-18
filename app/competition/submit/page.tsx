@@ -104,7 +104,13 @@ export default function SubmitActionPage() {
       if (insertError) throw insertError
 
       setMessage({ type: 'success', text: 'Eco-action logged successfully! Redirecting...' })
-      setTimeout(() => router.push('/competition'), 1500)
+      
+      // Force Next.js client router cache refresh before navigating back
+      router.refresh()
+      
+      setTimeout(() => {
+        router.push('/competition')
+      }, 1000)
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Failed to submit action.' })
     } finally {
