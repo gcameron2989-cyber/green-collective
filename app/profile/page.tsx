@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface UserSubmission {
   id: string
@@ -19,6 +20,7 @@ export default function UserProfilePage() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -29,67 +31,42 @@ export default function UserProfilePage() {
         data: { user },
       } = await supabase.auth.getUser()
 
-      if (user) {
-        setUserEmail(user.email || 'UBC Student')
+      if (!user) {
+        // If not logged in, redirect straight to login/home instead of showing empty data
+        router.push('/')
+        return
+      }
 
-        // 2. Fetch submissions specific to this user, with a fallback to recent submissions if none have user_id stamped yet
-        const { data: userSubmissions, error } = await supabase
-          .from('submissions')
-          .select(`
-            id,
-            created_at,
-            quantity,
-            status,
-            faculties ( name ),
-            eco_actions ( title, points, category )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
+      setUserEmail(user.email || 'UBC Participant')
 
-        if (!error && userSubmissions && userSubmissions.length > 0) {
-          setSubmissions(userSubmissions as unknown as UserSubmission[])
-        } else {
-          // Fallback: If user_id matching is empty (e.g. legacy/test rows), pull recent items so the dashboard isn't blank
-          const { data: recentData } = await supabase
-            .from('submissions')
-            .select(`
-              id,
-              created_at,
-              quantity,
-              status,
-              faculties ( name ),
-              eco_actions ( title, points, category )
-            `)
-            .order('created_at', { ascending: false })
-            .limit(10)
+      // 2. Fetch submissions strictly tied to this user's UUID
+      const { data: userSubmissions, error } = await supabase
+        .from('submissions')
+        .select(`
+          id,
+          created_at,
+          quantity,
+          status,
+          faculties ( name ),
+          eco_actions ( title, points, category )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
 
-          if (recentData) {
-            setSubmissions(recentData as unknown as UserSubmission[])
-          }
-        }
-      } else {
-        // Guest view fallback
-        const { data } = await supabase
-          .from('submissions')
-          .select(`
-            id,
-            created_at,
-            quantity,
-            status,
-            faculties ( name ),
-            eco_actions ( title, points, category )
-          `)
-          .order('created_at', { ascending: false })
-          .limit(10)
-
-        if (data) setSubmissions(data as unknown as UserSubmission[])
+      if (!error && userSubmissions) {
+        setSubmissions(userSubmissions as unknown as UserSubmission[])
       }
 
       setLoading(false)
     }
 
     fetchUserProfile()
-  }, [])
+  }, [router])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
 
   // Calculate Personal Aggregates
   const approvedSubmissions = submissions.filter((s) => s.status === 'approved')
@@ -141,6 +118,9 @@ export default function UserProfilePage() {
           <Link href="/competition" className="text-emerald-800 hover:underline">
             Leaderboard →
           </Link>
+          <button onClick={handleSignOut} className="text-red-600 hover:underline">
+            Sign Out
+          </button>
         </div>
       </header>
 
