@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -14,7 +14,9 @@ interface FacultyLeaderboard {
 export default function CompetitionLeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<FacultyLeaderboard[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  const supabase = createClient()
+  
+  // Memoize client to prevent re-creation during re-renders
+  const supabase = useMemo(() => createClient(), [])
 
   const fetchLeaderboard = async () => {
     const { data, error } = await supabase
@@ -31,25 +33,37 @@ export default function CompetitionLeaderboardPage() {
   }
 
   useEffect(() => {
+    // Initial fetch on mount
     fetchLeaderboard()
 
+    // Subscribe to changes on the underlying 'submissions' table
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('realtime-competition')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'submissions' },
-        () => fetchLeaderboard()
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'submissions' 
+        },
+        () => {
+          fetchLeaderboard()
+        }
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Realtime listener connected to public.submissions')
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [supabase])
 
-  const totalCampusActions = leaderboard.reduce((acc, curr) => acc + curr.total_actions, 0)
-  const totalCampusPoints = leaderboard.reduce((acc, curr) => acc + curr.total_points, 0)
-  const maxPoints = leaderboard.length > 0 ? Math.max(...leaderboard.map(f => f.total_points), 1) : 1
+  const totalCampusActions = leaderboard.reduce((acc, curr) => acc + Number(curr.total_actions), 0)
+  const totalCampusPoints = leaderboard.reduce((acc, curr) => acc + Number(curr.total_points), 0)
+  const maxPoints = leaderboard.length > 0 ? Math.max(...leaderboard.map(f => Number(f.total_points)), 1) : 1
 
   // Calculated Impact Metrics
   const estimatedCo2SavedKg = Math.round(totalCampusPoints * 0.45)
