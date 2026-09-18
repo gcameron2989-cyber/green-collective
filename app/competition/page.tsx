@@ -36,6 +36,12 @@ export default function CompetitionLeaderboardPage() {
     // Initial fetch on mount
     fetchLeaderboard()
 
+    // Re-fetch whenever the browser window or tab regains focus
+    const handleFocus = () => {
+      fetchLeaderboard()
+    }
+    window.addEventListener('focus', handleFocus)
+
     // Subscribe to changes on the underlying 'submissions' table
     const channel = supabase
       .channel('realtime-competition')
@@ -50,7 +56,7 @@ export default function CompetitionLeaderboardPage() {
           // Delay allows database view aggregation to complete before fetching
           setTimeout(() => {
             fetchLeaderboard()
-          }, 150)
+          }, 300)
         }
       )
       .subscribe((status) => {
@@ -60,6 +66,7 @@ export default function CompetitionLeaderboardPage() {
       })
 
     return () => {
+      window.removeEventListener('focus', handleFocus)
       supabase.removeChannel(channel)
     }
   }, [supabase])
