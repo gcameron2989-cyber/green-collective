@@ -18,12 +18,13 @@ export default function AdminReviewPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
 
   const supabase = createClient()
 
   const fetchSubmissions = async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    let query = supabase
       .from('submissions')
       .select(`
         id,
@@ -36,6 +37,12 @@ export default function AdminReviewPage() {
       `)
       .order('created_at', { ascending: false })
 
+    if (filter !== 'all') {
+      query = query.eq('status', filter)
+    }
+
+    const { data, error } = await query
+
     if (error) {
       console.error('Error loading submissions:', error.message)
     } else if (data) {
@@ -46,7 +53,7 @@ export default function AdminReviewPage() {
 
   useEffect(() => {
     fetchSubmissions()
-  }, [])
+  }, [filter])
 
   const updateStatus = async (id: string, newStatus: 'approved' | 'rejected') => {
     setActionLoading(id)
@@ -58,19 +65,21 @@ export default function AdminReviewPage() {
     if (error) {
       alert(`Failed to update status: ${error.message}`)
     } else {
-      setSubmissions((prev) =>
-        prev.map((sub) => (sub.id === id ? { ...sub, status: newStatus } : sub))
-      )
+      if (filter !== 'all') {
+        setSubmissions((prev) => prev.filter((sub) => sub.id !== id))
+      } else {
+        setSubmissions((prev) =>
+          prev.map((sub) => (sub.id === id ? { ...sub, status: newStatus } : sub))
+        )
+      }
     }
     setActionLoading(null)
   }
 
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Background Radial Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      {/* Header */}
       <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
         <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
           <span className="size-3 rounded-full bg-emerald-500 inline-block" />
@@ -81,21 +90,37 @@ export default function AdminReviewPage() {
         </Link>
       </header>
 
-      {/* Main Admin Section */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10 space-y-6">
-        <div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
-            🛡️ Admin Portal
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            Submission Moderation Queue
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Review proof photos and adjust approval statuses for campus submissions.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
+              🛡️ Admin Portal
+            </span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+              Submission Moderation Queue
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Review proof photos and adjust approval statuses for campus submissions.
+            </p>
+          </div>
+
+          <div className="flex gap-2 shrink-0">
+            {(['pending', 'approved', 'rejected', 'all'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition ${
+                  filter === tab
+                    ? 'bg-[#0f382c] text-white shadow-sm'
+                    : 'bg-emerald-100/50 text-[#0f382c] hover:bg-emerald-100'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Submissions List */}
         <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-4">
           {loading ? (
             <div className="text-center py-12 text-xs text-muted-foreground animate-pulse">
@@ -103,7 +128,7 @@ export default function AdminReviewPage() {
             </div>
           ) : submissions.length === 0 ? (
             <div className="text-center py-12 text-xs text-muted-foreground">
-              No submissions recorded yet.
+              No {filter !== 'all' ? filter : ''} submissions found.
             </div>
           ) : (
             <div className="space-y-4">
@@ -116,7 +141,6 @@ export default function AdminReviewPage() {
                     className="p-4 rounded-xl border border-emerald-900/10 bg-background/60 flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="flex items-start gap-4">
-                      {/* Proof Image Thumbnail */}
                       {sub.proof_image_url ? (
                         <a href={sub.proof_image_url} target="_blank" rel="noreferrer" className="shrink-0">
                           <img
@@ -152,12 +176,11 @@ export default function AdminReviewPage() {
                           Faculty: <strong className="text-foreground">{sub.faculties?.name || 'Unassigned'}</strong> • Quantity: {sub.quantity}
                         </p>
                         <p className="text-[11px] text-emerald-800 font-semibold">
-                          +{pointsEarned} total points logged
+                          +{pointsEarned} total points logged • {new Date(sub.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex items-center gap-2 border-t md:border-t-0 pt-3 md:pt-0 border-emerald-900/10">
                       <button
                         onClick={() => updateStatus(sub.id, 'approved')}
