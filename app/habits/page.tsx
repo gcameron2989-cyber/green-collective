@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 interface Habit {
   id: string;
@@ -12,6 +13,7 @@ interface Habit {
   completedToday: boolean;
   momentumScore: number;
   icon: string;
+  actionId: string;
 }
 
 const INITIAL_HABITS: Habit[] = [
@@ -19,31 +21,34 @@ const INITIAL_HABITS: Habit[] = [
     id: "h1",
     title: "Commute via Transit / Bike",
     category: "Transport",
-    co2SavedKg: 2.4,
+    co2SavedKg: 1.5,
     unit: "trip",
     completedToday: false,
     momentumScore: 68,
     icon: "🚲",
+    actionId: "sustainable-commute",
   },
   {
     id: "h2",
     title: "Plant-Based Meal Choice",
     category: "Food",
-    co2SavedKg: 1.6,
+    co2SavedKg: 1.2,
     unit: "meal",
     completedToday: false,
     momentumScore: 84,
     icon: "🥗",
+    actionId: "plant-based-meal",
   },
   {
     id: "h3",
     title: "Zero Waste / Compost Sorting",
     category: "Waste",
-    co2SavedKg: 0.8,
+    co2SavedKg: 0.5,
     unit: "day",
-    completedToday: true,
+    completedToday: false,
     momentumScore: 92,
     icon: "♻️",
+    actionId: "waste-sorting",
   },
   {
     id: "h4",
@@ -54,29 +59,87 @@ const INITIAL_HABITS: Habit[] = [
     completedToday: false,
     momentumScore: 45,
     icon: "🧺",
+    actionId: "cold-water-wash",
   },
 ];
 
 export default function HabitAnalyticsPage() {
   const [habits, setHabits] = useState<Habit[]>(INITIAL_HABITS);
   const [filter, setFilter] = useState<string>("All");
+  const [user, setUser] = useState<any>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  const toggleHabit = (id: string) => {
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkUserAndSubmissions = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        // Fetch user's submissions for today to sync completed state
+        const today = new Date().toISOString().split('T')[0];
+        const { data: subs } = await supabase
+          .from('submissions')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', today);
+
+        if (subs && subs.length > 0) {
+          setHabits((prev) =>
+            prev.map((habit) => {
+              const matched = subs.some((s: any) => s.eco_action_id === habit.actionId);
+              return matched ? { ...habit, completedToday: true } : habit;
+            })
+          );
+        }
+      }
+      setLoadingUser(false);
+    };
+
+    checkUserAndSubmissions();
+  }, [supabase]);
+
+  const toggleHabit = async (habit: Habit) => {
+    const newlyCompleted = !habit.completedToday;
+
+    // Optimistic UI update
     setHabits((prev) =>
-      prev.map((habit) => {
-        if (habit.id === id) {
-          const newlyCompleted = !habit.completedToday;
+      prev.map((h) => {
+        if (h.id === habit.id) {
           return {
-            ...habit,
+            ...h,
             completedToday: newlyCompleted,
             momentumScore: newlyCompleted
-              ? Math.min(100, habit.momentumScore + 5)
-              : Math.max(0, habit.momentumScore - 5),
+              ? Math.min(100, h.momentumScore + 5)
+              : Math.max(0, h.momentumScore - 5),
           };
         }
-        return habit;
+        return h;
       })
     );
+
+    // If logged in, sync with database submissions table
+    if (user) {
+      if (newlyCompleted) {
+        await supabase.from('submissions').insert({
+          user_id: user.id,
+          eco_action_id: habit.actionId,
+          quantity: 1,
+          status: 'approved',
+          faculty_id: user.user_metadata?.faculty_id || null,
+        });
+      } else {
+        // Remove today's submission for this action if toggled off
+        const today = new Date().toISOString().split('T')[0];
+        await supabase
+          .from('submissions')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('eco_action_id', habit.actionId)
+          .gte('created_at', today);
+      }
+    }
   };
 
   const totalCO2SavedToday = habits
@@ -107,25 +170,43 @@ export default function HabitAnalyticsPage() {
           <span className="size-3 rounded-full bg-emerald-500 inline-block" />
           Green Collective
         </Link>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full border border-emerald-200">
-          ⚡ Habit Analytics
-        </span>
+        <div className="flex items-center gap-4 text-xs font-semibold">
+          {user ? (
+            <>
+              <Link href="/profile" className="text-emerald-800 hover:underline">
+                👤 My Profile
+              </Link>
+              <Link href="/dashboard" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
+                Go to Dashboard
+              </Link>
+            </>
+          ) : (
+            <Link href="/login" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
+              Sign In
+            </Link>
+          )}
+        </div>
       </header>
 
-      {/* Hybrid Mode Banner */}
-      <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
-        <span>⚡ <strong>Interactive Preview Mode:</strong> You are testing live features. Create an account to permanently save your progress and impact metrics.</span>
-        <Link
-          href="/login"
-          className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
-        >
-          Create Free Account &rarr;
-        </Link>
-      </div>
+      {/* Hybrid Mode Banner (Only shown if guest) */}
+      {!loadingUser && !user && (
+        <div className="bg-[#0f382c] text-emerald-100 py-2.5 px-6 text-center text-xs font-medium border-b border-emerald-900/20 z-10 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <span>⚡ <strong>Interactive Preview Mode:</strong> You are testing live features. Create an account to permanently save your progress and impact metrics.</span>
+          <Link
+            href="/login"
+            className="underline font-bold text-white hover:text-emerald-300 transition ml-1"
+          >
+            Create Free Account &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10">
         <div className="mb-8 text-left">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
+            ⚡ Habit Analytics
+          </span>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">
             Personal Impact & Momentum Analytics
           </h1>
@@ -199,7 +280,7 @@ export default function HabitAnalyticsPage() {
             {filteredHabits.map((habit) => (
               <div
                 key={habit.id}
-                onClick={() => toggleHabit(habit.id)}
+                onClick={() => toggleHabit(habit)}
                 className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                   habit.completedToday
                     ? "bg-emerald-100/40 border-emerald-300 shadow-inner"
