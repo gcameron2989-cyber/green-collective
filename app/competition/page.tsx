@@ -83,19 +83,6 @@ export default function CompetitionLeaderboardPage() {
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          Green Collective
-        </Link>
-        <Link
-          href="/competition/submit"
-          className="text-xs font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10"
-        >
-          + Log Eco-Action
-        </Link>
-      </header>
-
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         <div>
           <Link href="/institution" className="text-xs font-semibold text-emerald-800 hover:underline mb-2 inline-block">
