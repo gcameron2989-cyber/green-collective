@@ -51,6 +51,8 @@ export default function SubmitActionPage() {
 
       if (!error && data) {
         setFaculties(data)
+      } else {
+        console.error('Error fetching faculties:', error)
       }
     }
     fetchFaculties()
@@ -97,7 +99,7 @@ export default function SubmitActionPage() {
       }
 
       const { error: insertError } = await supabase.from('submissions').insert({
-        faculty_id: selectedFaculty,
+        faculty_id: selectedFaculty, // This is now the exact UUID from the database row
         eco_action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
