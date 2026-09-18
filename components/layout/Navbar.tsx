@@ -44,6 +44,7 @@ export default function Navbar() {
       
       <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
         <Link href="/" className={`transition ${isActive('/') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Home</Link>
+        <Link href="/initiatives" className={`transition ${isActive('/initiatives') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Initiatives</Link>
         <Link href="/about" className={`transition ${isActive('/about') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>About</Link>
         <Link href="/contact" className={`transition ${isActive('/contact') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Contact</Link>
       </nav>
