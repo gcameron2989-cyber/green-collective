@@ -115,22 +115,6 @@ export default function InstitutionPage() {
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
 
-      {/* Header */}
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          Green Collective
-        </Link>
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          <Link href="/profile" className="text-emerald-800 hover:underline">
-            👤 My Profile
-          </Link>
-          <Link href="/dashboard" className="px-3.5 py-1.5 bg-[#0f382c] text-white rounded-full hover:bg-emerald-900 transition shadow-sm">
-            Go to Dashboard
-          </Link>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         <div>
