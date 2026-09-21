@@ -26,7 +26,6 @@ export default function RootLayout({
               "@type": "Organization",
               name: "Green Collective",
               url: "https://greencollective.ca",
-              logo: "https://greencollective.ca/logo.png",
               description: "Measurable Climate Impact & Eco-Action Platform."
             })
           }}
