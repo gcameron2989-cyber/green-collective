@@ -11,6 +11,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/initiatives`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/habits`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -20,7 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.5,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/contact`,
@@ -28,5 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.5,
     },
+    // Add any static pillar pages if they are public
+    {
+      url: `${baseUrl}/pillars/1`, 
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }
   ];
 }
