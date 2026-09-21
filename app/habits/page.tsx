@@ -205,7 +205,7 @@ export default function HabitAnalyticsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-foreground flex flex-col justify-between relative overflow-hidden pb-24">
+    <div className="min-h-screen bg-white text-foreground flex flex-col justify-between relative pb-24">
       {/* Background FX */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
       <div 
