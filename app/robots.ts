@@ -5,7 +5,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      disallow: [
+        '/login',
+        '/dashboard',
+        '/profile',
+        '/api/'
+      ],
     },
-    sitemap: 'https://www.greencollective.ca/sitemap.xml',
+    sitemap: 'https://greencollective.ca/sitemap.xml',
   }
 }
