@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
+import Logo from '@/components/Logo'
 
 export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
@@ -37,9 +38,8 @@ export default function Navbar() {
 
   return (
     <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-50 sticky top-0 shadow-sm">
-      <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2 hover:opacity-80 transition">
-        <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-        Green Collective
+      <Link href="/" className="hover:opacity-80 transition flex items-center">
+        <Logo />
       </Link>
       
       <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
