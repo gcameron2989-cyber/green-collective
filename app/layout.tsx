@@ -17,6 +17,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative">
+        {/* Organization Schema Markup for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Green Collective",
+              url: "https://greencollective.ca",
+              logo: "https://greencollective.ca/logo.png",
+              description: "Measurable Climate Impact & Eco-Action Platform."
+            })
+          }}
+        />
+
         {/* Shared Global Header */}
         <Navbar />
 
