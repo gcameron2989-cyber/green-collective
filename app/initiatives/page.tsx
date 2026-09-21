@@ -113,10 +113,7 @@ export default function InitiativesPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/80 backdrop-blur z-10">
-        © {new Date().getFullYear()} Green Collective. All rights reserved.
-      </footer>
+    
     </div>
   );
 }
