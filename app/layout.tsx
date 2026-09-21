@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
+      <body className="antialiased min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative">
         {/* Shared Global Header */}
         <Navbar />
 
