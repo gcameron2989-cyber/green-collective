@@ -1,12 +1,12 @@
 import Image from "next/image";
+import logoImage from "@/public/logo.jpg";
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2.5 font-bold text-xl tracking-tight text-[#0f382c] select-none ${className}`}>
-      {/* Solid white background wrapper with a dark border to make the logo pop */}
       <div className="w-9 h-9 flex items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm border border-emerald-950/20 p-1">
         <Image
-          src="/logo.jpg"
+          src={logoImage}
           alt="Green Collective Logo"
           width={32}
           height={32}
