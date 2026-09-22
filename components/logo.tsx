@@ -1,22 +1,17 @@
 import Image from "next/image";
 
-export default function Logo({ className = "h-10 w-auto" }: { className?: string }) {
+export default function Logo({ className = "" }: { className?: string }) {
   return (
-    <div className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-[#0f382c] select-none">
-      {/* Increased wrapper size so the JPEG is easily visible */}
-      <div className={`relative w-10 h-10 ${className}`}>
-        <Image
-          src="/logo.jpg"
-          alt="Green Collective Logo"
-          fill
-          className="object-contain rounded-md"
-          priority
-        />
-      </div>
-
-      <span>
-        Green <span className="text-emerald-600">Collective</span>
-      </span>
+    <div className={`flex items-center gap-2.5 font-bold text-xl tracking-tight text-[#0f382c] select-none ${className}`}>
+      {/* Fixed explicit width and height for a rectangular logo */}
+      <Image
+        src="/logo.jpg"
+        alt="Green Collective Logo"
+        width={120}
+        height={40}
+        className="object-contain"
+        priority
+      />
     </div>
   );
 }
