@@ -6,7 +6,7 @@ export default function Logo({ className = "h-10 w-auto" }: { className?: string
       {/* Increased wrapper size so the JPEG is easily visible */}
       <div className={`relative w-10 h-10 ${className}`}>
         <Image
-          src="/logo.jpeg"
+          src="/logo.jpg"
           alt="Green Collective Logo"
           fill
           className="object-contain rounded-md"
