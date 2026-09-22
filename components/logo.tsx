@@ -1,5 +1,5 @@
 import Image from "next/image";
-import logoImage from "../public/logo.jpg";
+import logoImage from "@/public/logo.jpg";
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
