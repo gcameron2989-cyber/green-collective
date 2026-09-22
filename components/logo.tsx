@@ -2,16 +2,17 @@ import Image from "next/image";
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-2.5 font-bold text-xl tracking-tight text-[#0f382c] select-none ${className}`}>
-      {/* Explicit width and height so Next.js renders the image immediately */}
-      <Image
-        src="/logo.jpg"
-        alt="Green Collective Logo"
-        width={32}
-        height={32}
-        className="rounded-md object-cover shadow-sm border border-emerald-900/10"
-        priority
-      />
+    <div className={`flex items-center gap-3 font-bold text-xl tracking-tight text-[#0f382c] select-none ${className}`}>
+      {/* Fixed square container that matches the navbar height cleanly */}
+      <div className="relative w-10 h-10 flex-shrink-0">
+        <Image
+          src="/logo.jpg"
+          alt="Green Collective Logo"
+          fill
+          className="object-contain rounded-md"
+          priority
+        />
+      </div>
 
       {/* Brand text wordmark */}
       <span>
