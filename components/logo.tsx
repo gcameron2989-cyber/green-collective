@@ -1,10 +1,18 @@
-import { Leaf } from "lucide-react";
+import Image from "next/image";
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2.5 font-bold text-xl tracking-tight text-[#0f382c] select-none ${className}`}>
-      <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shadow-sm border border-emerald-900/10">
-        <Leaf className="w-5 h-5" />
+      {/* Explicitly sized image wrapper that guarantees visibility */}
+      <div className="flex items-center justify-center overflow-hidden rounded-md bg-emerald-50 border border-emerald-900/10 p-0.5">
+        <Image
+          src="/logo.jpg"
+          alt="Green Collective Logo"
+          width={32}
+          height={32}
+          className="object-contain"
+          priority
+        />
       </div>
 
       <span>
