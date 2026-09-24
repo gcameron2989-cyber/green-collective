@@ -1,122 +1,174 @@
-'use client'
+```tsx
+import Link from 'next/link';
 
-import React from 'react'
-import Link from 'next/link'
-
-export default function HomePage() {
+export default function Home() {
   return (
-    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
-      {/* Exact Grid Square Pattern Background */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px'
-        }}
-      />
+    <main className="bg-white text-[#0f382c]">
 
-      {/* Absolute Glow Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center max-w-5xl mx-auto z-10 w-full space-y-12">
-        <div className="flex flex-col items-center">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-6 border border-emerald-200/80 shadow-sm backdrop-blur-md">
-            <span className="size-1.5 rounded-full bg-emerald-600 animate-ping" />
-            Sustainable Development & Strategy
-          </span>
-
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-tight max-w-3xl mb-4 text-foreground">
-            The Complete Platform Uniting People, Communities & Institutions for Sustainable Action.
-          </h1>
-
-          <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-8 font-normal">
-            Green Collective provides the habit analytics, engagement tools, and environmental strategy needed to power sustainable progress across all levels.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-16">
-            <Link
-              href="/habits"
-              className="bg-[#0f382c] text-white font-semibold px-8 py-4 rounded-full hover:bg-emerald-900 hover:scale-[1.02] transition-all duration-200 text-center shadow-lg shadow-emerald-950/20"
-            >
-              Start Making an Impact
-            </Link>
-            <Link
-              href="/institution"
-              className="border border-emerald-900/20 bg-background/80 backdrop-blur font-semibold px-8 py-4 rounded-full hover:bg-emerald-50/80 hover:scale-[1.02] transition-all duration-200 text-center shadow-sm"
-            >
-              Explore Enterprise Solutions
-            </Link>
-          </div>
-
-          <div className="w-full max-w-3xl mb-12">
-            <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/70">
-              <span>Individual Action</span>
-              <span className="text-emerald-600/50">→</span>
-              <span>Collective Momentum</span>
-              <span className="text-emerald-600/50">→</span>
-              <span>Global Impact</span>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Small actions become measurable momentum, amplified through communities and institutions.
+      {/* Hero */}
+      <section className="border-b border-neutral-200 bg-emerald-50/40">
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+          <div className="max-w-4xl">
+            <p className="mb-6 text-xs font-mono uppercase tracking-[0.2em] text-emerald-800">
+              Sustainability · Action · Measurement
             </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full">
-            <Link
-              href="/habits"
-              className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/90 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
-            >
-              <div>
-                <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl group-hover:scale-110 transition-transform duration-200">⚡</div>
-                <h2 className="font-bold text-lg mb-2 text-foreground flex items-center justify-between">
-                  Habit Analytics
-                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-4px] group-hover:translate-x-0">Explore &rarr;</span>
-                </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Log green choices, track personal progress metrics, and evaluate measured impact to build lasting momentum across your network.
-                </p>
-              </div>
-            </Link>
 
-            <Link
-              href="/institution"
-              className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/90 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
-            >
-              <div>
-                <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl group-hover:scale-110 transition-transform duration-200">📊</div>
-                <h2 className="font-bold text-lg mb-2 text-foreground flex items-center justify-between">
-                  Institutional Strategy
-                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-4px] group-hover:translate-x-0">Explore &rarr;</span>
-                </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Empower institutions of all levels—from schools to global enterprises—with actionable, full-scope environmental data and behavioral insights.
-                </p>
-              </div>
-            </Link>
+            <h1 className="text-5xl md:text-7xl font-medium tracking-tight leading-[0.95]">
+              Turn everyday choices into collective environmental progress.
+            </h1>
 
-            <Link
-              href="/coexistence"
-              className="group p-6 border border-emerald-900/10 hover:border-emerald-600/40 rounded-2xl bg-card/90 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between hover:-translate-y-1"
-            >
-              <div>
-                <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl group-hover:scale-110 transition-transform duration-200">🌿</div>
-                <h2 className="font-bold text-lg mb-2 text-foreground flex items-center justify-between">
-                  Ecological Coexistence
-                  <span className="text-xs text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity translate-x-[-4px] group-hover:translate-x-0">Explore &rarr;</span>
-                </h2>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Connect seamlessly with peers, communities, and global institutions. Share knowledge, join collective initiatives, and scale impact through a unified network.
-                </p>
-              </div>
-            </Link>
+            <p className="mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-neutral-600">
+              Green Collective gives people a simple way to record sustainable
+              actions, connect through shared programs, and help organizations
+              understand participation at scale.
+            </p>
+
+            <div className="mt-10">
+              <Link
+                href="/habits"
+                className="inline-flex items-center text-sm font-mono uppercase tracking-wider text-[#0f382c] hover:text-emerald-700 transition-colors"
+              >
+                Explore sustainable actions
+                <span className="ml-2">→</span>
+              </Link>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
 
-   
-    </div>
-  )
+      {/* Framework */}
+      <section className="border-b border-neutral-200">
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-24">
+          <div className="grid md:grid-cols-3 border-t border-neutral-300">
+
+            <div className="py-8 md:pr-10 md:border-r border-neutral-300">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                01
+              </p>
+
+              <h2 className="mt-4 text-2xl font-medium">
+                Individual Action
+              </h2>
+
+              <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+                Make sustainable choices visible by recording the actions you
+                already take in everyday life.
+              </p>
+            </div>
+
+            <div className="py-8 md:px-10 md:border-r border-neutral-300">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                02
+              </p>
+
+              <h2 className="mt-4 text-2xl font-medium">
+                Collective Momentum
+              </h2>
+
+              <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+                Connect individual participation through communities,
+                initiatives, and shared sustainability programs.
+              </p>
+            </div>
+
+            <div className="py-8 md:pl-10">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                03
+              </p>
+
+              <h2 className="mt-4 text-2xl font-medium">
+                Global Impact
+              </h2>
+
+              <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+                Give organizations a clearer picture of participation and
+                measurable environmental progress at scale.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Architecture */}
+      <section>
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-24">
+
+          <div className="max-w-2xl">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] text-emerald-800">
+              Platform Architecture
+            </p>
+
+            <h2 className="mt-5 text-3xl md:text-4xl font-medium tracking-tight">
+              From individual behaviour to institutional strategy.
+            </h2>
+
+            <p className="mt-5 text-base leading-relaxed text-neutral-600">
+              Green Collective creates a connected system where sustainable
+              actions can be recorded, organized into programs, and understood
+              at an institutional level.
+            </p>
+          </div>
+
+          <div className="mt-16 border-t border-neutral-300">
+
+            <div className="grid md:grid-cols-[180px_1fr] gap-6 py-8 border-b border-neutral-200">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                Individuals
+              </p>
+
+              <div>
+                <h3 className="text-xl font-medium">
+                  Sustainable Actions
+                </h3>
+
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
+                  Record everyday sustainable choices and build a personal
+                  history of environmental action.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-[180px_1fr] gap-6 py-8 border-b border-neutral-200">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                Communities
+              </p>
+
+              <div>
+                <h3 className="text-xl font-medium">
+                  Community & Programs
+                </h3>
+
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
+                  Bring people together through initiatives, challenges, and
+                  shared sustainability goals.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-[180px_1fr] gap-6 py-8">
+              <p className="text-xs font-mono uppercase tracking-wider text-emerald-800">
+                Institutions
+              </p>
+
+              <div>
+                <h3 className="text-xl font-medium">
+                  Institutional Strategy
+                </h3>
+
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-neutral-600">
+                  Translate participation into useful information for
+                  organizations developing and measuring sustainability
+                  programs.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+  );
 }
+```
