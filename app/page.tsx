@@ -42,7 +42,7 @@ export default function HomePage() {
               href="/habits"
               className="bg-[#0f382c] text-white font-semibold px-8 py-4 rounded-full hover:bg-emerald-900 hover:scale-[1.02] transition-all duration-200 text-center shadow-lg shadow-emerald-950/20"
             >
-              Start Logging Habits
+              Start Making an Impact
             </Link>
             <Link
               href="/institution"
@@ -52,6 +52,18 @@ export default function HomePage() {
             </Link>
           </div>
 
+          <div className="w-full max-w-3xl mb-12">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-900/70">
+              <span>Individual Action</span>
+              <span className="text-emerald-600/50">→</span>
+              <span>Collective Momentum</span>
+              <span className="text-emerald-600/50">→</span>
+              <span>Global Impact</span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Small actions become measurable momentum, amplified through communities and institutions.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left w-full">
             <Link
               href="/habits"
