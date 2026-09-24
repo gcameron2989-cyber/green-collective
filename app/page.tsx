@@ -1,4 +1,4 @@
-```tsx
+
 import Link from 'next/link';
 
 export default function Home() {
@@ -171,4 +171,3 @@ export default function Home() {
     </main>
   );
 }
-```
