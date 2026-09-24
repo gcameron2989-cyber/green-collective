@@ -1,80 +1,118 @@
-'use client'
+```tsx
+'use client';
 
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter, usePathname } from 'next/navigation'
-import Logo from '@/components/logo'
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter, usePathname } from 'next/navigation';
+import Logo from '@/components/logo';
 
 export default function Navbar() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [loadingAuth, setLoadingAuth] = useState<boolean>(true)
-  const supabase = createClient()
-  const router = useRouter()
-  const pathname = usePathname()
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  const supabase = createClient();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setIsAuthenticated(!!session)
-      setLoadingAuth(false)
-    }
-    checkUser()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session)
-      setLoadingAuth(false)
-    })
+      setIsAuthenticated(!!session);
+      setLoadingAuth(false);
+    };
 
-    return () => subscription.unsubscribe()
-  }, [supabase])
+    checkUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setLoadingAuth(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
-  }
+    await supabase.auth.signOut();
+    router.refresh();
+  };
 
-  const isActive = (path: string) => pathname === path
+  const isActive = (path: string) => pathname === path;
+
+  const navItems = [
+    { href: '/habits', label: 'Actions' },
+    { href: '/initiatives', label: 'Initiatives' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ];
 
   return (
-    <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-50 sticky top-0 shadow-sm">
-      <Link href="/" className="hover:opacity-80 transition flex items-center">
-        <Logo />
-      </Link>
-      
-      <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-muted-foreground">
-        <Link href="/" className={`transition ${isActive('/') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Home</Link>
-        <Link href="/initiatives" className={`transition ${isActive('/initiatives') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Initiatives</Link>
-        <Link href="/about" className={`transition ${isActive('/about') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>About</Link>
-        <Link href="/contact" className={`transition ${isActive('/contact') ? 'text-[#0f382c] font-bold' : 'hover:text-[#0f382c]'}`}>Contact</Link>
-      </nav>
+    <header className="border-b border-neutral-200 bg-white sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
 
-      <div className="flex gap-4 items-center text-xs font-semibold">
-        {!loadingAuth && (
-          isAuthenticated ? (
-            <>
-              <Link href="/profile" className="text-emerald-800 hover:underline font-bold">
-                👤 My Profile
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-red-600 hover:underline font-medium px-2 py-1"
+        <Link
+          href="/"
+          className="shrink-0 hover:opacity-75 transition-opacity flex items-center"
+          aria-label="Green Collective home"
+        >
+          <Logo />
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`transition-colors ${
+                isActive(item.href)
+                  ? 'text-[#0f382c] font-medium'
+                  : 'text-neutral-500 hover:text-[#0f382c]'
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider shrink-0">
+          {!loadingAuth && (
+            isAuthenticated ? (
+              <>
+                <Link
+                  href="/profile"
+                  className={`transition-colors ${
+                    isActive('/profile')
+                      ? 'text-[#0f382c] font-medium'
+                      : 'text-neutral-500 hover:text-[#0f382c]'
+                  }`}
+                >
+                  Profile
+                </Link>
+
+                <button
+                  onClick={handleSignOut}
+                  className="text-neutral-500 hover:text-neutral-900 transition-colors"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="text-neutral-500 hover:text-[#0f382c] transition-colors"
               >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm font-medium text-foreground hover:text-[#0f382c] transition px-3 py-2">
-                Log In
+                Log in
               </Link>
-              <Link href="/login" className="text-sm font-semibold bg-[#0f382c] text-white px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10">
-                Get Started
-              </Link>
-            </>
-          )
-        )}
+            )
+          )}
+        </div>
       </div>
     </header>
-  )
+  );
 }
+```
