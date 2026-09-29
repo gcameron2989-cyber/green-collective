@@ -1,85 +1,67 @@
-'use client'
-
-import React from 'react'
-import Link from 'next/link'
+import Link from 'next/link';
 
 export default function AboutPage() {
   return (
-    <div className="relative overflow-hidden flex flex-col items-center w-full px-6 py-16">
-      {/* Background Radial Glow & Grid Overlay */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+      {/* Editorial Page Header */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+            Philosophy · Transparency · Action
+          </p>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            About Green Collective
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Bridging individual sustainable choices with rigorous, citation-backed climate metrics and community-scale tracking.
+          </p>
+        </div>
+      </section>
 
-      {/* Hero Section */}
-      <div className="max-w-4xl mx-auto z-10 w-full text-center space-y-6 mb-16">
-        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/80 text-[#0f382c] rounded-full border border-emerald-200/60 shadow-sm backdrop-blur-md">
-          <span className="size-1.5 rounded-full bg-emerald-600 animate-ping" />
-          Our Mission & Architecture
-        </span>
-
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#0f382c]">
-          Redefining Collective Climate Action
-        </h1>
-
-        <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto font-normal">
-          Green Collective bridges individual behavioral choices with large-scale institutional climate metrics. By transforming daily operational habits into quantifiable ecological impact, we empower networks to drive verifiable decarbonization.
-        </p>
-      </div>
-
-      {/* Core Pillars Grid */}
-      <div className="max-w-5xl mx-auto z-10 w-full grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-        <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm flex flex-col justify-between">
+      {/* Main Content Sections */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
+        <div className="grid gap-16 lg:grid-cols-[0.8fr_1.2fr]">
           <div>
-            <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl">🌱</div>
-            <h3 className="font-bold text-lg mb-2 text-foreground">Behavioral Shifts</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Empowering individuals to log everyday green habits, cultivating lasting micro-changes that aggregate into massive structural shifts.
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
+              Our Mission
             </p>
+            <h2 className="mt-4 text-3xl font-medium tracking-tight">
+              Making sustainable action visible and accountable.
+            </h2>
+          </div>
+
+          <div className="space-y-6 text-[#526760] leading-relaxed text-base">
+            <p>
+              Green Collective was built to move beyond vague carbon accounting and surface-level greenwashing. By grounding every recorded habit in standardized lifecycle assessment (LCA) benchmarks from the US EPA, IPCC guidelines, and peer-reviewed agricultural databases, we provide an honest ledger for everyday behavior.
+            </p>
+            <p>
+              Whether participating in institutional challenges like the UBC Sustainability Challenge or logging daily transport and energy choices, participants gain granular visibility into their cumulative environmental impact.
+            </p>
+
+            <div className="pt-6 border-t border-[#102f26]/15 grid gap-6 sm:grid-cols-2">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+                  Standard 01
+                </p>
+                <h3 className="mt-2 text-lg font-medium text-[#102f26]">Academic Rigor</h3>
+                <p className="mt-1 text-xs text-[#526760]">
+                  Distance-based scaling and transparent source citations for every single action metric.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+                  Standard 02
+                </p>
+                <h3 className="mt-2 text-lg font-medium text-[#102f26]">Collective Scale</h3>
+                <p className="mt-1 text-xs text-[#526760]">
+                  Aggregating individual participation into meaningful institutional team insights.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl">📊</div>
-            <h3 className="font-bold text-lg mb-2 text-foreground">Institutional Metrics</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Translating fragmented human telemetry into rigorous ESG and carbon tracking dashboards built for organizations and academic networks.
-            </p>
-          </div>
-        </div>
-
-        <div className="p-6 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur-md shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="text-3xl mb-3 p-3 bg-emerald-500/10 w-fit rounded-xl">⚖️</div>
-            <h3 className="font-bold text-lg mb-2 text-foreground">Verifiable Impact</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Moving past greenwashing with transparent, friction-free protocols that reward collective participation and guarantee accountability.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action Banner */}
-      <div className="max-w-3xl mx-auto z-10 w-full p-8 rounded-3xl bg-[#0f382c] text-white text-center space-y-4 shadow-xl shadow-emerald-950/20">
-        <h3 className="text-2xl font-bold tracking-tight">Ready to join the collective movement?</h3>
-        <p className="text-emerald-100/80 text-sm max-w-xl mx-auto">
-          Start logging your personal habits today or explore our enterprise solutions tailored for campuses and organizations.
-        </p>
-        <div className="pt-2 flex justify-center gap-4">
-          <Link
-            href="/login"
-            className="bg-white text-[#0f382c] font-semibold px-6 py-3 rounded-full hover:bg-emerald-50 transition shadow-md text-xs"
-          >
-            Get Started
-          </Link>
-          <Link
-            href="/contact"
-            className="border border-white/20 text-white font-semibold px-6 py-3 rounded-full hover:bg-white/10 transition text-xs"
-          >
-            Contact Team
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
+      </section>
+    </main>
+  );
 }
