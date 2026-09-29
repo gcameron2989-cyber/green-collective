@@ -16,11 +16,10 @@ interface Habit {
   actionId: string; // Must match the competition's official eco_action_ids
 }
 
-// Updated to match the official competition action registry
 const INITIAL_HABITS: Habit[] = [
   {
     id: "h1",
-    title: "Active / Sustainable Transit Commute",
+    title: "Public / active transportation",
     category: "Transport",
     co2SavedKg: 1.5,
     unit: "trip",
@@ -31,7 +30,7 @@ const INITIAL_HABITS: Habit[] = [
   },
   {
     id: "h2",
-    title: "Plant-Based Meal Choice",
+    title: "Plant-forward meal",
     category: "Food",
     co2SavedKg: 1.2,
     unit: "meal",
@@ -42,10 +41,10 @@ const INITIAL_HABITS: Habit[] = [
   },
   {
     id: "h3",
-    title: "Zero Waste & Organic Composting",
+    title: "Waste sorting",
     category: "Waste",
     co2SavedKg: 0.5,
-    unit: "day",
+    unit: "action",
     completedToday: false,
     momentumScore: 92,
     icon: "♻️",
@@ -53,7 +52,7 @@ const INITIAL_HABITS: Habit[] = [
   },
   {
     id: "h4",
-    title: "Cold Water Laundry Cycle",
+    title: "Cold-water laundry",
     category: "Energy",
     co2SavedKg: 0.6,
     unit: "load",
@@ -182,7 +181,7 @@ export default function HabitAnalyticsPage() {
           completedToday: false,
         }))
       );
-      setSuccessMessage("🗑️ Today's test actions cleared successfully!");
+      setSuccessMessage("🗑️ Today's actions cleared successfully.");
     } else {
       setSuccessMessage("⚠️ Failed to clear actions. Please try again.");
     }
@@ -205,96 +204,83 @@ export default function HabitAnalyticsPage() {
   );
 
   return (
-    <div 
-      className="min-h-screen bg-white text-foreground flex flex-col justify-between relative pb-24"
-      style={{ minHeight: '100vh', height: 'auto', overflowY: 'auto', overflowX: 'hidden' }}
-    >
-      {/* Background FX */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px'
-        }}
-      />
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10">
-        <div className="mb-8 text-left">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
-            ⚡ Habit Analytics & Competition Log
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c] mb-2">
-            Personal Impact & Momentum Analytics
+    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+      {/* Hero Header Section */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+            Sustainability · Action · Measurement
+          </p>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            Habit Analytics &amp; Competition Log
           </h1>
-          <p className="text-sm text-muted-foreground font-normal">
-            Log your daily eco-actions, measure cumulative carbon reduction, and build long-term sustainability momentum.
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Log your daily choices, track cumulative carbon reduction, and participate in shared community programs.
           </p>
         </div>
+      </section>
 
+      {/* Main Content Area */}
+      <div className="mx-auto max-w-5xl px-6 py-12 md:px-10">
         {successMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+          <div className="mb-8 p-4 border border-[#102f26]/20 bg-[#f1f6f2] text-[#102f26] text-xs font-mono uppercase tracking-wider flex items-center gap-2">
             <span>{successMessage}</span>
           </div>
         )}
 
         {/* Analytics Summary Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm flex justify-between items-center">
-            <div>
-              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-800 block mb-1">
-                Measured CO₂ Diverted
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="p-6 border border-[#102f26]/15 bg-white">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
+              Measured CO₂ Diverted
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-medium tracking-tight text-[#102f26]">
+                {totalCO2SavedToday.toFixed(1)} <span className="text-sm font-normal text-[#71847d]">kg today</span>
               </span>
-              <span className="text-3xl font-extrabold text-[#0f382c]">
-                {totalCO2SavedToday.toFixed(1)} <span className="text-sm font-medium text-muted-foreground">kg today</span>
-              </span>
+              <span className="text-xl">🌱</span>
             </div>
-            <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">🌱</div>
           </div>
 
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm flex justify-between items-center">
-            <div>
-              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-800 block mb-1">
-                Completed Actions
+          <div className="p-6 border border-[#102f26]/15 bg-white">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
+              Completed Actions
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-medium tracking-tight text-[#102f26]">
+                {completedCount} <span className="text-sm font-normal text-[#71847d]">/ {habits.length}</span>
               </span>
-              <span className="text-3xl font-extrabold text-[#0f382c]">
-                {completedCount} <span className="text-sm font-normal text-muted-foreground">/ {habits.length}</span>
-              </span>
+              <span className="text-xl">✅</span>
             </div>
-            <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">✅</div>
           </div>
 
-          <div className="p-5 border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur shadow-sm flex justify-between items-center">
-            <div>
-              <span className="text-xs uppercase tracking-wider font-semibold text-emerald-800 block mb-1">
-                Overall Momentum Index
+          <div className="p-6 border border-[#102f26]/15 bg-white">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
+              Overall Momentum Index
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-medium tracking-tight text-[#102f26]">
+                {avgMomentum}% <span className="text-xs font-mono text-[#39705d]">Active</span>
               </span>
-              <span className="text-3xl font-extrabold text-[#0f382c]">
-                {avgMomentum}% <span className="text-xs font-medium text-emerald-700">High Progress</span>
-              </span>
+              <span className="text-xl">📈</span>
             </div>
-            <div className="text-2xl p-3 rounded-xl bg-emerald-100/70 border border-emerald-200">📈</div>
           </div>
         </div>
 
         {/* Filter Bar & Interactive Habit List */}
-        <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-lg font-bold text-foreground">Official Competition Actions</h2>
+        <div className="border border-[#102f26]/15 bg-white p-6 md:p-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-[#102f26]/10 pb-6">
+            <h2 className="text-lg font-medium tracking-tight text-[#102f26]">Official Action Registry</h2>
 
             <div className="flex flex-wrap gap-2">
               {["All", "Transport", "Waste", "Energy", "Food"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setFilter(cat)}
-                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-full border transition ${
+                  className={`px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] border transition ${
                     filter === cat
-                      ? "bg-[#0f382c] text-white border-[#0f382c] shadow-sm"
-                      : "bg-background/60 text-muted-foreground border-emerald-900/10 hover:bg-emerald-50/50 hover:text-foreground"
+                      ? "bg-[#102f26] text-white border-[#102f26]"
+                      : "bg-white text-[#526760] border-[#102f26]/15 hover:border-[#102f26]/40"
                   }`}
                 >
                   {cat}
@@ -303,34 +289,34 @@ export default function HabitAnalyticsPage() {
             </div>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-4 mb-8">
             {filteredHabits.map((habit) => (
               <div
                 key={habit.id}
                 onClick={() => toggleHabitLocally(habit.id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                className={`p-5 border transition-all cursor-pointer flex items-center justify-between gap-4 ${
                   habit.completedToday
-                    ? "bg-emerald-100/40 border-emerald-300 shadow-inner"
-                    : "bg-background/60 border-emerald-900/10 hover:border-emerald-700/30"
+                    ? "bg-[#f1f6f2] border-[#102f26]/40"
+                    : "bg-white border-[#102f26]/15 hover:border-[#102f26]/30"
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="text-xl p-2.5 rounded-xl bg-white border border-emerald-900/10 shadow-sm">
+                  <div className="text-xl p-3 bg-[#f1f6f2] border border-[#102f26]/10">
                     {habit.icon}
                   </div>
                   <div>
                     <h3
-                      className={`font-semibold text-sm ${
+                      className={`font-medium text-sm ${
                         habit.completedToday
-                          ? "line-through text-muted-foreground"
-                          : "text-foreground"
+                          ? "line-through text-[#71847d]"
+                          : "text-[#102f26]"
                       }`}
                     >
                       {habit.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                      <span className="text-emerald-800 font-semibold">
-                        -{habit.co2SavedKg} kg CO₂ / {habit.unit}
+                    <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d] mt-1">
+                      <span className="text-[#39705d]">
+                        ~{habit.co2SavedKg} kg CO₂e / {habit.unit}
                       </span>
                       <span>•</span>
                       <span>Momentum: {habit.momentumScore}%</span>
@@ -338,62 +324,62 @@ export default function HabitAnalyticsPage() {
                   </div>
                 </div>
 
-                <button
-                  aria-label={`Mark ${habit.title} as completed`}
-                  className={`size-6 rounded-md border flex items-center justify-center font-bold text-xs transition ${
+                <div
+                  className={`size-6 border flex items-center justify-center font-mono text-xs transition ${
                     habit.completedToday
-                      ? "bg-[#0f382c] border-[#0f382c] text-white"
-                      : "border-emerald-900/20 text-transparent hover:border-emerald-700"
+                      ? "bg-[#102f26] border-[#102f26] text-white"
+                      : "border-[#102f26]/20 text-transparent"
                   }`}
                 >
                   ✓
-                </button>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Competition Opt-in Toggle */}
-          <div className="mb-6 p-4 rounded-xl bg-emerald-50/60 border border-emerald-900/10 flex items-start gap-3">
+          <div className="mb-8 p-5 border border-[#102f26]/15 bg-[#f1f6f2] flex items-start gap-4">
             <input
               type="checkbox"
               id="competition-opt-in"
               checked={joinCompetition}
               onChange={(e) => setJoinCompetition(e.target.checked)}
-              className="mt-0.5 size-4 accent-[#0f382c] rounded cursor-pointer"
+              className="mt-1 size-4 accent-[#102f26] rounded-none cursor-pointer"
             />
-            <label htmlFor="competition-opt-in" className="text-xs text-foreground cursor-pointer select-none">
-              <strong className="block text-[#0f382c] font-semibold mb-0.5">Include these actions in the UBC Sustainability Challenge Leaderboard</strong>
-              Check this box to contribute your metrics to your faculty's team score. Leave unchecked to keep your logs strictly personal and private.
+            <label htmlFor="competition-opt-in" className="text-xs text-[#526760] cursor-pointer select-none">
+              <strong className="block font-medium text-[#102f26] mb-1">Include in the UBC Sustainability Challenge Leaderboard</strong>
+              Contribute your metrics to your faculty's team score, or leave unchecked to keep your logs strictly private.
             </label>
           </div>
 
           {/* Submit & Clear Action Buttons Bar */}
-          <div className="pt-4 border-t border-emerald-900/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-muted-foreground">
-              {completedCount} action{completedCount === 1 ? '' : 's'} selected for submission today.
+          <div className="pt-6 border-t border-[#102f26]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d]">
+              {completedCount} action{completedCount === 1 ? '' : 's'} selected for logging today.
             </span>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {user && (
                 <button
+                  type="button"
                   onClick={handleClearTodaySubmissions}
                   disabled={deleting}
-                  className="px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="px-4 py-3 bg-white hover:bg-red-50 text-red-700 border border-red-200 font-mono text-[10px] uppercase tracking-[0.16em] transition disabled:opacity-50"
                 >
-                  {deleting ? 'Clearing...' : '🗑️ Clear Today’s Logs'}
+                  {deleting ? 'Clearing...' : 'Clear Today’s Logs'}
                 </button>
               )}
               <button
+                type="button"
                 onClick={handleBatchSubmit}
                 disabled={submitting}
-                className="flex-1 sm:flex-none px-6 py-3 bg-[#0f382c] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-none px-6 py-3 bg-[#102f26] hover:bg-[#102f26]/90 text-white font-mono text-[10px] uppercase tracking-[0.16em] transition disabled:opacity-50"
               >
-                {submitting ? 'Submitting Actions...' : '🚀 Submit Selected Eco-Actions'}
+                {submitting ? 'Submitting...' : 'Submit Selected Actions →'}
               </button>
             </div>
           </div>
         </div>
-      </main>
-
-    </div>
+      </div>
+    </main>
   );
 }
