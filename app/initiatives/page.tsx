@@ -1,119 +1,93 @@
 import Link from 'next/link';
-import PilotMap from '@/components/PilotMap';
 
-const localInitiatives = [
+const initiativesList = [
   {
-    title: "Oppenheimer Repair Clinics",
-    category: "Transport & Waste",
-    description: "Free, year-round bike and mobility device repairs supporting low-carbon transit and circular economy waste reduction.",
-    location: "Downtown Eastside, Vancouver",
-    coords: [49.2827, -123.0988]
+    code: "01",
+    category: "Institutional Challenge",
+    title: "UBC Sustainability Challenge",
+    description: "Participate in faculty-wide challenges to measure aggregate carbon savings and drive campus sustainability metrics collectively.",
+    status: "Active Program",
+    href: "/habits",
   },
   {
-    title: "False Creek Community-Led Mapping",
-    category: "Ecosystems & Resilience",
-    description: "Mapping urban watershed climate risks and opportunities for local ecological stewardship and community adaptation.",
-    location: "False Creek, Vancouver",
-    coords: [49.2680, -123.1120]
+    code: "02",
+    category: "Community Action",
+    title: "Local Urban Canopy Expansion",
+    description: "Coordinate with regional partners and municipal groups to monitor canopy cover, urban heat island mitigation, and green space accessibility.",
+    status: "Ongoing",
+    href: "/habits",
   },
   {
-    title: "West End Intergenerational Climate Adaptation",
-    category: "Community Health",
-    description: "Building neighborhood resilience to extreme heat events and poor air quality through intergenerational support programs.",
-    location: "West End, Vancouver",
-    coords: [49.2865, -123.1360]
-  }
+    code: "03",
+    category: "Policy & Research",
+    title: "Green Transit & Drivetrain Transition",
+    description: "Evaluate lifecycle emissions, municipal charging infrastructure, and policy frameworks for heavy-duty and commuter transport networks.",
+    status: "Research Phase",
+    href: "/about",
+  },
 ];
 
 export default function InitiativesPage() {
   return (
-    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
-      {/* Exact Grid Square Pattern Background */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px'
-        }}
-      />
-
-      {/* Absolute Glow Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
-
-      <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full space-y-10 z-10">
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
-              📍 Local Geolocation Strategy
-            </span>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c]">Vancouver Sustainability Initiatives</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Active grassroots climate action projects mapped across Vancouver, BC.
-            </p>
-          </div>
-          <Link 
-            href="/initiatives/new"
-            className="bg-[#0f382c] text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md"
-          >
-            + Propose Initiative
-          </Link>
+    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+      {/* Editorial Page Header */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+            Programs · Scale · Impact
+          </p>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            Shared initiatives &amp; community programs
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Individual actions compound into measurable institutional progress when aligned through structured community programs.
+          </p>
         </div>
+      </section>
 
-        {/* Interactive Map Section with Side Info Panel */}
-        <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card/90 backdrop-blur shadow-sm flex flex-col lg:flex-row">
-          {/* Map Area - flush fit */}
-          <div className="relative w-full lg:w-3/5 h-[400px] lg:h-auto min-h-[400px] overflow-hidden">
-            <PilotMap />
-          </div>
+      {/* Main Initiatives Grid */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
+        <div className="border-t border-[#102f26]/15">
+          {initiativesList.map((item) => (
+            <div
+              key={item.code}
+              className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
+            >
+              <div className="grid gap-6 lg:grid-cols-[0.3fr_1.2fr_0.5fr] lg:items-center">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block">
+                    Initiative / {item.code}
+                  </span>
+                  <span className="mt-1 inline-block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
+                    {item.status}
+                  </span>
+                </div>
 
-          {/* Featured Initiative Details Panel */}
-          <div className="w-full lg:w-2/5 p-6 md:p-8 flex flex-col justify-between bg-gradient-to-br from-[#0f382c] to-emerald-950 text-white">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-1.5 text-emerald-300 font-semibold text-xs tracking-wider uppercase">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                Featured Project Spotlight
-              </div>
-              <h2 className="text-xl font-bold">Engineering Quad Solar Array</h2>
-              <p className="text-emerald-100/80 text-xs leading-relaxed">
-                Rooftop solar photovoltaic array powering local lab equipment and reducing campus grid reliance.
-              </p>
-            </div>
-            
-            <div className="pt-6 border-t border-emerald-800/60 mt-4 flex justify-between items-center text-xs">
-              <div>
-                <span className="text-[10px] text-emerald-300 block uppercase tracking-wider">Measured Impact</span>
-                <span className="font-bold text-white text-sm">45 kWh generated today</span>
-              </div>
-              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-[10px] font-semibold border border-emerald-400/30">
-                Active
-              </span>
-            </div>
-          </div>
-        </div>
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#39705d] block mb-1">
+                    {item.category}
+                  </span>
+                  <h3 className="text-2xl font-medium tracking-tight text-[#102f26]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-[#526760]">
+                    {item.description}
+                  </p>
+                </div>
 
-        {/* Initiative Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {localInitiatives.map((item, idx) => (
-            <div key={idx} className="bg-card/90 backdrop-blur p-6 rounded-2xl border border-emerald-900/10 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100/90 text-emerald-800 px-2.5 py-1 rounded-full">
-                  {item.category}
-                </span>
-                <h2 className="text-base font-bold text-foreground mt-3">{item.title}</h2>
-                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{item.description}</p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-emerald-900/10 text-[11px] text-emerald-700 font-medium flex items-center gap-1">
-                📍 {item.location}
+                <div className="lg:text-right">
+                  <Link
+                    href={item.href}
+                    className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-xs uppercase tracking-[0.14em] transition-opacity hover:opacity-55"
+                  >
+                    Participate →
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
         </div>
-      </main>
-
-    
-    </div>
+      </section>
+    </main>
   );
 }
