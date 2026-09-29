@@ -26,10 +26,10 @@ const initiativesList: Initiative[] = [
   {
     code: "02",
     category: "Community Action",
-    title: "Local Urban Canopy Expansion",
-    description: "Coordinate with regional partners and municipal groups to monitor canopy cover, urban heat island mitigation, and green space accessibility.",
+    title: "Broad Community Action & Regional Stewardship",
+    description: "Coordinate with regional partners and municipal groups across urban forestry, watershed health, and localized sustainability initiatives.",
     status: "Ongoing",
-    href: "/initiatives/canopy",
+    href: "/initiatives/community-action", // Updated route path
     regions: ["Vancouver", "Toronto"],
   },
   {
