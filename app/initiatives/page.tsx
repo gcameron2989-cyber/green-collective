@@ -15,7 +15,7 @@ const initiativesList = [
     title: "Local Urban Canopy Expansion",
     description: "Coordinate with regional partners and municipal groups to monitor canopy cover, urban heat island mitigation, and green space accessibility.",
     status: "Ongoing",
-    href: "/habits",
+    href: "/habits", // Or a dedicated route if you create one, e.g., /initiatives/canopy
   },
   {
     code: "03",
@@ -23,7 +23,7 @@ const initiativesList = [
     title: "Green Transit & Drivetrain Transition",
     description: "Evaluate lifecycle emissions, municipal charging infrastructure, and policy frameworks for heavy-duty and commuter transport networks.",
     status: "Research Phase",
-    href: "/about",
+    href: "/about", // Routes to your research and policy background overview
   },
 ];
 
