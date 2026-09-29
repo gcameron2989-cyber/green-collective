@@ -7,7 +7,7 @@ const initiativesList = [
     title: "UBC Sustainability Challenge",
     description: "Participate in faculty-wide challenges to measure aggregate carbon savings and drive campus sustainability metrics collectively.",
     status: "Active Program",
-    href: "/habits",
+    href: "/competition",
   },
   {
     code: "02",
@@ -80,7 +80,7 @@ export default function InitiativesPage() {
                     href={item.href}
                     className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-xs uppercase tracking-[0.14em] transition-opacity hover:opacity-55"
                   >
-                    Participate →
+                    View program →
                   </Link>
                 </div>
               </div>
