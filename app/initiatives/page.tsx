@@ -1,119 +1,181 @@
-import Link from 'next/link';
-import PilotMap from '@/components/PilotMap';
+"use client";
 
-const localInitiatives = [
+import { useState } from 'react';
+import Link from 'next/link';
+
+interface Initiative {
+  code: string;
+  category: string;
+  title: string;
+  description: string;
+  status: string;
+  href: string;
+  regions: string[];
+}
+
+const initiativesList: Initiative[] = [
   {
-    title: "Oppenheimer Repair Clinics",
-    category: "Transport & Waste",
-    description: "Free, year-round bike and mobility device repairs supporting low-carbon transit and circular economy waste reduction.",
-    location: "Downtown Eastside, Vancouver",
-    coords: [49.2827, -123.0988]
+    code: "01",
+    category: "Institutional Challenge",
+    title: "UBC Sustainability Challenge",
+    description: "Participate in faculty-wide challenges to measure aggregate carbon savings and drive campus sustainability metrics collectively.",
+    status: "Active Program",
+    href: "/competition",
+    regions: ["Vancouver", "Global / Remote"],
   },
   {
-    title: "False Creek Community-Led Mapping",
-    category: "Ecosystems & Resilience",
-    description: "Mapping urban watershed climate risks and opportunities for local ecological stewardship and community adaptation.",
-    location: "False Creek, Vancouver",
-    coords: [49.2680, -123.1120]
+    code: "02",
+    category: "Community Action",
+    title: "Broad Community Action & Regional Stewardship",
+    description: "Coordinate with regional partners and municipal groups across urban forestry, watershed health, and localized sustainability initiatives.",
+    status: "Ongoing",
+    href: "/initiatives/community-action", // Updated route path
+    regions: ["Vancouver", "Toronto"],
   },
   {
-    title: "West End Intergenerational Climate Adaptation",
-    category: "Community Health",
-    description: "Building neighborhood resilience to extreme heat events and poor air quality through intergenerational support programs.",
-    location: "West End, Vancouver",
-    coords: [49.2865, -123.1360]
-  }
+    code: "03",
+    category: "Policy & Research",
+    title: "Green Transit & Drivetrain Transition",
+    description: "Evaluate lifecycle emissions, municipal charging infrastructure, and policy frameworks for heavy-duty and commuter transport networks.",
+    status: "Research Phase",
+    href: "/initiatives/transport-policy",
+    regions: ["Vancouver", "Toronto", "Global / Remote"],
+  },
 ];
 
 export default function InitiativesPage() {
+  const [selectedRegion, setSelectedRegion] = useState<string>("Vancouver");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Approximate bounding check for Vancouver vs Toronto
+        if (latitude > 48.0 && latitude < 50.0 && longitude > -124.0 && longitude < -122.0) {
+          setSelectedRegion("Vancouver");
+        } else if (latitude > 43.0 && latitude < 44.5 && longitude > -80.0 && longitude < -79.0) {
+          setSelectedRegion("Toronto");
+        } else {
+          setSelectedRegion("Global / Remote");
+        }
+        setLoading(false);
+      },
+      () => {
+        alert("Unable to retrieve your location. Defaulting to Vancouver.");
+        setLoading(false);
+      }
+    );
+  };
+
+  const filteredInitiatives = initiativesList.filter((item) =>
+    item.regions.includes(selectedRegion)
+  );
+
   return (
-    <div className="min-h-screen text-foreground flex flex-col justify-between relative overflow-hidden bg-white">
-      {/* Exact Grid Square Pattern Background */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-60"
-        style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(16, 185, 129, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '32px 32px'
-        }}
-      />
+    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+      {/* Editorial Page Header */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
+          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+            Programs · Scale · Impact
+          </p>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            Shared initiatives &amp; community programs
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Individual actions compound into measurable institutional progress when aligned through structured community programs.
+          </p>
+        </div>
+      </section>
 
-      {/* Absolute Glow Background */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent blur-3xl pointer-events-none z-0" />
-
-      <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full space-y-10 z-10">
-        <div className="flex justify-between items-center">
+      {/* Main Initiatives Section */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
+        {/* Location Curation Toolbar */}
+        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100/90 text-[#0f382c] rounded-full mb-3 border border-emerald-200/80 backdrop-blur-md shadow-sm">
-              📍 Local Geolocation Strategy
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+              Contextual Curation
             </span>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#0f382c]">Vancouver Sustainability Initiatives</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Active grassroots climate action projects mapped across Vancouver, BC.
+            <p className="text-sm font-medium text-[#102f26]">
+              Showing programs for: <span className="underline font-mono uppercase text-xs">{selectedRegion}</span>
             </p>
           </div>
-          <Link 
-            href="/initiatives/new"
-            className="bg-[#0f382c] text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-emerald-900 transition shadow-md"
-          >
-            + Propose Initiative
-          </Link>
-        </div>
 
-        {/* Interactive Map Section with Side Info Panel */}
-        <div className="w-full rounded-2xl overflow-hidden border border-emerald-900/10 bg-card/90 backdrop-blur shadow-sm flex flex-col lg:flex-row">
-          {/* Map Area - flush fit */}
-          <div className="relative w-full lg:w-3/5 h-[400px] lg:h-auto min-h-[400px] overflow-hidden">
-            <PilotMap />
-          </div>
-
-          {/* Featured Initiative Details Panel */}
-          <div className="w-full lg:w-2/5 p-6 md:p-8 flex flex-col justify-between bg-gradient-to-br from-[#0f382c] to-emerald-950 text-white">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-1.5 text-emerald-300 font-semibold text-xs tracking-wider uppercase">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                Featured Project Spotlight
-              </div>
-              <h2 className="text-xl font-bold">Engineering Quad Solar Array</h2>
-              <p className="text-emerald-100/80 text-xs leading-relaxed">
-                Rooftop solar photovoltaic array powering local lab equipment and reducing campus grid reliance.
-              </p>
-            </div>
-            
-            <div className="pt-6 border-t border-emerald-800/60 mt-4 flex justify-between items-center text-xs">
-              <div>
-                <span className="text-[10px] text-emerald-300 block uppercase tracking-wider">Measured Impact</span>
-                <span className="font-bold text-white text-sm">45 kWh generated today</span>
-              </div>
-              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-[10px] font-semibold border border-emerald-400/30">
-                Active
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDetectLocation}
+              disabled={loading}
+              className="px-4 py-2 bg-[#102f26] text-white font-mono text-[10px] uppercase tracking-[0.16em] hover:bg-[#102f26]/90 transition disabled:opacity-50"
+            >
+              {loading ? "Locating..." : "Detect My Location"}
+            </button>
+            <select
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              className="px-3 py-2 bg-white border border-[#102f26]/20 font-mono text-xs text-[#102f26] focus:outline-none"
+            >
+              <option value="Vancouver">Vancouver, BC</option>
+              <option value="Toronto">Toronto, ON</option>
+              <option value="Global / Remote">Global / Remote</option>
+            </select>
           </div>
         </div>
 
-        {/* Initiative Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {localInitiatives.map((item, idx) => (
-            <div key={idx} className="bg-card/90 backdrop-blur p-6 rounded-2xl border border-emerald-900/10 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100/90 text-emerald-800 px-2.5 py-1 rounded-full">
-                  {item.category}
-                </span>
-                <h2 className="text-base font-bold text-foreground mt-3">{item.title}</h2>
-                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{item.description}</p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-emerald-900/10 text-[11px] text-emerald-700 font-medium flex items-center gap-1">
-                📍 {item.location}
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+        {/* Initiatives List Grid */}
+        <div className="border-t border-[#102f26]/15">
+          {filteredInitiatives.length > 0 ? (
+            filteredInitiatives.map((item) => (
+              <div
+                key={item.code}
+                className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
+              >
+                <div className="grid gap-6 lg:grid-cols-[0.3fr_1.2fr_0.5fr] lg:items-center">
+                  <div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block">
+                      Initiative / {item.code}
+                    </span>
+                    <span className="mt-1 inline-block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
+                      {item.status}
+                    </span>
+                  </div>
 
-    
-    </div>
+                  <div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#39705d] block mb-1">
+                      {item.category}
+                    </span>
+                    <h3 className="text-2xl font-medium tracking-tight text-[#102f26]">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-[#526760]">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <div className="lg:text-right">
+                    <Link
+                      href={item.href}
+                      className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-xs uppercase tracking-[0.14em] transition-opacity hover:opacity-55"
+                    >
+                      View program →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-16 text-center text-[#526760] font-mono text-xs uppercase tracking-wider">
+              No active programs currently listed for this specific region.
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }
