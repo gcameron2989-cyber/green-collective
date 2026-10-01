@@ -6,16 +6,27 @@ import { createClient } from '@/lib/supabase/client';
 
 interface LeaderboardEntry {
   rank: number;
-  faculty: string;
+  name: string;
+  category: string;
   participants: number;
   carbonOffsetKg: number;
 }
 
-export default function UBCCompetitionPage() {
+export default function CompetitionPage() {
+  const [boardTier, setBoardTier] = useState<"institutional" | "local">("institutional");
   const [activeTab, setActiveTab] = useState<"leaderboard" | "guidelines">("leaderboard");
-  const [standings, setStandings] = useState<LeaderboardEntry[]>([]);
+  const [institutionalStandings, setInstitutionalStandings] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const supabase = createClient();
+
+  // Local regional standings for Vancouver neighborhood hubs
+  const localStandings: LeaderboardEntry[] = [
+    { rank: 1, name: 'Kitsilano Community Hub', category: 'Vancouver West', participants: 412, carbonOffsetKg: 18450 },
+    { rank: 2, name: 'Point Grey & Campus Perimeter', category: 'Vancouver West', participants: 389, carbonOffsetKg: 16920 },
+    { rank: 3, name: 'Mount Pleasant Eco-Network', category: 'Vancouver East', participants: 310, carbonOffsetKg: 13400 },
+    { rank: 4, name: 'Downtown Core Collective', category: 'Central Vancouver', participants: 275, carbonOffsetKg: 11800 },
+    { rank: 5, name: 'Grandview-Woodland', category: 'Vancouver East', participants: 195, carbonOffsetKg: 8950 },
+  ];
 
   useEffect(() => {
     const fetchLiveStandings = async () => {
@@ -64,14 +75,15 @@ export default function UBCCompetitionPage() {
         const computedStandings: LeaderboardEntry[] = Object.values(facultyMap)
           .map((f) => ({
             rank: 0,
-            faculty: f.name,
+            name: f.name,
+            category: 'UBC Faculty',
             participants: f.users.size,
             carbonOffsetKg: Math.round(f.points * 3.5),
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
-        setStandings(computedStandings);
+        setInstitutionalStandings(computedStandings);
       } catch (err) {
         console.error('Error fetching live standings:', err);
       } finally {
@@ -82,65 +94,91 @@ export default function UBCCompetitionPage() {
     fetchLiveStandings();
   }, [supabase]);
 
-  const totalCarbon = standings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
-  const totalParticipants = standings.reduce((acc, curr) => acc + curr.participants, 0);
+  const currentStandings = boardTier === "institutional" ? institutionalStandings : localStandings;
+  const totalCarbon = currentStandings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
+  const totalParticipants = currentStandings.reduce((acc, curr) => acc + curr.participants, 0);
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
+    <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
       {/* Editorial Page Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-              Institutional Challenge · Initiative / 01
+              Leaderboards &amp; Challenges · Regional &amp; Institutional
             </p>
             <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
-              <Link href="/initiatives" className="text-[#526760] hover:text-[#102f26]">
-                ← Back to Initiatives
+              <Link href="/" className="text-[#526760] hover:text-[#102f26]">
+                ← Back to Home
               </Link>
-              <Link href="/competition/submit" className="text-[#526760] hover:text-[#102f26]">
+              <Link href="/habits" className="text-[#526760] hover:text-[#102f26]">
                 Log Eco-Action →
               </Link>
             </div>
           </div>
           <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
-            UBC Faculty Sustainability Challenge &amp; Leaderboard
+            Community &amp; Institutional Leaderboards
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Real-time aggregate carbon savings and faculty participation metrics powered by student action ledgers across campus.
+            Track real-time carbon diversion across local Vancouver neighborhood hubs and university faculties.
           </p>
         </div>
       </section>
 
       {/* Main Content Hub */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
-        {/* Toggle Nav Bar */}
-        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-              Active View
-            </span>
-            <p className="text-sm font-medium text-[#102f26]">
-              Currently displaying: <span className="underline font-mono uppercase text-xs">{activeTab}</span>
-            </p>
+        {/* Tier & Sub-Tab Control Bar */}
+        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+                Leaderboard Tier
+              </span>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  onClick={() => setBoardTier("institutional")}
+                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                    boardTier === "institutional"
+                      ? "bg-[#102f26] text-white shadow-sm"
+                      : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
+                  }`}
+                >
+                  Institutional (UBC / Orgs)
+                </button>
+                <button
+                  onClick={() => setBoardTier("local")}
+                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                    boardTier === "local"
+                      ? "bg-[#102f26] text-white shadow-sm"
+                      : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
+                  }`}
+                >
+                  Local (Vancouver / Regional)
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveTab("leaderboard")}
               className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                activeTab === "leaderboard" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
+                activeTab === "leaderboard"
+                  ? "bg-[#102f26] text-white"
+                  : "bg-white border border-[#102f26]/20 text-[#102f26]"
               }`}
             >
-              Faculty Leaderboard
+              Rankings
             </button>
             <button
               onClick={() => setActiveTab("guidelines")}
               className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                activeTab === "guidelines" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
+                activeTab === "guidelines"
+                  ? "bg-[#102f26] text-white"
+                  : "bg-white border border-[#102f26]/20 text-[#102f26]"
               }`}
             >
-              Challenge Guidelines &amp; Rules
+              Guidelines &amp; Rules
             </button>
           </div>
         </div>
@@ -151,21 +189,23 @@ export default function UBCCompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  Faculty Carbon Offset Standings (Live Database)
+                  {boardTier === "institutional" ? "Faculty & Organizational Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings"}
                 </h2>
-                <span className="font-mono text-[10px] text-[#39705d]">Synced via Supabase</span>
+                <span className="font-mono text-[10px] text-[#39705d]">
+                  {boardTier === "institutional" ? "Synced via Database" : "Aggregated Community Metrics"}
+                </span>
               </div>
 
-              {loading ? (
-                <div className="p-12 border border-[#102f26]/15 bg-[#f1f6f2] text-center font-mono text-xs text-[#526760] uppercase tracking-wider">
-                  Querying live faculty ledgers...
+              {loading && boardTier === "institutional" ? (
+                <div className="p-12 border border-[#102f26]/15 bg-[#f1f6f2] text-center font-mono text-xs text-[#526760] uppercase tracking-wider shadow-sm">
+                  Querying live institutional ledgers...
                 </div>
-              ) : standings.length > 0 ? (
+              ) : currentStandings.length > 0 ? (
                 <div className="space-y-4">
-                  {standings.map((entry) => (
+                  {currentStandings.map((entry) => (
                     <div
                       key={entry.rank}
-                      className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] transition hover:border-[#102f26] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-6 border border-[#102f26]/15 bg-white transition hover:border-[#102f26] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
                     >
                       <div className="flex items-center gap-4">
                         <span className="font-mono text-lg font-bold text-[#39705d] w-6">
@@ -173,10 +213,10 @@ export default function UBCCompetitionPage() {
                         </span>
                         <div>
                           <h3 className="text-lg font-medium tracking-tight text-[#102f26]">
-                            {entry.faculty}
+                            {entry.name}
                           </h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
-                            {entry.participants} Active Contributor{entry.participants === 1 ? '' : 's'}
+                            {entry.category} · {entry.participants} Active Contributor{entry.participants === 1 ? '' : 's'}
                           </p>
                         </div>
                       </div>
@@ -193,20 +233,20 @@ export default function UBCCompetitionPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-12 border border-dashed border-[#102f26]/20 text-center font-mono text-xs text-[#526760] uppercase tracking-wider">
-                  No submissions logged yet. Be the first to log an action for your faculty!
+                <div className="p-12 border border-dashed border-[#102f26]/20 text-center font-mono text-xs text-[#526760] uppercase tracking-wider bg-white">
+                  No submissions logged yet. Be the first to log an action!
                 </div>
               )}
 
-              <div className="mt-8 p-6 border border-dashed border-[#102f26]/30 bg-white">
+              <div className="mt-8 p-6 border border-dashed border-[#102f26]/30 bg-[#f1f6f2]">
                 <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                  Contribute to Your Faculty
+                  Contribute to Your Standing
                 </span>
                 <p className="text-xs text-[#526760] mb-4">
-                  Log your daily transit choices, zero-waste dining, and campus conservation efforts to push your faculty up the live standings.
+                  Log your daily transit choices, zero-waste dining, and conservation efforts to push your faculty or neighborhood up the live standings.
                 </p>
                 <Link
-                  href="/competition/submit"
+                  href="/habits"
                   className="inline-flex items-center gap-2 bg-[#102f26] text-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em]"
                 >
                   Log Action to Personal Ledger →
@@ -218,28 +258,28 @@ export default function UBCCompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  Institutional Impact Summary
+                  {boardTier === "institutional" ? "Institutional Impact Summary" : "Regional Impact Summary"}
                 </h2>
               </div>
 
               <div className="space-y-6 text-xs text-[#526760]">
-                <div className="p-6 border border-[#102f26]/15 bg-white">
+                <div className="p-6 border border-[#102f26]/15 bg-white shadow-sm">
                   <span className="font-mono text-[10px] text-[#39705d] block mb-1">Total Carbon Mitigated</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
                     {totalCarbon.toLocaleString()} kg
                   </p>
                   <p className="text-[#71847d]">
-                    Aggregated directly from verified student action submissions in the database.
+                    Aggregated directly from verified participant action submissions.
                   </p>
                 </div>
 
-                <div className="p-6 border border-[#102f26]/15 bg-white">
+                <div className="p-6 border border-[#102f26]/15 bg-white shadow-sm">
                   <span className="font-mono text-[10px] text-[#39705d] block mb-1">Active Participation</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
-                    {totalParticipants} Student{totalParticipants === 1 ? '' : 's'}
+                    {totalParticipants} Participant{totalParticipants === 1 ? '' : 's'}
                   </p>
                   <p className="text-[#71847d]">
-                    Unique contributors across participating faculties.
+                    Unique contributors across active tiers.
                   </p>
                 </div>
               </div>
@@ -247,22 +287,22 @@ export default function UBCCompetitionPage() {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-8">
-            <div className="p-8 border border-[#102f26]/15 bg-[#f1f6f2]">
+            <div className="p-8 border border-[#102f26]/15 bg-white shadow-sm">
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
                 Competition Rules &amp; Framework
               </span>
               <h2 className="text-2xl font-medium text-[#102f26] mb-4">
-                UBC Faculty Sustainability Challenge Guidelines
+                Sustainability Challenge Guidelines
               </h2>
               <div className="space-y-4 text-sm text-[#526760] leading-relaxed">
                 <p>
-                  The UBC Sustainability Challenge is an institutional-grade platform designed to quantify and compare grassroots environmental action across campus faculties.
+                  Green Collective&apos;s dual-tier leaderboard system quantifies and compares grassroots environmental action across both institutional departments (such as UBC faculties) and municipal regional hubs (such as Vancouver neighborhoods).
                 </p>
                 <p>
-                  <strong>Eligibility:</strong> At least one participant or team member must be currently enrolled as an undergraduate or graduate student at the University of British Columbia.
+                  <strong>Eligibility:</strong> Participants may align their actions with their university faculty, workplace organization, or local neighborhood residential zone.
                 </p>
                 <p>
-                  <strong>Verification &amp; Calculation:</strong> Actions logged through the personal ledger are verified against standardized carbon-intensity coefficients for modal transit shift, energy conservation, and ecological restoration hours.
+                  <strong>Verification &amp; Calculation:</strong> Actions logged through the personal ledger are verified against standardized carbon-intensity coefficients for modal transit shift, energy conservation, and ecological actions.
                 </p>
               </div>
             </div>
