@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthView = "signin" | "signup" | "forgot";
 
-export default function LoginPage() {
+function LoginFormContent() {
   const [view, setView] = useState<AuthView>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +56,7 @@ export default function LoginPage() {
     if (view === "signup") {
       const origin = window.location.origin;
       const emailRedirectTarget = `${origin}/login?redirectTo=${encodeURIComponent(redirectTo)}`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -92,140 +92,147 @@ export default function LoginPage() {
       }
     }
 
-    // Redirect to the intended destination instead of forcing /dashboard
     router.push(redirectTo);
     router.refresh();
   };
 
+  return (
+    <div className="w-full max-w-md border border-emerald-900/10 rounded-2xl bg-card/90 backdrop-blur p-8 shadow-xl">
+      <div className="text-center mb-6">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
+          {view === "signup" ? "Join the Network" : view === "forgot" ? "Account Recovery" : "Welcome Back"}
+        </span>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+          {view === "signup"
+            ? "Create your account"
+            : view === "forgot"
+            ? "Reset your password"
+            : "Sign in to Green Collective"}
+        </h1>
+      </div>
+
+      {errorMsg && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-700 text-center">
+          {errorMsg}
+        </div>
+      )}
+
+      {infoMsg && (
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-800 text-center font-medium">
+          {infoMsg}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4" key={view}>
+        {view === "signup" && (
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Institution / Organization (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. University, Workplace, or Local Chapter"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="block text-xs font-semibold text-foreground mb-1">Email Address</label>
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+          />
+        </div>
+
+        {view !== "forgot" && (
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-xs font-semibold text-foreground">Password</label>
+              {view === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => switchView("forgot")}
+                  className="text-[11px] font-medium text-emerald-800 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </div>
+            <input
+              type="password"
+              required
+              autoComplete={view === "signup" ? "new-password" : "current-password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+            />
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
+        >
+          {loading
+            ? "Processing..."
+            : view === "signup"
+            ? "Create Account & Continue"
+            : view === "forgot"
+            ? "Send Password Reset Link"
+            : "Sign In"}
+        </button>
+      </form>
+
+      <div className="mt-6 text-center text-xs text-muted-foreground pt-4 border-t border-emerald-900/10 space-y-2">
+        {view === "signup" && (
+          <div>
+            Already have an account?{" "}
+            <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
+              Sign In
+            </button>
+          </div>
+        )}
+        {view === "signin" && (
+          <div>
+            New to Green Collective?{" "}
+            <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline">
+              Create Account
+            </button>
+          </div>
+        )}
+        {view === "forgot" && (
+          <div>
+            Remembered your password?{" "}
+            <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
+              Back to Sign In
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
   return (
     <div className="flex-1 flex flex-col justify-center relative overflow-hidden w-full">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
       <main className="flex-1 flex items-center justify-center px-6 py-12 z-10 w-full">
-        <div className="w-full max-w-md border border-emerald-900/10 rounded-2xl bg-card/90 backdrop-blur p-8 shadow-xl">
-          <div className="text-center mb-6">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
-              {view === "signup" ? "Join the Network" : view === "forgot" ? "Account Recovery" : "Welcome Back"}
-            </span>
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-              {view === "signup"
-                ? "Create your account"
-                : view === "forgot"
-                ? "Reset your password"
-                : "Sign in to Green Collective"}
-            </h1>
-          </div>
-
-          {errorMsg && (
-            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-700 text-center">
-              {errorMsg}
-            </div>
-          )}
-
-          {infoMsg && (
-            <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-800 text-center font-medium">
-              {infoMsg}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4" key={view}>
-            {view === "signup" && (
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
-                  Institution / Organization (Optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. University, Workplace, or Local Chapter"
-                  value={institution}
-                  onChange={(e) => setInstitution(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1">Email Address</label>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-              />
-            </div>
-
-            {view !== "forgot" && (
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-semibold text-foreground">Password</label>
-                  {view === "signin" && (
-                    <button
-                      type="button"
-                      onClick={() => switchView("forgot")}
-                      className="text-[11px] font-medium text-emerald-800 hover:underline"
-                    >
-                      Forgot Password?
-                    </button>
-                  )}
-                </div>
-                <input
-                  type="password"
-                  required
-                  autoComplete={view === "signup" ? "new-password" : "current-password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
-                />
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-[#0f382c] text-white font-semibold rounded-full hover:bg-emerald-900 transition shadow-md text-xs mt-2 disabled:opacity-50"
-            >
-              {loading
-                ? "Processing..."
-                : view === "signup"
-                ? "Create Account & Continue"
-                : view === "forgot"
-                ? "Send Password Reset Link"
-                : "Sign In"}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center text-xs text-muted-foreground pt-4 border-t border-emerald-900/10 space-y-2">
-            {view === "signup" && (
-              <div>
-                Already have an account?{" "}
-                <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
-                  Sign In
-                </button>
-              </div>
-            )}
-            {view === "signin" && (
-              <div>
-                New to Green Collective?{" "}
-                <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline">
-                  Create Account
-                </button>
-              </div>
-            )}
-            {view === "forgot" && (
-              <div>
-                Remembered your password?{" "}
-                <button onClick={() => switchView("signin")} className="font-bold text-[#0f382c] hover:underline">
-                  Back to Sign In
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <Suspense fallback={<div className="text-center p-8 text-xs font-mono text-[#526760]">Loading...</div>}>
+          <LoginFormContent />
+        </Suspense>
       </main>
     </div>
   );
