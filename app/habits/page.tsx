@@ -32,6 +32,7 @@ const ALL_ACTIONS: EcoAction[] = [
 ]
 
 function HabitsContent() {
+  const [userType, setUserType] = useState<'student' | 'community'>('student')
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
@@ -85,8 +86,8 @@ function HabitsContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedFaculty) {
-      setMessage({ type: 'error', text: 'Please select your UBC faculty before submitting.' })
+    if (userType === 'student' && !selectedFaculty) {
+      setMessage({ type: 'error', text: 'Please select your UBC faculty to contribute to the challenge.' })
       return
     }
     if (selectedActionIds.length === 0) {
@@ -106,7 +107,7 @@ function HabitsContent() {
 
       for (const actionId of selectedActionIds) {
         const { error: insertError } = await supabase.from('submissions').insert({
-          faculty_id: selectedFaculty,
+          faculty_id: userType === 'student' ? selectedFaculty : null,
           eco_action_id: actionId,
           quantity: 1,
           status: 'approved',
@@ -115,11 +116,11 @@ function HabitsContent() {
         if (insertError) throw insertError
       }
 
-      setMessage({ type: 'success', text: 'Actions logged successfully to your ledger! Redirecting...' })
+      setMessage({ type: 'success', text: 'Actions logged successfully to your personal ledger!' })
       router.refresh()
 
       setTimeout(() => {
-        window.location.href = '/competition'
+        window.location.href = userType === 'student' ? '/competition' : '/profile'
       }, 1000)
     } catch (err: any) {
       console.error('Submission error:', err)
@@ -148,7 +149,7 @@ function HabitsContent() {
             Verified Action Registry
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Select multiple sustainable actions below to log them directly to your faculty ledger and drive real-time campus impact.
+            Check off multiple sustainable actions below to record your footprint. Choose your participation mode to attribute points accordingly.
           </p>
         </div>
       </section>
@@ -168,30 +169,58 @@ function HabitsContent() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Faculty Selector Bar */}
-          <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                Institutional Affiliation
-              </span>
-              <p className="text-xs font-medium text-[#102f26]">Select your UBC faculty to attribute points:</p>
+          {/* Branching Segment: Student vs Community */}
+          <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+                  Participation Track
+                </span>
+                <p className="text-xs font-medium text-[#102f26]">Are you participating as a UBC student in the faculty challenge?</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUserType('student')}
+                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                    userType === 'student' ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
+                  }`}
+                >
+                  UBC Student (Challenge)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('community')}
+                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                    userType === 'community' ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
+                  }`}
+                >
+                  General Community / Public
+                </button>
+              </div>
             </div>
-            <select
-              value={selectedFaculty}
-              onChange={(e) => setSelectedFaculty(e.target.value)}
-              required
-              className="px-4 py-2 border border-[#102f26]/20 bg-white font-mono text-xs text-[#102f26] focus:outline-none"
-            >
-              <option value="">-- Choose Faculty --</option>
-              {faculties.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+
+            {userType === 'student' && (
+              <div className="pt-4 border-t border-[#102f26]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <span className="text-xs text-[#526760]">Select your UBC faculty for leaderboard credit:</span>
+                <select
+                  value={selectedFaculty}
+                  onChange={(e) => setSelectedFaculty(e.target.value)}
+                  required={userType === 'student'}
+                  className="px-4 py-2 border border-[#102f26]/20 bg-white font-mono text-xs text-[#102f26] focus:outline-none"
+                >
+                  <option value="">-- Choose UBC Faculty --</option>
+                  {faculties.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          {/* Category Filter Bar (Matches Screenshot 2 layout) */}
+          {/* Category Filter Bar */}
           <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/15 pb-6">
             {['ALL', 'TRANSPORT', 'FOOD', 'ENERGY', 'WASTE', 'COMMUNITY'].map((cat) => (
               <button
@@ -207,7 +236,7 @@ function HabitsContent() {
             ))}
           </div>
 
-          {/* Action List Feed (Matches Screenshot 2 layout with Checkboxes) */}
+          {/* Action List Feed with Checkboxes & Auto-Sorting */}
           <div className="border-t border-[#102f26]/15 divide-y divide-[#102f26]/15">
             {filteredActions.map((action) => {
               const isSelected = selectedActionIds.includes(action.id)
@@ -226,7 +255,7 @@ function HabitsContent() {
                       </span>
                       {isSelected && (
                         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#39705d] font-bold">
-                          ✓ Selected from Homepage
+                          ✓ Selected
                         </span>
                       )}
                     </div>
