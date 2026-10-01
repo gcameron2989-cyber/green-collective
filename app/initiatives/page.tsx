@@ -27,7 +27,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "VANCOUVER",
     description: "Long-term monitoring of forest health, wildfire fuel loads, and carbon sequestration across research forests and campus canopy plots.",
     impactScope: "100+ Regional Plots Audited · Carbon Sink Monitoring",
-    officialPortalUrl: "https://forestry.ubc.ca/",
+    officialPortalUrl: "https://forestry.ubc.ca",
   },
   {
     id: "vancouver-zero-waste-2040",
@@ -39,7 +39,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "VANCOUVER",
     description: "Comprehensive city policy and merchant network targeted at eliminating disposable packaging and expanding reusable food container systems.",
     impactScope: "Municipal Single-Use Reduction Strategy",
-    officialPortalUrl: "https://vancouver.ca/zero-waste",
+    officialPortalUrl: "https://vancouver.ca/green-vancouver/zero-waste-vancouver.aspx",
   },
   {
     id: "translink-climate-action-plan",
@@ -51,7 +51,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "VANCOUVER",
     description: "Regional transit decarbonization roadmap prioritizing electric bus deployment and active transportation corridor integration.",
     impactScope: "Zero-Emission Bus Fleet · RapidBus Corridor Expansion",
-    officialPortalUrl: "https://www.translink.ca/plans-and-projects/strategies-plans-and-guidelines/environment-and-sustainability/climate-action-plan",
+    officialPortalUrl: "https://www.translink.ca/about-us/about-translink/sustainability",
   },
   {
     id: "ubc-cap-2030",
@@ -63,7 +63,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "UBC POINT GREY",
     description: "Institutional net-zero roadmap targeting an 85% reduction in operational emissions and zero-waste residence operations by 2030.",
     impactScope: "Campus District Energy Systems · Scope 3 Emission Scoping",
-    officialPortalUrl: "https://sustain.ubc.ca/climate-action-plan-2030",
+    officialPortalUrl: "https://sustain.ubc.ca/campus-initiatives/climate-action/climate-action-plan-2030",
   },
   {
     id: "toronto-ravine-strategy",
@@ -87,7 +87,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "GREATER TORONTO AREA",
     description: "Restoring urban wetlands, improving stormwater quality, and maintaining green infrastructure across major Southern Ontario watersheds.",
     impactScope: "Regional Watershed Monitoring · Shoreline Protection",
-    officialPortalUrl: "https://trca.ca/conservation/green-infrastructure/",
+    officialPortalUrl: "https://trca.ca",
   },
   {
     id: "c40-cities-climate-network",
@@ -99,7 +99,7 @@ export const VERIFIED_INITIATIVES: RealInitiative[] = [
     locationTag: "INTERNATIONAL",
     description: "Global coalition of mayors and municipal leaders taking urgent action to confront the climate crisis and drive urban sustainability.",
     impactScope: "Urban Climate Action Benchmarking · Global Municipal Standards",
-    officialPortalUrl: "https://www.c40.org/",
+    officialPortalUrl: "https://www.c40.org",
   },
 ];
 
@@ -126,24 +126,7 @@ export default function InitiativesPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111827] font-sans antialiased pb-20">
-      {/* Navbar Header matching screenshot */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-30 px-8 py-3.5 flex items-center justify-between text-xs tracking-wider font-semibold">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 font-black text-sm tracking-tight text-[#0F2C23]">
-            <span className="w-4 h-4 bg-[#0F2C23] rounded-sm flex items-center justify-center text-[10px] text-white">■</span>
-            Green Collective
-          </Link>
-          <div className="hidden md:flex items-center gap-6 text-gray-500 font-mono text-[11px]">
-            <Link href="/actions" className="hover:text-black transition">ACTIONS</Link>
-            <Link href="/initiatives" className="text-black font-bold underline underline-offset-4">INITIATIVES</Link>
-            <Link href="/about" className="hover:text-black transition">ABOUT</Link>
-            <Link href="/contact" className="hover:text-black transition">CONTACT</Link>
-          </div>
-        </div>
-        <div>
-          <Link href="/login" className="text-gray-500 hover:text-black font-mono text-[11px]">LOG IN</Link>
-        </div>
-      </nav>
+      {/* NO NAVBAR HERE - Relying strictly on app/layout.tsx to prevent duplicate header */}
 
       <main className="max-w-7xl mx-auto px-6 pt-8 pb-16">
         {/* Region Filters + Search Input Header Row */}
@@ -200,9 +183,11 @@ export default function InitiativesPage() {
                     <span className="text-gray-500">{item.locationTag}</span>
                   </div>
 
-                  {/* Title linking to internal subpage */}
-                  <h2 className="text-lg font-bold text-gray-900 hover:text-[#0F2C23] transition mb-0.5">
-                    <Link href={`/initiatives/${item.id}`}>{item.title}</Link>
+                  {/* Title */}
+                  <h2 className="text-lg font-bold text-gray-900 mb-0.5">
+                    <Link href={`/initiatives/${item.id}`} className="hover:text-[#0F2C23] transition">
+                      {item.title}
+                    </Link>
                   </h2>
 
                   {/* Lead Organization */}
@@ -221,7 +206,7 @@ export default function InitiativesPage() {
                   </p>
                 </div>
 
-                {/* Right Action Button */}
+                {/* Direct External Portal Button */}
                 <div className="shrink-0 flex items-center">
                   <a
                     href={item.officialPortalUrl}
