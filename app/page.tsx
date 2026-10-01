@@ -12,32 +12,60 @@ const DEMO_ACTIONS = [
 
 const MAIN_ACTIONS = [
   {
+    id: 'sustainable-commute',
     category: 'TRANSPORT',
     name: 'Public / active transportation',
-    description: 'Replace a car trip with walking, cycling, transit, or another lower-impact option.',
+    description: 'Replace a personal vehicle trip with walking, cycling, or public transit.',
     impact: '~1.5 kg CO₂e / trip',
-    id: 'sustainable-commute',
   },
   {
+    id: 'plant-based-meal',
     category: 'FOOD',
     name: 'Plant-forward meal',
-    description: 'Choose a meal centred around plant-based ingredients.',
+    description: 'Choose a meal centered around whole plant ingredients instead of high-emission livestock.',
     impact: '~1.2 kg CO₂e / meal',
-    id: 'plant-based-meal',
   },
   {
-    category: 'WASTE',
-    name: 'Waste sorting',
-    description: 'Sort recyclable, compostable, and landfill materials correctly.',
-    impact: '~0.5 kg CO₂e / action',
-    id: 'waste-sorting',
-  },
-  {
-    category: 'ENERGY',
-    name: 'Cold-water laundry',
-    description: 'Wash clothing using cold water instead of a hot cycle.',
-    impact: '~0.6 kg CO₂e / load',
     id: 'cold-water-laundry',
+    category: 'ENERGY',
+    name: 'Cold-water laundry load',
+    description: 'Wash clothing in cold water to eliminate heating energy demand per cycle.',
+    impact: '~0.6 kg CO₂e / load',
+  },
+  {
+    id: 'waste-sorting',
+    category: 'WASTE',
+    name: 'Three-stream waste sorting',
+    description: 'Direct organics, recyclables, and landfill materials into their correct streams.',
+    impact: '~0.5 kg CO₂e / action',
+  },
+  {
+    id: 'reusable-cup',
+    category: 'CIRCULARITY',
+    name: 'Reusable mug / container',
+    description: 'Divert single-use paper cups and takeaway packaging with personal reusables.',
+    impact: '~0.15 kg CO₂e / use',
+  },
+  {
+    id: 'line-dry',
+    category: 'ENERGY',
+    name: 'Air-dry clothing',
+    description: 'Bypass electric tumble drying completely in favor of drying racks or clothing lines.',
+    impact: '~2.4 kg CO₂e / load',
+  },
+  {
+    id: 'shower-timer',
+    category: 'WATER & ENERGY',
+    name: 'Low-flow 5-min shower',
+    description: 'Limit hot water usage time to conserve municipal energy and water treatment resources.',
+    impact: '~0.9 kg CO₂e / shower',
+  },
+  {
+    id: 'second-hand',
+    category: 'CONSUMPTION',
+    name: 'Thrift / second-hand item',
+    description: 'Source apparel or goods second-hand to avoid manufacturing supply chain footprints.',
+    impact: '~4.2 kg CO₂e / item',
   },
 ];
 
@@ -46,6 +74,13 @@ export default function HomePage() {
     'sustainable-commute',
     'plant-based-meal',
   ]);
+
+  // Modal & form states for proposing new actions
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [proposedName, setProposedName] = useState('');
+  const [proposedCategory, setProposedCategory] = useState('TRANSPORT');
+  const [proposedDesc, setProposedDesc] = useState('');
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   const toggleDemoAction = (id: string) => {
     setSelectedDemoActions((prev) =>
@@ -58,6 +93,18 @@ export default function HomePage() {
   )
     .reduce((sum, action) => sum + action.impact, 0)
     .toFixed(1);
+
+  const handleProposeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proposedName.trim()) return;
+    setSubmissionSuccess(true);
+    setTimeout(() => {
+      setSubmissionSuccess(false);
+      setIsModalOpen(false);
+      setProposedName('');
+      setProposedDesc('');
+    }, 2000);
+  };
 
   return (
     <main className="bg-[#f9f8f6] text-[#102f26] font-sans antialiased">
@@ -95,31 +142,61 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* REAL VALUE PILLARS (Replaces hardcoded / placeholder stats) */}
-          <div className="mt-16 grid grid-cols-1 gap-6 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
-            <div className="border-l-2 border-[#102f26]/20 pl-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
-                01 / Action Ledger
+          {/* CLICKABLE PILLARS (Directs to subpages) */}
+          <div className="mt-16 grid grid-cols-1 gap-4 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
+            <Link
+              href="/habits"
+              className="group block rounded-sm border border-[#102f26]/10 bg-white/40 p-4 transition-all hover:border-[#102f26]/30 hover:bg-white hover:shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                  01 / Action Ledger
+                </p>
+                <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
+                  →
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
+                Multi-select entry
               </p>
-              <p className="mt-1 text-sm font-medium text-[#102f26]">Multi-select entry</p>
               <p className="mt-0.5 text-xs text-[#526760]">Log sustainable daily choices in seconds.</p>
-            </div>
+            </Link>
 
-            <div className="border-l-2 border-[#102f26]/20 pl-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
-                02 / Campus & Municipal
+            <Link
+              href="/competition"
+              className="group block rounded-sm border border-[#102f26]/10 bg-white/40 p-4 transition-all hover:border-[#102f26]/30 hover:bg-white hover:shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                  02 / Campus & Municipal
+                </p>
+                <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
+                  →
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
+                Institutional tiers
               </p>
-              <p className="mt-1 text-sm font-medium text-[#102f26]">Institutional tiers</p>
               <p className="mt-0.5 text-xs text-[#526760]">Group progress by faculty, campus, or local hub.</p>
-            </div>
+            </Link>
 
-            <div className="border-l-2 border-[#102f26]/20 pl-4">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
-                03 / Impact Models
+            <Link
+              href="/about#methodology"
+              className="group block rounded-sm border border-[#102f26]/10 bg-white/40 p-4 transition-all hover:border-[#102f26]/30 hover:bg-white hover:shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                  03 / Impact Models
+                </p>
+                <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
+                  →
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
+                Standardized CO₂e
               </p>
-              <p className="mt-1 text-sm font-medium text-[#102f26]">Standardized CO₂e</p>
               <p className="mt-0.5 text-xs text-[#526760]">Transparent, factor-based carbon offset estimates.</p>
-            </div>
+            </Link>
           </div>
 
         </div>
@@ -130,7 +207,6 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             
-            {/* Left Explanation */}
             <div className="lg:col-span-5 space-y-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
                 Interactive Micro-Demo
@@ -152,11 +228,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Interactive Logger Box */}
             <div className="lg:col-span-7">
               <div className="border border-[#102f26]/15 bg-[#f9f8f6] shadow-sm">
                 
-                {/* Header with Live Counter */}
                 <div className="flex items-center justify-between border-b border-[#102f26]/10 px-6 py-4 bg-[#e2ede5]/50">
                   <div className="flex items-center gap-2.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-[#39705d] animate-pulse" />
@@ -169,7 +243,6 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Actions Grid */}
                 <div className="p-6 grid gap-3 sm:grid-cols-2">
                   {DEMO_ACTIONS.map((action) => {
                     const isSelected = selectedDemoActions.includes(action.id);
@@ -209,7 +282,6 @@ export default function HomePage() {
                   })}
                 </div>
 
-                {/* Footer Link */}
                 <div className="border-t border-[#102f26]/10 bg-[#102f26] px-6 py-4 text-white flex items-center justify-between">
                   <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/80">
                     Selected Actions: {selectedDemoActions.length} of {DEMO_ACTIONS.length}
@@ -229,79 +301,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. THE COLLECTIVE FRAMEWORK */}
-      <section className="border-b border-[#102f26]/10 bg-[#f9f8f6]">
-        <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
-          <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
-                The collective
-              </p>
-            </div>
-
-            <div>
-              <h2 className="max-w-4xl text-3xl font-medium leading-tight tracking-[-0.04em] md:text-5xl">
-                Your actions don&apos;t exist in isolation.
-              </h2>
-
-              <p className="mt-6 max-w-2xl text-base leading-7 text-[#526760] md:text-lg">
-                Green Collective connects individual activity with local communities
-                and institutions so participation becomes measurable progress.
-              </p>
-
-              <div className="mt-12 border-t border-[#102f26]/15">
-                <div className="grid md:grid-cols-3">
-                  <div className="border-b border-[#102f26]/10 py-7 md:border-b-0 md:border-r md:pr-8">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-                      01
-                    </p>
-                    <h3 className="mt-4 text-xl font-medium">Individual</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#667871]">
-                      Record choices seamlessly via the action registry.
-                    </p>
-                  </div>
-
-                  <div className="border-b border-[#102f26]/10 py-7 md:border-b-0 md:border-r md:px-8">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-                      02
-                    </p>
-                    <h3 className="mt-4 text-xl font-medium">Local & Community</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#667871]">
-                      Measure aggregate impact across regional municipal hubs.
-                    </p>
-                  </div>
-
-                  <div className="py-7 md:pl-8">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-                      03
-                    </p>
-                    <h3 className="mt-4 text-xl font-medium">Institutional</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#667871]">
-                      Participate in faculty challenges and organizational goals.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. ACTION LIBRARY */}
-      <section className="bg-[#102f26] text-white">
-        <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
+      {/* 3. EXPANDED ACTION LIBRARY & PROPOSAL OPTION */}
+      <section className="bg-[#102f26] text-white py-20 md:py-28">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
             <div>
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#9bb9aa]">
-                Action library
+                Action Library
               </p>
 
               <h2 className="mt-6 max-w-sm text-3xl font-medium leading-tight tracking-[-0.04em] md:text-4xl">
-                Start with something you already do.
+                Start with habits that fit your routine.
               </h2>
               <p className="mt-4 text-xs font-mono uppercase tracking-[0.14em] text-[#9bb9aa]/70">
-                Clicking any action pre-selects it instantly in your personal ledger.
+                Clicking any action pre-selects it in your personal ledger.
               </p>
+
+              {/* Propose Action Button */}
+              <div className="mt-10 pt-6 border-t border-white/10">
+                <p className="text-sm text-white/70">Missing an action you do regularly?</p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-2 border border-[#9bb9aa]/30 bg-white/5 px-4 py-2.5 text-xs font-mono uppercase tracking-[0.14em] text-[#9bb9aa] transition-all hover:bg-white/10 hover:border-[#9bb9aa]"
+                >
+                  <span>+ Propose New Action</span>
+                </button>
+              </div>
             </div>
 
             <div className="border-t border-white/15">
@@ -341,7 +367,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. LEADERBOARDS OVERVIEW */}
+      {/* 4. LEADERBOARDS OVERVIEW */}
       <section className="border-b border-[#102f26]/10 bg-[#f9f8f6]">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
@@ -402,7 +428,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6. CLOSING CTA */}
+      {/* 5. CLOSING CTA */}
       <section className="bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="max-w-5xl">
@@ -428,6 +454,106 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* PROPOSE NEW ACTION MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#102f26]/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg border border-[#102f26]/20 bg-[#f9f8f6] p-6 shadow-xl sm:p-8">
+            <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                Community Action Registry
+              </span>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                type="button"
+                className="text-xs font-mono uppercase text-[#102f26]/60 hover:text-[#102f26]"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {submissionSuccess ? (
+              <div className="py-12 text-center space-y-3">
+                <span className="text-2xl">✓</span>
+                <h3 className="text-xl font-medium text-[#102f26]">Action Submitted for Approval</h3>
+                <p className="text-xs text-[#526760]">
+                  Thanks for contributing! Our team will review the carbon methodology before publishing to the registry.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleProposeSubmit} className="mt-6 space-y-4">
+                <div>
+                  <h3 className="text-xl font-medium text-[#102f26]">Propose a New Action</h3>
+                  <p className="mt-1 text-xs text-[#526760]">
+                    Submitted actions undergo factor review before being added to global registry options.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[10px] uppercase tracking-wider text-[#39705d] mb-1">
+                    Action Title
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Solar panel maintenance, Backyard composting"
+                    value={proposedName}
+                    onChange={(e) => setProposedName(e.target.value)}
+                    className="w-full border border-[#102f26]/20 bg-white px-3 py-2 text-sm text-[#102f26] focus:border-[#102f26] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[10px] uppercase tracking-wider text-[#39705d] mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={proposedCategory}
+                    onChange={(e) => setProposedCategory(e.target.value)}
+                    className="w-full border border-[#102f26]/20 bg-white px-3 py-2 text-sm text-[#102f26] focus:border-[#102f26] focus:outline-none"
+                  >
+                    <option value="TRANSPORT">Transport</option>
+                    <option value="FOOD">Food</option>
+                    <option value="ENERGY">Energy</option>
+                    <option value="WASTE">Waste</option>
+                    <option value="WATER & ENERGY">Water & Energy</option>
+                    <option value="CIRCULARITY">Circularity</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-mono text-[10px] uppercase tracking-wider text-[#39705d] mb-1">
+                    Description & Methodology Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe how this action reduces emissions or conserves resources..."
+                    value={proposedDesc}
+                    onChange={(e) => setProposedDesc(e.target.value)}
+                    className="w-full border border-[#102f26]/20 bg-white px-3 py-2 text-sm text-[#102f26] focus:border-[#102f26] focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="border border-[#102f26]/20 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#102f26]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#102f26] px-5 py-2 text-xs font-mono uppercase tracking-wider text-white hover:bg-[#1a4438]"
+                  >
+                    Submit for Review
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
