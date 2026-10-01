@@ -6,7 +6,7 @@ import Link from 'next/link';
 interface CommunityProject {
   id: string;
   city: string;
-  category: "Urban Forestry" | "Watershed Health" | "Habitat Restoration" | "Community Stewardship";
+  category: "Urban Forestry" | "Watershed Health" | "Habitat Restoration" | "Community Stewardship" | "Virtual Research & Advocacy";
   title: string;
   organization: string;
   description: string;
@@ -50,6 +50,33 @@ const communityProjects: CommunityProject[] = [
     description: "Collaborate on neighborhood-level urban forestry education, yard tree planting consultations, and resident stewardship workshops.",
     link: "https://www.yourleaf.org/planting-private-property",
   },
+  {
+    id: "comm-05",
+    city: "Global / Remote",
+    category: "Virtual Research & Advocacy",
+    title: "Global Forest Watch & Satellite Canopy Mapping",
+    organization: "World Resources Institute (WRI)",
+    description: "Contribute remotely to open-source satellite imagery classification, identifying deforestation hotspots, and verifying tree cover loss data worldwide.",
+    link: "https://www.globalforestwatch.org/help/get-involved/",
+  },
+  {
+    id: "comm-06",
+    city: "Global / Remote",
+    category: "Virtual Research & Advocacy",
+    title: "Open Climate Data & Greenhouse Gas Inventory Mapping",
+    organization: "Climate TRACE",
+    description: "Assist virtual research cohorts in analyzing open-source emissions datasets, industrial facility tracking, and sectoral carbon accounting models.",
+    link: "https://climatetrace.org/",
+  },
+  {
+    id: "comm-07",
+    city: "Global / Remote",
+    category: "Virtual Research & Advocacy",
+    title: "Zooniverse Citizen Science: Biodiversity & Climate Observations",
+    organization: "Zooniverse & University of Oxford",
+    description: "Participate in crowdsourced ecological classification, analyzing camera trap imagery, audio recordings of endangered bird species, and historical weather logs.",
+    link: "https://www.zooniverse.org/projects?query=climate&selectedTab=science",
+  }
 ];
 
 export default function CommunityActionPage() {
@@ -63,7 +90,7 @@ export default function CommunityActionPage() {
   });
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
       {/* Editorial Page Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
@@ -74,7 +101,7 @@ export default function CommunityActionPage() {
             Broad Community Action &amp; Regional Stewardship
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Connect directly with active field initiatives, ecological restoration crews, and municipal stewardship programs in your region.
+            Connect directly with active field initiatives, ecological restoration crews, municipal stewardship programs, and virtual remote research coalitions.
           </p>
         </div>
       </section>
@@ -86,25 +113,20 @@ export default function CommunityActionPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                Region
+                Region / Scope
               </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setUserCity("Vancouver")}
-                  className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                    userCity === "Vancouver" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
-                  }`}
-                >
-                  Vancouver
-                </button>
-                <button
-                  onClick={() => setUserCity("Toronto")}
-                  className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                    userCity === "Toronto" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
-                  }`}
-                >
-                  Toronto
-                </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {["Vancouver", "Toronto", "Global / Remote"].map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => setUserCity(city)}
+                    className={`px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                      userCity === city ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
+                    }`}
+                  >
+                    {city}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -114,7 +136,7 @@ export default function CommunityActionPage() {
               Stewardship Pillar
             </span>
             <div className="flex flex-wrap items-center gap-2">
-              {["All", "Urban Forestry", "Watershed Health", "Habitat Restoration", "Community Stewardship"].map((cat) => (
+              {["All", "Urban Forestry", "Watershed Health", "Habitat Restoration", "Community Stewardship", "Virtual Research & Advocacy"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -134,7 +156,7 @@ export default function CommunityActionPage() {
           <div>
             <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
               <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                Verified Field Programs &amp; Portals
+                Verified Field &amp; Virtual Programs ({userCity})
               </h2>
               <span className="font-mono text-[10px] text-[#39705d]">{filteredProjects.length} Active</span>
             </div>
@@ -179,7 +201,7 @@ export default function CommunityActionPage() {
                 Ledger Integration
               </span>
               <p className="text-xs text-[#526760] mb-4">
-                Completed volunteer hours or field stewardship work? Log your participation directly to your impact ledger.
+                Completed volunteer hours or remote conservation work? Log your participation directly to your impact ledger.
               </p>
               <Link
                 href="/habits"
