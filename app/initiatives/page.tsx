@@ -4,176 +4,219 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 interface Initiative {
-  code: string;
-  category: string;
+  id: string;
   title: string;
+  category: string;
+  region: 'vancouver' | 'toronto' | 'global';
+  points: number;
   description: string;
-  status: string;
-  href: string;
-  regions: string[];
+  actionParam: string;
 }
 
-const initiativesList: Initiative[] = [
+const REGIONAL_INITIATIVES: Initiative[] = [
+  // --- Vancouver / UBC Initiatives ---
   {
-    code: "01",
-    category: "Institutional Challenge",
-    title: "UBC Sustainability Challenge",
-    description: "Participate in faculty-wide challenges to measure aggregate carbon savings and drive campus sustainability metrics collectively.",
-    status: "Active Program",
-    href: "/competition",
-    regions: ["Vancouver", "Global / Remote"],
+    id: 'ubc-forestry-field',
+    title: 'Campus Tree Care & Ecosystem Field Audit',
+    category: 'UBC Stewardship',
+    region: 'vancouver',
+    points: 50,
+    description: 'Participate in forestry audits and campus canopy maintenance across Point Grey grounds.',
+    actionParam: 'ubc-forestry-field',
   },
   {
-    code: "02",
-    category: "Community Action",
-    title: "Broad Community Action & Regional Stewardship",
-    description: "Coordinate with regional partners and municipal groups across urban forestry, watershed health, and localized sustainability initiatives.",
-    status: "Ongoing",
-    href: "/initiatives/community-action",
-    regions: ["Vancouver", "Toronto"],
+    id: 'sustainable-commute-ubc',
+    title: 'Transit, Cycling, or Walking Commute (99 B-Line / SkyTrain)',
+    category: 'Mobility & Energy',
+    region: 'vancouver',
+    points: 25,
+    description: 'Skip single-occupancy vehicles; commute via regional Vancouver transit networks or active bike lanes.',
+    actionParam: 'sustainable-commute-ubc',
   },
   {
-    code: "03",
-    category: "Policy & Research",
-    title: "Green Transit & Drivetrain Transition",
-    description: "Evaluate lifecycle emissions, municipal charging infrastructure, and policy frameworks for heavy-duty and commuter transport networks.",
-    status: "Research Phase",
-    href: "/initiatives/transport-policy",
-    regions: ["Vancouver", "Toronto", "Global / Remote"],
+    id: 'home-meal-van',
+    title: 'Zero Single-Use Campus Meal Prep',
+    category: 'Zero Waste & Dining',
+    region: 'vancouver',
+    points: 30,
+    description: 'Bring lunch and snacks from home using reusable containers and zero single-use plastics.',
+    actionParam: 'home-meal',
+  },
+
+  // --- Toronto / GTA Initiatives ---
+  {
+    id: 'transit-ttc-toronto',
+    title: 'TTC Subway, Streetcar, or Active Transit Commute',
+    category: 'Mobility & Energy',
+    region: 'toronto',
+    points: 25,
+    description: 'Utilize public transit lines across the GTA instead of personal automotive transport.',
+    actionParam: 'sustainable-commute-ubc',
+  },
+  {
+    id: 'local-market-produce-to',
+    title: 'Local Ontario Seasonal Produce Sourcing',
+    category: 'Circular Economy',
+    region: 'toronto',
+    points: 30,
+    description: 'Source zero-waste or local Ontario food boxes to minimize regional supply chain footprints.',
+    actionParam: 'thrift-borrow-gear',
+  },
+  {
+    id: 'gta-community-cleanup',
+    title: 'GTA Ravine & Neighborhood Green Space Cleanup',
+    category: 'Stewardship',
+    region: 'toronto',
+    points: 45,
+    description: 'Join local community volunteer efforts to clear waste from Toronto ravines and parks.',
+    actionParam: 'campus-cleanup',
+  },
+
+  // --- Global / Remote Initiatives ---
+  {
+    id: 'remote-energy-audit',
+    title: 'Home Energy & Smart Lighting Reduction Audit',
+    category: 'Energy Conservation',
+    region: 'global',
+    points: 35,
+    description: 'Optimize home thermal settings, execute LED retrofits, and eliminate phantom load power drains.',
+    actionParam: 'waste-sorting',
+  },
+  {
+    id: 'digital-sustainability-brief',
+    title: 'Author Policy Brief or Open-Source Climate Documentation',
+    category: 'Advocacy & Research',
+    region: 'global',
+    points: 50,
+    description: 'Contribute technical research, open-source code, or policy whitepapers toward global climate action platforms.',
+    actionParam: 'ubc-forestry-field',
+  },
+  {
+    id: 'zero-waste-digital-workspace',
+    title: 'Digital Carbon Footprint & Cloud Storage Cleanse',
+    category: 'Digital Efficiency',
+    region: 'global',
+    points: 20,
+    description: 'Purge redundant cloud backups, optimize server queries, and minimize unnecessary data storage energy draw.',
+    actionParam: 'home-beverage',
   },
 ];
 
 export default function InitiativesPage() {
-  const [selectedRegion, setSelectedRegion] = useState<string>("Vancouver");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedRegion, setSelectedRegion] = useState<'vancouver' | 'toronto' | 'global'>('vancouver');
 
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
-      return;
-    }
-
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        if (latitude > 48.0 && latitude < 50.0 && longitude > -124.0 && longitude < -122.0) {
-          setSelectedRegion("Vancouver");
-        } else if (latitude > 43.0 && latitude < 44.5 && longitude > -80.0 && longitude < -79.0) {
-          setSelectedRegion("Toronto");
-        } else {
-          setSelectedRegion("Global / Remote");
-        }
-        setLoading(false);
-      },
-      () => {
-        alert("Unable to retrieve your location. Defaulting to Vancouver.");
-        setLoading(false);
-      }
-    );
-  };
-
-  const filteredInitiatives = initiativesList.filter((item) =>
-    item.regions.includes(selectedRegion)
+  const filteredInitiatives = REGIONAL_INITIATIVES.filter(
+    (item) => item.region === selectedRegion
   );
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24">
-      {/* Editorial Page Header */}
+    <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
-          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-            Programs · Scale · Impact
-          </p>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+              Green Collective · Initiative Registry
+            </p>
+            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
+              <Link href="/" className="text-[#526760] hover:text-[#102f26] transition">
+                ← Home
+              </Link>
+              <Link href="/competition/submit" className="text-[#526760] hover:text-[#102f26] transition">
+                Log Action →
+              </Link>
+            </div>
+          </div>
           <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
-            Shared initiatives &amp; community programs
+            Verified Regional Initiatives
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Individual actions compound into measurable institutional progress when aligned through structured community programs.
+            Explore region-specific actions designed for campus life, metropolitan transit networks, and remote contributors.
           </p>
         </div>
       </section>
 
-      {/* Main Initiatives Section */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
-        {/* Location Curation Toolbar */}
-        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-              Contextual Curation
+              Filter by Operating Region
             </span>
-            <p className="text-sm font-medium text-[#102f26]">
-              Showing programs for: <span className="underline font-mono uppercase text-xs">{selectedRegion}</span>
+            <p className="text-xs text-[#526760]">
+              Select your active zone to view tailored action paths.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleDetectLocation}
-              disabled={loading}
-              className="px-4 py-2 bg-[#102f26] text-white font-mono text-[10px] uppercase tracking-[0.16em] hover:bg-[#102f26]/90 transition disabled:opacity-50"
+              onClick={() => setSelectedRegion('vancouver')}
+              className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                selectedRegion === 'vancouver'
+                  ? 'bg-[#102f26] text-white shadow-sm'
+                  : 'bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]'
+              }`}
             >
-              {loading ? "Locating..." : "Detect My Location"}
+              Vancouver / UBC
             </button>
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#102f26]/20 font-mono text-xs text-[#102f26] focus:outline-none"
+            <button
+              onClick={() => setSelectedRegion('toronto')}
+              className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                selectedRegion === 'toronto'
+                  ? 'bg-[#102f26] text-white shadow-sm'
+                  : 'bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]'
+              }`}
             >
-              <option value="Vancouver">Vancouver, BC</option>
-              <option value="Toronto">Toronto, ON</option>
-              <option value="Global / Remote">Global / Remote</option>
-            </select>
+              Toronto / GTA
+            </button>
+            <button
+              onClick={() => setSelectedRegion('global')}
+              className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                selectedRegion === 'global'
+                  ? 'bg-[#102f26] text-white shadow-sm'
+                  : 'bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]'
+              }`}
+            >
+              Global / Remote
+            </button>
           </div>
         </div>
 
-        {/* Initiatives List Grid */}
-        <div className="border-t border-[#102f26]/15">
-          {filteredInitiatives.length > 0 ? (
-            filteredInitiatives.map((item) => (
-              <div
-                key={item.code}
-                className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
+        {filteredInitiatives.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredInitiatives.map((item) => (
+              <Link
+                key={item.id}
+                href={`/competition/submit?action=${item.actionParam}`}
+                className="group p-8 border border-[#102f26]/15 bg-white hover:border-[#102f26] transition flex flex-col justify-between shadow-sm hover:shadow-md"
               >
-                <div className="grid gap-6 lg:grid-cols-[0.3fr_1.2fr_0.5fr] lg:items-center">
-                  <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block">
-                      Initiative / {item.code}
-                    </span>
-                    <span className="mt-1 inline-block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                      {item.status}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#39705d] block mb-1">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#39705d] bg-[#f1f6f2] px-2.5 py-1">
                       {item.category}
                     </span>
-                    <h3 className="text-2xl font-medium tracking-tight text-[#102f26]">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-[#526760]">
-                      {item.description}
-                    </p>
+                    <span className="font-mono text-xs font-medium text-[#102f26]">
+                      +{item.points} pts
+                    </span>
                   </div>
-
-                  <div className="lg:text-right">
-                    <Link
-                      href={item.href}
-                      className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-xs uppercase tracking-[0.14em] transition-opacity hover:opacity-55"
-                    >
-                      View program →
-                    </Link>
-                  </div>
+                  <h3 className="text-xl font-medium tracking-tight text-[#102f26] group-hover:text-[#39705d] transition">
+                    {item.title}
+                  </h3>
+                  <p className="mt-3 text-xs text-[#526760] leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-16 text-center text-[#526760] font-mono text-xs uppercase tracking-wider">
-              No active programs currently listed for this specific region.
-            </div>
-          )}
-        </div>
+
+                <div className="mt-8 pt-4 border-t border-[#102f26]/10 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-[#39705d]">
+                  <span>Log action in ledger</span>
+                  <span className="transform group-hover:translate-x-1 transition">→</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="p-16 border border-dashed border-[#102f26]/20 bg-white text-center font-mono text-xs text-[#526760] uppercase tracking-wider">
+            No specific initiatives registered for this zone yet.
+          </div>
+        )}
       </section>
     </main>
   );
