@@ -26,19 +26,20 @@ export async function createInitiative(formData: FormData) {
     category,
     location,
     user_id: user.id,
+    upvotes: 1,
   })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/')
+  revalidatePath('/initiatives')
+  revalidatePath('/dashboard')
 }
 
 export async function upvoteInitiative(initiativeId: string) {
   const supabase = await createClient()
   
-  // Fetch current upvotes
   const { data: initiative, error: fetchError } = await supabase
     .from('initiatives')
     .select('upvotes')
@@ -51,7 +52,6 @@ export async function upvoteInitiative(initiativeId: string) {
 
   const currentVotes = initiative?.upvotes || 0
 
-  // Increment upvote count
   const { error } = await supabase
     .from('initiatives')
     .update({ upvotes: currentVotes + 1 })
@@ -62,4 +62,5 @@ export async function upvoteInitiative(initiativeId: string) {
   }
 
   revalidatePath('/initiatives')
+  revalidatePath('/dashboard')
 }
