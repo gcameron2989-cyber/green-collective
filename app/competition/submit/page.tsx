@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Faculty {
   id: string
@@ -28,7 +28,7 @@ const ECO_ACTIONS = [
   { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in AMS / Faculty Eco-Action Cleanup', points: 50 },
 ]
 
-export default function SubmitActionPage() {
+function SubmitFormContent() {
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
   const [selectedAction, setSelectedAction] = useState<string>('')
@@ -40,8 +40,15 @@ export default function SubmitActionPage() {
 
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
+    // Check if an action was pre-selected from a homepage card click via URL params
+    const actionParam = searchParams.get('action')
+    if (actionParam) {
+      setSelectedAction(actionParam)
+    }
+
     const fetchFaculties = async () => {
       const { data, error } = await supabase
         .from('faculties')
@@ -55,7 +62,7 @@ export default function SubmitActionPage() {
       }
     }
     fetchFaculties()
-  }, [supabase])
+  }, [supabase, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -238,5 +245,13 @@ export default function SubmitActionPage() {
         </form>
       </section>
     </main>
+  )
+}
+
+export default function SubmitActionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Submission Portal...</div>}>
+      <SubmitFormContent />
+    </Suspense>
   )
 }
