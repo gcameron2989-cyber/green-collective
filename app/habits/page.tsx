@@ -1,552 +1,280 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import React, { useState, useEffect, Suspense } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-interface Habit {
-  id: string;
-  title: string;
-  description: string;
-  category: "Transport" | "Waste" | "Energy" | "Food" | "Community";
-  baseCo2PerUnit: number; // kg CO2e per unit or per km
-  unit: string;
-  completedToday: boolean;
-  actionId: string;
-  isDistanceBased?: boolean;
-  distanceKm?: number;
-  citationSource: string;
+interface Faculty {
+  id: string
+  name: string
 }
 
-const EXTENSIVE_HABITS: Habit[] = [
-  // Transport (Distance Based)
-  {
-    id: "h1",
-    title: "Public Transit Commute",
-    description: "Replaced a personal vehicle trip with Skytrain, bus, or SeaBus.",
-    category: "Transport",
-    baseCo2PerUnit: 0.17, // Net savings per passenger-km compared to average car
-    unit: "km",
-    completedToday: false,
-    actionId: "sustainable-commute",
-    isDistanceBased: true,
-    distanceKm: 12,
-    citationSource: "US EPA & CUTA passenger-km transit displacement averages, accounting for regional electric grid intensity.",
-  },
-  {
-    id: "h2",
-    title: "Active Transportation (Bike / Walk)",
-    description: "Chose cycling or walking instead of motorized transport.",
-    category: "Transport",
-    baseCo2PerUnit: 0.21, // Full displacement of average passenger vehicle per km
-    unit: "km",
-    completedToday: false,
-    actionId: "active-transport",
-    isDistanceBased: true,
-    distanceKm: 5,
-    citationSource: "US EPA Greenhouse Gas Equivalencies Calculator (Average passenger vehicle tailpipe emissions ~0.21 kg CO₂e/km).",
-  },
-  {
-    id: "h3",
-    title: "Carpooling / EV Ride",
-    description: "Shared a vehicle trip with passengers or traveled via electric vehicle.",
-    category: "Transport",
-    baseCo2PerUnit: 0.12,
-    unit: "km",
-    completedToday: false,
-    actionId: "carpool-ev",
-    isDistanceBased: true,
-    distanceKm: 15,
-    citationSource: "Transport Canada shared-mobility and EV lifecycle displacement factors.",
-  },
+interface EcoAction {
+  id: string
+  category: string
+  name: string
+  description: string
+  impact: string
+  points: number
+}
 
-  // Food
-  {
-    id: "h4",
-    title: "Plant-Forward Meal",
-    description: "Consumed a vegetarian or vegan meal, avoiding ruminant meats.",
-    category: "Food",
-    baseCo2PerUnit: 1.5,
-    unit: "meal",
-    completedToday: false,
-    actionId: "plant-based-meal",
-    citationSource: "Poore & Nemecek (2018) global food lifecycle database, via Our World in Data (comparison vs. beef/lamb baseline).",
-  },
-  {
-    id: "h5",
-    title: "Local / Seasonal Produce",
-    description: "Purchased or consumed locally grown regional produce.",
-    category: "Food",
-    baseCo2PerUnit: 0.8,
-    unit: "day",
-    completedToday: false,
-    actionId: "local-food",
-    citationSource: "Agri-food supply chain lifecycle assessments (transport vs. local production emissions).",
-  },
-  {
-    id: "h6",
-    title: "Zero Food Waste Meal",
-    description: "Successfully consumed or repurposed leftovers to prevent food waste.",
-    category: "Food",
-    baseCo2PerUnit: 0.6,
-    unit: "meal",
-    completedToday: false,
-    actionId: "zero-food-waste",
-    citationSource: "FAO global food waste footprint and avoided landfill methane estimations.",
-  },
+const ALL_ACTIONS: EcoAction[] = [
+  { id: 'sustainable-commute', category: 'TRANSPORT', name: 'Public Transit Commute', description: 'Replaced a personal vehicle trip with Skytrain, bus, or SeaBus.', impact: '~2.04 kg CO₂e total', points: 25 },
+  { id: 'active-transport', category: 'TRANSPORT', name: 'Active Transportation (Bike / Walk)', description: 'Chose cycling or walking instead of motorized transport.', impact: '~1.05 kg CO₂e total', points: 25 },
+  { id: 'carpool-trip', category: 'TRANSPORT', name: 'Carpooling / EV Ride', description: 'Shared a vehicle trip with passengers or traveled via electric vehicle.', impact: '~1.8 kg CO₂e total', points: 20 },
+  { id: 'plant-based-meal', category: 'FOOD', name: 'Plant-Forward Meal', description: 'Consumed a vegetarian or vegan meal, avoiding ruminant meats.', impact: '~1.5 kg CO₂e per meal', points: 20 },
+  { id: 'local-produce', category: 'FOOD', name: 'Local / Seasonal Produce', description: 'Purchased or consumed locally grown regional produce.', impact: '~0.8 kg CO₂e per day', points: 15 },
+  { id: 'zero-food-waste', category: 'FOOD', name: 'Zero Food Waste Meal', description: 'Successfully consumed or repurposed leftovers to prevent food waste.', impact: '~0.6 kg CO₂e per meal', points: 20 },
+  { id: 'waste-sorting', category: 'WASTE', name: 'Waste Sorting', description: 'Sort recyclable, compostable, and landfill materials correctly.', impact: '~0.5 kg CO₂e per action', points: 10 },
+  { id: 'cold-water-laundry', category: 'ENERGY', name: 'Cold-Water Laundry', description: 'Wash clothing using cold water instead of a hot cycle.', impact: '~0.6 kg CO₂e per load', points: 15 },
+  { id: 'campus-cleanup', category: 'COMMUNITY', name: 'Campus Clean-up / Eco Event', description: 'Participated in campus sustainability clean-up or ecological restoration.', impact: '~4.0 kg CO₂e total', points: 50 },
+]
 
-  // Energy
-  {
-    id: "h7",
-    title: "Cold-Water Laundry Cycle",
-    description: "Washed clothes entirely using cold water, eliminating water-heating energy.",
-    category: "Energy",
-    baseCo2PerUnit: 0.7,
-    unit: "load",
-    completedToday: false,
-    actionId: "cold-water-wash",
-    citationSource: "Energy Star appliance efficiency standards and residential water heater thermal load estimates.",
-  },
-  {
-    id: "h8",
-    title: "Line-Dried Laundry",
-    description: "Hung garments and linens to air dry instead of using an electric tumble dryer.",
-    category: "Energy",
-    baseCo2PerUnit: 1.6,
-    unit: "load",
-    completedToday: false,
-    actionId: "line-dry",
-    citationSource: "Residential electric clothes dryer average energy consumption per standard cycle (~3.2 kWh).",
-  },
-  {
-    id: "h9",
-    title: "Optimized Thermostat / Lighting",
-    description: "Adjusted thermostat by 1°C or unplugged idle electronics.",
-    category: "Energy",
-    baseCo2PerUnit: 0.5,
-    unit: "day",
-    completedToday: false,
-    actionId: "energy-conservation",
-    citationSource: "Utility provider residential energy audit benchmarks and baseline heating efficiencies.",
-  },
-
-  // Waste & Circularity
-  {
-    id: "h10",
-    title: "Rigorous Waste Sorting & Composting",
-    description: "Correctly sorted organic compost, recyclables, and landfill streams.",
-    category: "Waste",
-    baseCo2PerUnit: 0.4,
-    unit: "day",
-    completedToday: false,
-    actionId: "waste-sorting",
-    citationSource: "Municipal solid waste management diversion credits and avoided landfill fugitive methane calculations.",
-  },
-  {
-    id: "h11",
-    title: "Zero Single-Use Plastics",
-    description: "Utilized reusable water bottles, coffee cups, and shopping totes.",
-    category: "Waste",
-    baseCo2PerUnit: 0.3,
-    unit: "day",
-    completedToday: false,
-    actionId: "reusable-swaps",
-    citationSource: "Lifecycle analysis of single-use polymer manufacturing vs. multi-use durability baselines.",
-  },
-  {
-    id: "h12",
-    title: "Repair or Secondhand Acquisition",
-    description: "Repaired an item or acquired goods second-hand instead of buying new.",
-    category: "Waste",
-    baseCo2PerUnit: 3.0,
-    unit: "item",
-    completedToday: false,
-    actionId: "repair-secondhand",
-    citationSource: " WRAP (Waste & Resources Action Programme) product lifecycle carbon displacement metrics.",
-  },
-
-  // Community
-  {
-    id: "h13",
-    title: "Sustainability Workshop / Advocacy",
-    description: "Participated in an environmental workshop, cleanup event, or policy discussion.",
-    category: "Community",
-    baseCo2PerUnit: 1.0,
-    unit: "session",
-    completedToday: false,
-    actionId: "community-action",
-    citationSource: "Standardized proxy estimation for collective behavioural impact workshops.",
-  },
-];
-
-export default function HabitAnalyticsPage() {
-  const [habits, setHabits] = useState<Habit[]>(EXTENSIVE_HABITS);
-  const [filter, setFilter] = useState<string>("All");
-  const [user, setUser] = useState<any>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [joinCompetition, setJoinCompetition] = useState(false);
+function HabitsContent() {
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [selectedFaculty, setSelectedFaculty] = useState<string>('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
+  const [selectedActionIds, setSelectedActionIds] = useState<string[]>([])
   
-  // Track open citations: map habit id -> boolean
-  const [openCitations, setOpenCitations] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState<boolean>(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const supabase = createClient();
+  const supabase = createClient()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    const checkUserAndSubmissions = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const actionParam = searchParams.get('action')
+    if (actionParam) {
+      setSelectedActionIds([actionParam])
+    }
 
-      if (user) {
-        const today = new Date().toISOString().split('T')[0];
-        const { data: subs } = await supabase
-          .from('submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .gte('created_at', today);
+    const fetchFaculties = async () => {
+      const { data, error } = await supabase
+        .from('faculties')
+        .select('id, name')
+        .order('name', { ascending: true })
 
-        if (subs && subs.length > 0) {
-          setHabits((prev) =>
-            prev.map((habit) => {
-              const matched = subs.some((s: any) => s.eco_action_id === habit.actionId);
-              return matched ? { ...habit, completedToday: true } : habit;
-            })
-          );
-          if (subs.some((s: any) => s.faculty_id)) {
-            setJoinCompetition(true);
-          }
-        }
+      if (!error && data) {
+        setFaculties(data)
       }
-    };
-
-    checkUserAndSubmissions();
-  }, [supabase]);
-
-  const toggleHabitLocally = (id: string) => {
-    setHabits((prev) =>
-      prev.map((habit) =>
-        habit.id === id ? { ...habit, completedToday: !habit.completedToday } : habit
-      )
-    );
-  };
-
-  const toggleCitation = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpenCitations((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleBatchSubmit = async () => {
-    if (!user) {
-      window.location.href = "/login";
-      return;
     }
+    fetchFaculties()
+  }, [supabase, searchParams])
 
-    setSubmitting(true);
-    setSuccessMessage("");
+  // Sort actions so any preselected action from homepage appears at the top
+  const prioritizedActions = [...ALL_ACTIONS].sort((a, b) => {
+    const aSelected = selectedActionIds.includes(a.id) ? -1 : 0
+    const bSelected = selectedActionIds.includes(b.id) ? -1 : 0
+    return aSelected - bSelected
+  })
 
-    const today = new Date().toISOString().split('T')[0];
-    const selectedHabits = habits.filter(h => h.completedToday);
+  const filteredActions = prioritizedActions.filter((action) => {
+    if (selectedCategory === 'ALL') return true
+    return action.category === selectedCategory
+  })
 
-    await supabase
-      .from('submissions')
-      .delete()
-      .eq('user_id', user.id)
-      .gte('created_at', today);
-
-    if (selectedHabits.length > 0) {
-      const inserts = selectedHabits.map(h => ({
-        user_id: user.id,
-        eco_action_id: h.actionId,
-        quantity: h.isDistanceBased ? (h.distanceKm || 1) : 1,
-        status: 'approved',
-        faculty_id: joinCompetition ? (user.user_metadata?.faculty_id || "general-comp") : null,
-      }));
-
-      await supabase.from('submissions').insert(inserts);
-    }
-
-    setSubmitting(false);
-    setSuccessMessage("✨ Verified eco-actions successfully logged!");
-    setTimeout(() => setSuccessMessage(""), 4000);
-  };
-
-  const handleClearTodaySubmissions = async () => {
-    if (!user) return;
-    
-    setDeleting(true);
-    setSuccessMessage("");
-
-    const today = new Date().toISOString().split('T')[0];
-    
-    const { error } = await supabase
-      .from('submissions')
-      .delete()
-      .eq('user_id', user.id)
-      .gte('created_at', today);
-
-    if (!error) {
-      setHabits((prev) =>
-        prev.map((habit) => ({ ...habit, completedToday: false }))
-      );
-      setSuccessMessage("🗑️ Today's logs cleared successfully.");
+  const toggleActionSelection = (id: string) => {
+    if (selectedActionIds.includes(id)) {
+      setSelectedActionIds(selectedActionIds.filter((item) => item !== id))
     } else {
-      setSuccessMessage("⚠️ Failed to clear logs. Please try again.");
+      setSelectedActionIds([...selectedActionIds, id])
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedFaculty) {
+      setMessage({ type: 'error', text: 'Please select your UBC faculty before submitting.' })
+      return
+    }
+    if (selectedActionIds.length === 0) {
+      setMessage({ type: 'error', text: 'Please select at least one action to log.' })
+      return
     }
 
-    setDeleting(false);
-    setTimeout(() => setSuccessMessage(""), 4000);
-  };
+    setLoading(true)
+    setMessage(null)
 
-  // Compute precise cumulative carbon savings
-  const totalCO2SavedToday = habits
-    .filter((h) => h.completedToday)
-    .reduce((acc, curr) => {
-      const multiplier = curr.isDistanceBased ? (curr.distanceKm || 0) : 1;
-      return acc + curr.baseCo2PerUnit * multiplier;
-    }, 0);
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-  const completedCount = habits.filter((h) => h.completedToday).length;
-  const categories = ["All", "Transport", "Food", "Energy", "Waste", "Community"];
-  const filteredHabits = habits.filter(
-    (h) => filter === "All" || h.category === filter
-  );
+      // Insert all selected actions into Supabase
+      for (const actionId of selectedActionIds) {
+        const { error: insertError } = await supabase.from('submissions').insert({
+          faculty_id: selectedFaculty,
+          eco_action_id: actionId,
+          quantity: 1,
+          status: 'approved',
+          user_id: user.id,
+        })
+        if (insertError) throw insertError
+      }
+
+      setMessage({ type: 'success', text: 'Actions logged successfully to your ledger! Redirecting...' })
+      router.refresh()
+
+      setTimeout(() => {
+        window.location.href = '/competition'
+      }, 1000)
+    } catch (err: any) {
+      console.error('Submission error:', err)
+      setMessage({ type: 'error', text: err?.message || 'Failed to submit actions.' })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24">
-      {/* Hero Header Section */}
+    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
+      {/* Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
-          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-            Impact Registry · Verified Metrics
-          </p>
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-20 lg:px-12">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+              Action Registry · Personal Ledger
+            </p>
+            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
+              <Link href="/competition" className="text-[#526760] hover:text-[#102f26]">
+                View Live Leaderboard →
+              </Link>
+            </div>
+          </div>
           <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
-            Habit Analytics &amp; Action Log
+            Verified Action Registry
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Record verified daily sustainable behaviors with distance-adjusted calculations, calculate carbon reductions, and contribute to institutional challenges.
+            Select multiple sustainable actions below to log them directly to your faculty ledger and drive real-time campus impact.
           </p>
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <div className="mx-auto max-w-5xl px-6 py-12 md:px-10">
-        {successMessage && (
-          <div className="mb-8 p-4 border border-[#102f26]/20 bg-[#f1f6f2] text-[#102f26] text-xs font-mono uppercase tracking-wider flex items-center gap-2">
-            <span>{successMessage}</span>
+      {/* Main Content */}
+      <section className="mx-auto max-w-5xl px-6 py-12 md:px-10">
+        {message && (
+          <div
+            className={`mb-8 p-4 border font-mono text-xs ${
+              message.type === 'success'
+                ? 'bg-[#f1f6f2] border-[#39705d] text-[#102f26]'
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
+            {message.text}
           </div>
         )}
 
-        {/* Real Metrics Summary Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="p-6 border border-[#102f26]/15 bg-white">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
-              Estimated CO₂e Avoided Today
-            </span>
-            <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-medium tracking-tight text-[#102f26]">
-                {totalCO2SavedToday.toFixed(1)} <span className="text-sm font-normal text-[#71847d]">kg CO₂e</span>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Faculty Selector Bar */}
+          <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+                Institutional Affiliation
               </span>
-              <span className="text-xl">🌱</span>
+              <p className="text-xs font-medium text-[#102f26]">Select your UBC faculty to attribute points:</p>
             </div>
-            <p className="mt-3 text-xs text-[#71847d] font-mono">
-              Calculated using lifecycle emission factors &amp; distance variables.
-            </p>
-          </div>
-
-          <div className="p-6 border border-[#102f26]/15 bg-white">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
-              Actions Logged Today
-            </span>
-            <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-medium tracking-tight text-[#102f26]">
-                {completedCount} <span className="text-sm font-normal text-[#71847d]">/ {habits.length} available</span>
-              </span>
-              <span className="text-xl">✅</span>
-            </div>
-            <p className="mt-3 text-xs text-[#71847d] font-mono">
-              Select actions completed within the past 24 hours.
-            </p>
-          </div>
-        </div>
-
-        {/* Filter Bar & Interactive Habit List */}
-        <div className="border border-[#102f26]/15 bg-white p-6 md:p-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-[#102f26]/10 pb-6">
-            <h2 className="text-lg font-medium tracking-tight text-[#102f26]">Verified Action Registry</h2>
-
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] border transition ${
-                    filter === cat
-                      ? "bg-[#102f26] text-white border-[#102f26]"
-                      : "bg-white text-[#526760] border-[#102f26]/15 hover:border-[#102f26]/40"
-                  }`}
-                >
-                  {cat}
-                </button>
+            <select
+              value={selectedFaculty}
+              onChange={(e) => setSelectedFaculty(e.target.value)}
+              required
+              className="px-4 py-2 border border-[#102f26]/20 bg-white font-mono text-xs text-[#102f26] focus:outline-none"
+            >
+              <option value="">-- Choose Faculty --</option>
+              {faculties.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          <div className="space-y-4 mb-8">
-            {filteredHabits.map((habit) => {
-              const currentTotal = habit.isDistanceBased
-                ? Number((habit.baseCo2PerUnit * (habit.distanceKm || 0)).toFixed(2))
-                : habit.baseCo2PerUnit;
-              const isCitationOpen = openCitations[habit.id] || false;
+          {/* Category Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/15 pb-6">
+            {['ALL', 'TRANSPORT', 'FOOD', 'ENERGY', 'WASTE', 'COMMUNITY'].map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                  selectedCategory === cat ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
+          {/* Action List Feed */}
+          <div className="border-t border-[#102f26]/15 divide-y divide-[#102f26]/15">
+            {filteredActions.map((action) => {
+              const isSelected = selectedActionIds.includes(action.id)
               return (
                 <div
-                  key={habit.id}
-                  onClick={() => toggleHabitLocally(habit.id)}
-                  className={`p-5 border transition-all cursor-pointer ${
-                    habit.completedToday
-                      ? "bg-[#f1f6f2] border-[#102f26]/40"
-                      : "bg-white border-[#102f26]/15 hover:border-[#102f26]/30"
+                  key={action.id}
+                  onClick={() => toggleActionSelection(action.id)}
+                  className={`p-6 transition cursor-pointer flex items-center justify-between gap-6 ${
+                    isSelected ? 'bg-[#f1f6f2] border-l-4 border-l-[#102f26]' : 'hover:bg-[#f1f6f2]/40 bg-white'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1 pr-4 flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 bg-[#f1f6f2] text-[#39705d] border border-[#102f26]/10">
-                          {habit.category}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 bg-[#f1f6f2] border border-[#102f26]/10 text-[#39705d]">
+                        {action.category}
+                      </span>
+                      {isSelected && (
+                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#39705d] font-bold">
+                          ✓ Selected
                         </span>
-                        <h3 className="font-medium text-sm text-[#102f26]">
-                          {habit.title}
-                        </h3>
-                      </div>
-                      <p className="text-xs text-[#526760]">{habit.description}</p>
-                      
-                      {/* Sub-line impact & Citation Toggle Button */}
-                      <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d] pt-1">
-                        <span className="text-[#39705d]">
-                          ~{currentTotal} kg CO₂e {habit.isDistanceBased ? 'total' : `per ${habit.unit}`}
-                        </span>
-                        <span>•</span>
-                        <button
-                          type="button"
-                          onClick={(e) => toggleCitation(habit.id, e)}
-                          className="inline-flex items-center gap-1 text-[#39705d] hover:underline font-medium lowercase"
-                        >
-                          <span className="inline-flex size-3.5 items-center justify-center rounded-full border border-[#39705d] text-[9px] font-bold">
-                            i
-                          </span>
-                          {isCitationOpen ? "hide source" : "view source"}
-                        </button>
-                      </div>
-
-                      {/* Distance Input field if applicable */}
-                      {habit.isDistanceBased && habit.completedToday && (
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-3 pt-3 border-t border-[#102f26]/10 flex items-center gap-3"
-                        >
-                          <label htmlFor={`dist-${habit.id}`} className="font-mono text-[10px] uppercase text-[#526760]">
-                            Trip Distance (km):
-                          </label>
-                          <input
-                            id={`dist-${habit.id}`}
-                            type="number"
-                            min="0.5"
-                            step="0.5"
-                            value={habit.distanceKm || 1}
-                            onChange={(e) => {
-                              const val = parseFloat(e.target.value) || 0;
-                              setHabits((prev) =>
-                                prev.map((h) => (h.id === habit.id ? { ...h, distanceKm: val } : h))
-                              );
-                            }}
-                            className="w-24 px-2 py-1 bg-white border border-[#102f26]/20 font-mono text-xs text-[#102f26] focus:outline-none focus:border-[#102f26]"
-                          />
-                          <span className="font-mono text-[10px] text-[#71847d]">km</span>
-                        </div>
-                      )}
-
-                      {/* Inline Citation Drawer */}
-                      {isCitationOpen && (
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-3 p-3 bg-white border border-[#102f26]/20 text-[11px] text-[#526760] font-normal lowercase space-y-1"
-                        >
-                          <p className="font-mono text-[10px] uppercase tracking-wider text-[#102f26] font-medium">
-                            Calculation Methodology &amp; Source:
-                          </p>
-                          <p className="normal-case leading-relaxed">{habit.citationSource}</p>
-                        </div>
                       )}
                     </div>
+                    <h3 className="text-lg font-medium text-[#102f26]">
+                      {action.name}
+                    </h3>
+                    <p className="text-xs text-[#526760] max-w-xl">
+                      {action.description}
+                    </p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d] pt-1">
+                      {action.impact} · <span className="text-[#39705d]">+{action.points} pts</span>
+                    </p>
+                  </div>
 
-                    <div
-                      className={`size-6 shrink-0 border flex items-center justify-center font-mono text-xs transition ${
-                        habit.completedToday
-                          ? "bg-[#102f26] border-[#102f26] text-white"
-                          : "border-[#102f26]/20 text-transparent"
-                      }`}
-                    >
-                      ✓
-                    </div>
+                  <div className="shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleActionSelection(action.id)}
+                      className="size-5 accent-[#102f26] cursor-pointer"
+                    />
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
 
-          {/* Methodology Disclosure Footer Note */}
-          <div className="mb-8 p-5 border border-[#102f26]/15 bg-[#f1f6f2] text-xs text-[#526760] space-y-2">
-            <h4 className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#102f26] font-medium">
-              Transparency &amp; Verification Framework
-            </h4>
-            <p className="leading-relaxed">
-              Green Collective calculates greenhouse gas displacement using standardized lifecycle assessment (LCA) benchmarks from institutions including the US EPA, IPCC guidelines, and peer-reviewed agricultural databases. All transport factors support precise distance-scaling in kilometers.
-            </p>
+          {/* Submit Action Bar */}
+          <div className="pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50 shadow-md"
+            >
+              {loading ? 'Logging Actions...' : `Submit ${selectedActionIds.length} Selected Action(s) to Ledger →`}
+            </button>
           </div>
-
-          {/* Competition Opt-in Toggle */}
-          <div className="mb-8 p-5 border border-[#102f26]/15 bg-white flex items-start gap-4">
-            <input
-              type="checkbox"
-              id="competition-opt-in"
-              checked={joinCompetition}
-              onChange={(e) => setJoinCompetition(e.target.checked)}
-              className="mt-1 size-4 accent-[#102f26] rounded-none cursor-pointer"
-            />
-            <label htmlFor="competition-opt-in" className="text-xs text-[#526760] cursor-pointer select-none">
-              <strong className="block font-medium text-[#102f26] mb-1">Contribute to the Faculty Sustainability Challenge Leaderboard</strong>
-              Include your verified submissions in your institutional team score total. Uncheck to keep your metrics private.
-            </label>
-          </div>
-
-          {/* Submit & Clear Action Buttons Bar */}
-          <div className="pt-6 border-t border-[#102f26]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d]">
-              {completedCount} action{completedCount === 1 ? '' : 's'} selected for submission.
-            </span>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              {user && (
-                <button
-                  type="button"
-                  onClick={handleClearTodaySubmissions}
-                  disabled={deleting}
-                  className="px-4 py-3 bg-white hover:bg-red-50 text-red-700 border border-red-200 font-mono text-[10px] uppercase tracking-[0.16em] transition disabled:opacity-50"
-                >
-                  {deleting ? 'Clearing...' : 'Clear Today’s Logs'}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleBatchSubmit}
-                disabled={submitting}
-                className="flex-1 sm:flex-none px-6 py-3 bg-[#102f26] hover:bg-[#102f26]/90 text-white font-mono text-[10px] uppercase tracking-[0.16em] transition disabled:opacity-50"
-              >
-                {submitting ? 'Submitting...' : 'Submit Verified Actions →'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        </form>
+      </section>
     </main>
-  );
+  )
+}
+
+export default function HabitsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Action Registry...</div>}>
+      <HabitsContent />
+    </Suspense>
+  )
 }
