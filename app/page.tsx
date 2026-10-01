@@ -1,3 +1,6 @@
+'use client'
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 const actions = [
@@ -6,32 +9,34 @@ const actions = [
     name: 'Public / active transportation',
     description: 'Replace a car trip with walking, cycling, transit, or another lower-impact option.',
     impact: '~1.5 kg CO₂e / trip',
-    href: '/competition/submit?action=sustainable-commute-ubc',
+    id: 'sustainable-commute',
   },
   {
     category: 'FOOD',
     name: 'Plant-forward meal',
     description: 'Choose a meal centred around plant-based ingredients.',
     impact: '~1.2 kg CO₂e / meal',
-    href: '/competition/submit?action=plant-based-meal',
+    id: 'plant-based-meal',
   },
   {
     category: 'WASTE',
     name: 'Waste sorting',
     description: 'Sort recyclable, compostable, and landfill materials correctly.',
     impact: '~0.5 kg CO₂e / action',
-    href: '/competition/submit?action=waste-sorting',
+    id: 'waste-sorting',
   },
   {
     category: 'ENERGY',
     name: 'Cold-water laundry',
     description: 'Wash clothing using cold water instead of a hot cycle.',
     impact: '~0.6 kg CO₂e / load',
-    href: '/competition/submit?action=home-meal', // Map to closest available action category if preferred
+    id: 'cold-water-laundry',
   },
 ];
 
 export default function HomePage() {
+  const [selectedTrack, setSelectedTrack] = useState<'student' | 'community'>('student');
+
   return (
     <main className="bg-white text-[#102f26]">
       {/* Hero */}
@@ -39,9 +44,33 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12 lg:py-32">
           <div className="grid items-end gap-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20">
             <div>
-              <p className="mb-7 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-                Sustainability · Action · Measurement
-              </p>
+              <div className="mb-6 flex flex-wrap items-center gap-3">
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+                  Sustainability · Action · Measurement
+                </p>
+                <span className="text-[#39705d]/40 font-mono">/</span>
+                {/* Quick Track Switcher on Hero */}
+                <div className="inline-flex border border-[#102f26]/20 bg-white p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTrack('student')}
+                    className={`px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] transition ${
+                      selectedTrack === 'student' ? 'bg-[#102f26] text-white' : 'text-[#526760] hover:text-[#102f26]'
+                    }`}
+                  >
+                    UBC Student
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTrack('community')}
+                    className={`px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] transition ${
+                      selectedTrack === 'community' ? 'bg-[#102f26] text-white' : 'text-[#526760] hover:text-[#102f26]'
+                    }`}
+                  >
+                    Community / Public
+                  </button>
+                </div>
+              </div>
 
               <h1 className="max-w-4xl text-[clamp(3.5rem,8vw,7.5rem)] font-medium leading-[0.88] tracking-[-0.065em]">
                 Turn everyday choices into
@@ -50,28 +79,34 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-10 max-w-xl text-lg leading-8 text-[#315148] md:text-xl">
-                Green Collective gives people a simple way to record sustainable actions,
-                connect through shared programs, and help organizations understand
-                participation at scale.
+                Green Collective gives students and community members a simple way to record sustainable actions,
+                track carbon diverted, and participate in regional or institutional challenges.
               </p>
 
-              <Link
-                href="/competition/submit"
-                className="mt-10 inline-flex items-center border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55"
-              >
-                Explore sustainable actions
-                <span className="ml-3">→</span>
-              </Link>
+              <div className="mt-10 flex flex-wrap items-center gap-6">
+                <Link
+                  href={`/habits?mode=${selectedTrack}`}
+                  className="inline-flex items-center bg-[#102f26] px-6 py-3.5 text-xs font-mono uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-sm"
+                >
+                  Log actions ({selectedTrack === 'student' ? 'UBC Challenge' : 'Community Ledger'}) →
+                </Link>
+                <Link
+                  href="/competition"
+                  className="inline-flex items-center border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55"
+                >
+                  View live leaderboard <span className="ml-2">→</span>
+                </Link>
+              </div>
             </div>
 
             <div className="lg:pb-3">
               <div className="border border-[#102f26]/15 bg-white">
                 <div className="flex items-center justify-between border-b border-[#102f26]/10 px-5 py-4">
                   <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
-                    Your activity
+                    Participation mode
                   </span>
                   <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                    Today
+                    {selectedTrack === 'student' ? 'UBC Faculty Track' : 'General Ledger'}
                   </span>
                 </div>
 
@@ -80,14 +115,14 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-5">
                       <div>
                         <p className="text-sm font-medium">
-                          Active transportation
+                          {selectedTrack === 'student' ? 'UBC Sustainability Challenge' : 'Regional Community Action'}
                         </p>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Transport · 1 action
+                          {selectedTrack === 'student' ? 'Points credited to your faculty' : 'Credited to cumulative carbon savings'}
                         </p>
                       </div>
-                      <span className="font-mono text-[10px] text-[#39705d]">
-                        1.5 kg CO₂e
+                      <span className="font-mono text-[10px] text-[#39705d] font-bold">
+                        ACTIVE
                       </span>
                     </div>
                   </div>
@@ -96,15 +131,13 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-5">
                       <div>
                         <p className="text-sm font-medium">
-                          Plant-forward meal
+                          Multi-select action feed
                         </p>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Food · 1 action
+                          Log multiple habits simultaneously
                         </p>
                       </div>
-                      <span className="font-mono text-[10px] text-[#39705d]">
-                        1.2 kg CO₂e
-                      </span>
+                      <span className="text-lg leading-none">✓</span>
                     </div>
                   </div>
 
@@ -115,7 +148,7 @@ export default function HomePage() {
                           Your activity grows
                         </p>
                         <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Individual → collective
+                          Individual → collective impact
                         </p>
                       </div>
                       <span className="text-lg leading-none">↗</span>
@@ -129,7 +162,7 @@ export default function HomePage() {
                       Green Collective
                     </span>
                     <span className="font-mono text-[10px] uppercase tracking-[0.16em]">
-                      Activity / 01
+                      Registry / Live
                     </span>
                   </div>
                 </div>
@@ -198,7 +231,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Action library */}
+      {/* Action library (passes selected track and action ID) */}
       <section className="bg-[#102f26] text-white">
         <div className="mx-auto max-w-7xl px-6 py-24 md:px-10 md:py-32 lg:px-12">
           <div className="grid gap-16 lg:grid-cols-[0.7fr_1.3fr]">
@@ -210,13 +243,16 @@ export default function HomePage() {
               <h2 className="mt-7 max-w-sm text-4xl font-medium leading-tight tracking-[-0.04em] md:text-5xl">
                 Start with something you already do.
               </h2>
+              <p className="mt-4 text-xs font-mono uppercase tracking-[0.14em] text-[#9bb9aa]/70">
+                Clicking an action auto-selects it in your {selectedTrack === 'student' ? 'UBC Student' : 'Community'} registry.
+              </p>
             </div>
 
             <div className="border-t border-white/15">
               {actions.map((action) => (
                 <Link
-                  key={action.name}
-                  href={action.href}
+                  key={action.id}
+                  href={`/habits?action=${action.id}&mode=${selectedTrack}`}
                   className="group block border-b border-white/15 py-7 transition-colors hover:bg-white/[0.04]"
                 >
                   <div className="grid gap-5 md:grid-cols-[0.9fr_1.5fr_auto] md:items-center">
@@ -304,12 +340,12 @@ export default function HomePage() {
               Make sustainable action visible.
             </h2>
 
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#526760]">
-              <Link href="/competition/submit" className="hover:text-[#102f26]">
+              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#526760]">
+              <Link href="/habits" className="hover:text-[#102f26]">
                 Actions →
               </Link>
-              <Link href="/initiatives" className="hover:text-[#102f26]">
-                Initiatives →
+              <Link href="/competition" className="hover:text-[#102f26]">
+                Leaderboard →
               </Link>
               <Link href="/about" className="hover:text-[#102f26]">
                 About →
