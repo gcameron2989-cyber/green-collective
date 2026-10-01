@@ -29,7 +29,7 @@ const initiativesList: Initiative[] = [
     title: "Broad Community Action & Regional Stewardship",
     description: "Coordinate with regional partners and municipal groups across urban forestry, watershed health, and localized sustainability initiatives.",
     status: "Ongoing",
-    href: "/initiatives/community-action", // Updated route path
+    href: "/initiatives/community-action",
     regions: ["Vancouver", "Toronto"],
   },
   {
@@ -131,7 +131,7 @@ export default function InitiativesPage() {
         {/* Initiatives List Grid */}
         <div className="border-t border-[#102f26]/15">
           {filteredInitiatives.length > 0 ? (
-            filteredInitiatives.map((item) => (
+            filteredInitiatives.main || filteredInitiatives.map((item) => (
               <div
                 key={item.code}
                 className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
