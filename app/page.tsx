@@ -6,28 +6,28 @@ const actions = [
     name: 'Public / active transportation',
     description: 'Replace a car trip with walking, cycling, transit, or another lower-impact option.',
     impact: '~1.5 kg CO₂e / trip',
-    href: '/habits',
+    href: '/competition/submit?action=sustainable-commute-ubc',
   },
   {
     category: 'FOOD',
     name: 'Plant-forward meal',
     description: 'Choose a meal centred around plant-based ingredients.',
     impact: '~1.2 kg CO₂e / meal',
-    href: '/habits',
+    href: '/competition/submit?action=plant-based-meal',
   },
   {
     category: 'WASTE',
     name: 'Waste sorting',
     description: 'Sort recyclable, compostable, and landfill materials correctly.',
     impact: '~0.5 kg CO₂e / action',
-    href: '/habits',
+    href: '/competition/submit?action=waste-sorting',
   },
   {
     category: 'ENERGY',
     name: 'Cold-water laundry',
     description: 'Wash clothing using cold water instead of a hot cycle.',
     impact: '~0.6 kg CO₂e / load',
-    href: '/habits',
+    href: '/competition/submit?action=home-meal', // Map to closest available action category if preferred
   },
 ];
 
@@ -56,7 +56,7 @@ export default function HomePage() {
               </p>
 
               <Link
-                href="/habits"
+                href="/competition/submit"
                 className="mt-10 inline-flex items-center border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55"
               >
                 Explore sustainable actions
@@ -305,7 +305,7 @@ export default function HomePage() {
             </h2>
 
             <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#526760]">
-              <Link href="/habits" className="hover:text-[#102f26]">
+              <Link href="/competition/submit" className="hover:text-[#102f26]">
                 Actions →
               </Link>
               <Link href="/initiatives" className="hover:text-[#102f26]">
