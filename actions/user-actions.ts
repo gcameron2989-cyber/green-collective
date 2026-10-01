@@ -5,50 +5,60 @@ import { revalidatePath } from 'next/cache'
 
 export type AffiliationType = 'neighbourhood' | 'association' | 'company' | 'faculty' | 'other'
 
-export interface LogActionInput {
+export interface BatchActionItem {
   actionId: string
-  sector: 'public' | 'campus'
-  affiliationType: AffiliationType
-  affiliationName: string
   quantity: number
   notes?: string
 }
 
-export async function logUserAction(input: LogActionInput) {
+export interface LogBatchActionsInput {
+  items: BatchActionItem[]
+  sector: 'public' | 'campus'
+  affiliationType: AffiliationType
+  affiliationName: string
+}
+
+export async function logBatchUserActions(input: LogBatchActionsInput) {
   const supabase = await createClient()
 
   // 1. Authenticate user
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
-    throw new Error('You must be logged in to record an action.')
+    throw new Error('You must be logged in to record actions.')
   }
 
-  const { actionId, sector, affiliationType, affiliationName, quantity, notes } = input
+  const { items, sector, affiliationType, affiliationName } = input
 
-  if (!actionId || !sector || !affiliationType || !affiliationName) {
+  if (!items || items.length === 0) {
+    throw new Error('No actions selected to log.')
+  }
+
+  if (!sector || !affiliationType || !affiliationName) {
     throw new Error('Please select both a sector and a specific affiliation.')
   }
 
-  // 2. Insert into Supabase table with exact selected affiliation name
-  const { error } = await supabase.from('logged_actions').insert({
+  // 2. Prepare multi-row payload
+  const rowsToInsert = items.map((item) => ({
     user_id: user.id,
-    action_id: actionId,
+    action_id: item.actionId,
     sector: sector,
     affiliation_type: affiliationType,
     affiliation_name: affiliationName,
-    quantity: quantity || 1,
-    notes: notes || '',
+    quantity: item.quantity || 1,
+    notes: item.notes || '',
     created_at: new Date().toISOString(),
-  })
+  }))
+
+  const { error } = await supabase.from('logged_actions').insert(rowsToInsert)
 
   if (error) {
     throw new Error(error.message)
   }
 
-  // 3. Revalidate paths
+  // 3. Revalidate cached routes
   revalidatePath('/actions')
   revalidatePath('/dashboard')
   revalidatePath('/profile')
 
-  return { success: true }
+  return { success: true, count: items.length }
 }
