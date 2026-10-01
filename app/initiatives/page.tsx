@@ -57,7 +57,6 @@ export default function InitiativesPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        // Approximate bounding check for Vancouver vs Toronto
         if (latitude > 48.0 && latitude < 50.0 && longitude > -124.0 && longitude < -122.0) {
           setSelectedRegion("Vancouver");
         } else if (latitude > 43.0 && latitude < 44.5 && longitude > -80.0 && longitude < -79.0) {
