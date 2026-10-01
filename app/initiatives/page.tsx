@@ -131,7 +131,7 @@ export default function InitiativesPage() {
         {/* Initiatives List Grid */}
         <div className="border-t border-[#102f26]/15">
           {filteredInitiatives.length > 0 ? (
-            filteredInitiatives.main || filteredInitiatives.map((item) => (
+            filteredInitiatives.map((item) => (
               <div
                 key={item.code}
                 className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
