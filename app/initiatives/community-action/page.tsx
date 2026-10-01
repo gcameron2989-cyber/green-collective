@@ -6,7 +6,7 @@ import Link from 'next/link';
 interface CommunityProject {
   id: string;
   city: string;
-  category: "Urban Forestry" | "Watershed & Ecology" | "Food Systems & Waste" | "Transit & Mobility";
+  category: "Urban Forestry" | "Watershed Health" | "Habitat Restoration" | "Community Stewardship";
   title: string;
   organization: string;
   description: string;
@@ -15,53 +15,44 @@ interface CommunityProject {
 
 const communityProjects: CommunityProject[] = [
   {
-    id: "proj-01",
+    id: "comm-01",
     city: "Vancouver",
-    category: "Urban Forestry",
-    title: "Dedicated Invasive Removal Team (DIRT) & EcoStewards",
-    organization: "Stanley Park Ecology Society",
-    description: "Participate in bi-weekly habitat restoration sessions removing invasive species and collecting baseline ecological tracking data in Stanley Park.",
-    link: "https://stanleyparkecology.ca/about-stanley-park-ecology/volunteer/",
+    category: "Habitat Restoration",
+    title: "Stanley Park Ecological Restoration & Canopy Monitoring",
+    organization: "Stanley Park Ecology Society (SPES)",
+    description: "Join field crews and volunteer cohorts engaged in invasive species removal, native understory planting, and post-looper moth forest recovery monitoring.",
+    link: "https://stanleyparkecology.ca/what-we-do/conservation/forest-restoration/",
   },
   {
-    id: "proj-02",
+    id: "comm-02",
     city: "Vancouver",
-    category: "Watershed & Ecology",
-    title: "Seeding Stewardship: Rain Garden & Stormwater Maintenance",
-    organization: "City of Vancouver Parks Board",
-    description: "Adopt and maintain local naturalized rain gardens and bioswales to support urban stormwater management and municipal biodiversity corridors.",
-    link: "https://vancouver.ca/home-property-development/seeding-stewardship-program.aspx",
+    category: "Watershed Health",
+    title: "Urban Streamkeepers & Salmon Habitat Sampling",
+    organization: "Pacific Salmon Foundation & Streamkeepers",
+    description: "Participate in benthic macroinvertebrate sampling, water quality testing, and riparian zone rehabilitation across regional urban watersheds.",
+    link: "https://psf.ca/what-we-do/community-salmon-program/",
   },
   {
-    id: "proj-03",
-    city: "Vancouver",
-    category: "Food Systems & Waste",
-    title: "Neighborhood Food Systems & Composting Hubs",
-    organization: "Vancouver Local Food Networks",
-    description: "Engage in community composting initiatives and localized urban agriculture projects designed to minimize transport emissions and foster food resilience.",
-    link: "https://vancouver.ca/home-property-development/composting.aspx",
-  },
-  {
-    id: "proj-04",
+    id: "comm-03",
     city: "Toronto",
     category: "Urban Forestry",
-    title: "Community Canopy Planting & Tree Vulnerability Audits",
-    organization: "LEAF (Local Enhancement & Appreciation of Forests)",
-    description: "Participate in neighborhood planting blitzes and residential tree care programs to expand Toronto's urban forest canopy density.",
-    link: "https://www.torontoleaf.org/get-involved/volunteer/",
+    title: "Ravine Strategy Canopy & Stewardship Initiative",
+    organization: "City of Toronto Parks, Forestry & Recreation",
+    description: "Engage in community-led tree planting, erosion control, and biodiversity baseline inventories across Toronto's expansive ravine network.",
+    link: "https://www.toronto.ca/explore-enjoy/parks-gardens-beaches/ravines/toronto-ravine-strategy/",
   },
   {
-    id: "proj-05",
+    id: "comm-04",
     city: "Toronto",
-    category: "Transit & Mobility",
-    title: "Active Transportation & Transit Corridor Advocacy",
-    organization: "Environmental Defence / Toronto Active Mobility",
-    description: "Contribute to regional public consultations promoting protected bike lanes, pedestrianized corridors, and electrified municipal transit expansion.",
-    link: "https://environmentaldefence.ca/campaign/clean-transport-toronto/",
+    category: "Community Stewardship",
+    title: "Backyard Tree Planting & Neighborhood Canopy Growth",
+    organization: "LEAF (Local Enhancement and Appreciation of Forests)",
+    description: "Collaborate on neighborhood-level urban forestry education, yard tree planting consultations, and resident stewardship workshops.",
+    link: "https://www.yourleaf.org/planting-and-programs",
   },
 ];
 
-export default function CommunityActionHubPage() {
+export default function CommunityActionPage() {
   const [userCity, setUserCity] = useState<string>("Vancouver");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -77,13 +68,13 @@ export default function CommunityActionHubPage() {
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
           <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-            Community Action Hub · Initiative / 02
+            Community Hub · Initiative / 02
           </p>
           <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
             Broad Community Action &amp; Regional Stewardship
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Engage directly with multi-sectoral municipal programs spanning urban forestry, watershed restoration, food security, and active mobility.
+            Connect directly with active field initiatives, ecological restoration crews, and municipal stewardship programs in your region.
           </p>
         </div>
       </section>
@@ -120,10 +111,10 @@ export default function CommunityActionHubPage() {
 
           <div>
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-              Action Pillar
+              Stewardship Pillar
             </span>
             <div className="flex flex-wrap items-center gap-2">
-              {["All", "Urban Forestry", "Watershed & Ecology", "Food Systems & Waste", "Transit & Mobility"].map((cat) => (
+              {["All", "Urban Forestry", "Watershed Health", "Habitat Restoration", "Community Stewardship"].map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -143,7 +134,7 @@ export default function CommunityActionHubPage() {
           <div>
             <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
               <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                Verified Local Projects &amp; Volunteer Opportunities
+                Verified Field Programs &amp; Portals
               </h2>
               <span className="font-mono text-[10px] text-[#39705d]">{filteredProjects.length} Active</span>
             </div>
@@ -172,59 +163,59 @@ export default function CommunityActionHubPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-[#102f26] hover:opacity-60"
                     >
-                      External Program Portal →
+                      Direct Program &amp; Volunteer Portal →
                     </a>
                   </div>
                 ))
               ) : (
                 <div className="p-12 border border-dashed border-[#102f26]/20 text-center font-mono text-xs text-[#526760] uppercase tracking-wider">
-                  No active projects found matching this category and region combination.
+                  No active stewardship programs found matching this category and region combination.
                 </div>
               )}
             </div>
 
             <div className="mt-8 p-6 border border-dashed border-[#102f26]/30 bg-white">
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                Platform Action Integration
+                Ledger Integration
               </span>
               <p className="text-xs text-[#526760] mb-4">
-                Participated in any of these community programs? Log your actions directly into your institutional ledger to calculate cumulative ecological offset.
+                Completed volunteer hours or field stewardship work? Log your participation directly to your impact ledger.
               </p>
               <Link
                 href="/habits"
                 className="inline-flex items-center gap-2 bg-[#102f26] text-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em]"
               >
-                Log Action to Personal Ledger →
+                Log Volunteer Hours to Ledger →
               </Link>
             </div>
           </div>
 
-          {/* Academic Literature & Systems Frameworks */}
+          {/* Research & Field Documentation */}
           <div>
             <div className="border-b border-[#102f26]/15 pb-4 mb-6">
               <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                Systemic Frameworks &amp; Literature
+                Regional Ecology &amp; Frameworks
               </h2>
             </div>
 
             <div className="space-y-6 text-xs text-[#526760]">
               <div className="p-6 border border-[#102f26]/15 bg-white">
-                <span className="font-mono text-[10px] text-[#39705d] block mb-1">Urban Ecosystems (2022)</span>
+                <span className="font-mono text-[10px] text-[#39705d] block mb-1">SPES Conservation Report</span>
                 <p className="font-medium text-[#102f26] text-sm mb-2">
-                  &ldquo;Collective efficacy and municipal sustainability program adoption in North American cities&rdquo;
+                  Urban Forest Resilience &amp; Microclimate Adaptation in Coastal Temperate Zones
                 </p>
                 <p className="italic text-[#71847d] mb-4">
-                  Analyzes how grassroots volunteer participation rates directly correlate with long-term municipal carbon reduction target compliance.
+                  Outlines canopy vulnerability thresholds and multi-species understory reinforcement strategies.
                 </p>
               </div>
 
               <div className="p-6 border border-[#102f26]/15 bg-white">
-                <span className="font-mono text-[10px] text-[#39705d] block mb-1">Journal of Environmental Management (2023)</span>
+                <span className="font-mono text-[10px] text-[#39705d] block mb-1">Urban Ravine Guidelines</span>
                 <p className="font-medium text-[#102f26] text-sm mb-2">
-                  &ldquo;Evaluating multi-pillar community interventions for urban resilience&rdquo;
+                  Watershed Protection &amp; Invasive Species Management Frameworks
                 </p>
                 <p className="italic text-[#71847d] mb-4">
-                  Demonstrates the compounding ecological benefits of coupling urban forestry stewardship with decentralized stormwater and local food production networks.
+                  Standardized protocols for community-led restoration and soil stabilization across urban ravines.
                 </p>
               </div>
             </div>
