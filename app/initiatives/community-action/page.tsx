@@ -21,7 +21,7 @@ const communityProjects: CommunityProject[] = [
     title: "Stanley Park Ecological Restoration & Canopy Monitoring",
     organization: "Stanley Park Ecology Society (SPES)",
     description: "Join field crews and volunteer cohorts engaged in invasive species removal, native understory planting, and post-looper moth forest recovery monitoring.",
-    link: "https://stanleyparkecology.ca/what-we-do/conservation/forest-restoration/",
+    link: "https://stanleyparkecology.ca/ecology/conservation/",
   },
   {
     id: "comm-02",
@@ -39,7 +39,7 @@ const communityProjects: CommunityProject[] = [
     title: "Ravine Strategy Canopy & Stewardship Initiative",
     organization: "City of Toronto Parks, Forestry & Recreation",
     description: "Engage in community-led tree planting, erosion control, and biodiversity baseline inventories across Toronto's expansive ravine network.",
-    link: "https://www.toronto.ca/explore-enjoy/parks-gardens-beaches/ravines/toronto-ravine-strategy/",
+    link: "https://www.toronto.ca/city-government/accountability-operations-customer-service/long-term-vision-plans-and-strategies/ravine-strategy/",
   },
   {
     id: "comm-04",
@@ -48,7 +48,7 @@ const communityProjects: CommunityProject[] = [
     title: "Backyard Tree Planting & Neighborhood Canopy Growth",
     organization: "LEAF (Local Enhancement and Appreciation of Forests)",
     description: "Collaborate on neighborhood-level urban forestry education, yard tree planting consultations, and resident stewardship workshops.",
-    link: "https://www.yourleaf.org/planting-and-programs",
+    link: "https://www.yourleaf.org/planting-private-property",
   },
 ];
 
