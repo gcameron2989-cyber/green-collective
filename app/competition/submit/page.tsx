@@ -1,4 +1,4 @@
-\'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -11,22 +11,21 @@ interface Faculty {
 }
 
 const ECO_ACTIONS = [
+  // UBC Campus & Forestry Specific
+  { id: 'ubc-forestry-field', category: 'UBC Stewardship', title: 'Participated in Campus Tree Care or Ecosystem Field Audit', points: 50 },
+  { id: 'sustainable-commute-ubc', category: 'Mobility & Energy', title: 'Commuted to UBC via 99 B-Line, Transit, Cycling, or Walking', points: 25 },
+  
   // Zero-Waste & Food
   { id: 'home-meal', category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
-  { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
-  { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug for Retail Purchase', points: 15 },
-  { id: 'refillable-water', category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
-  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining Option', points: 20 },
-
-  // Sustainable Mobility
-  { id: 'sustainable-commute', category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
-  { id: 'carpool-trip', category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
-  { id: 'stairs-instead-elevator', category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator (3+ Floors)', points: 10 },
+  { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea in Reusable Mug on Campus', points: 25 },
+  { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container at UBC Food Services', points: 15 },
+  { id: 'refillable-water', category: 'Zero Waste & Dining', title: 'Used Refillable Water Station vs. Bottled Water', points: 20 },
+  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose Plant-Based Dining Option at Totem/Open Kitchen', points: 20 },
 
   // Circular Economy & Resource Conservation
-  { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost, Recyclables & Soft Plastics', points: 10 },
-  { id: 'thrift-borrow-gear', category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear or Clothes', points: 30 },
-  { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in Campus Clean-up / Eco Event', points: 50 },
+  { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost & Recyclables at Campus Hub', points: 10 },
+  { id: 'thrift-borrow-gear', category: 'Circular Economy', title: 'Borrowed / Thrifted Academic Textbooks or Gear', points: 30 },
+  { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in AMS / Faculty Eco-Action Cleanup', points: 50 },
 ]
 
 export default function SubmitActionPage() {
@@ -109,13 +108,13 @@ export default function SubmitActionPage() {
 
       if (insertError) throw insertError
 
-      setMessage({ type: 'success', text: 'Eco-action logged successfully! Redirecting to your Impact Hub...' })
+      setMessage({ type: 'success', text: 'Action verified and logged! Updating faculty standings...' })
       
       router.refresh()
       
       setTimeout(() => {
-        window.location.href = '/profile'
-      }, 800)
+        window.location.href = '/competition'
+      }, 1000)
     } catch (err: any) {
       console.error('Full Submission Error Details:', err)
       setMessage({ type: 'error', text: err?.message || JSON.stringify(err) || 'Failed to submit action.' })
@@ -126,7 +125,6 @@ export default function SubmitActionPage() {
 
   return (
     <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
-      {/* Editorial Page Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
@@ -138,7 +136,7 @@ export default function SubmitActionPage() {
                 My Profile →
               </Link>
               <Link href="/competition" className="text-[#526760] hover:text-[#102f26]">
-                Leaderboard →
+                View Live Leaderboard →
               </Link>
             </div>
           </div>
@@ -146,12 +144,11 @@ export default function SubmitActionPage() {
             Log Your Sustainable Action
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Submit your daily sustainable choices to calculate cumulative ecological offsets and earn points for your faculty on the live standings.
+            Record your daily transit, campus stewardship, and zero-waste choices to compound your faculty&apos;s score on the live leaderboard.
           </p>
         </div>
       </section>
 
-      {/* Main Submission Section */}
       <section className="mx-auto max-w-2xl px-6 py-16 md:px-10 lg:px-12">
         {message && (
           <div
@@ -168,7 +165,7 @@ export default function SubmitActionPage() {
         <form onSubmit={handleSubmit} className="border border-[#102f26]/15 bg-[#f1f6f2] p-8 space-y-6">
           <div className="space-y-2">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-              Select Your Faculty
+              Select Your UBC Faculty
             </label>
             <select
               value={selectedFaculty}
@@ -187,7 +184,7 @@ export default function SubmitActionPage() {
 
           <div className="space-y-2">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-              Select Eco-Action
+              Select Eco-Action Category &amp; Impact
             </label>
             <select
               value={selectedAction}
@@ -221,7 +218,7 @@ export default function SubmitActionPage() {
 
           <div className="space-y-2">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-              Attach Proof (Optional)
+              Attach Proof (Optional Image)
             </label>
             <input
               type="file"
