@@ -1,197 +1,232 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
+import { useState } from 'react';
+import Link from 'next/link';
 
-interface FacultyLeaderboard {
-  faculty_id: string
-  faculty_name: string
-  total_points: number
-  total_actions: number
+interface LeaderboardEntry {
+  rank: number;
+  faculty: string;
+  participants: number;
+  carbonOffsetKg: number;
+  trend: string;
 }
 
-export default function CompetitionLeaderboardPage() {
-  const [leaderboard, setLeaderboard] = useState<FacultyLeaderboard[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+const leaderboardData: LeaderboardEntry[] = [
+  {
+    rank: 1,
+    faculty: "Faculty of Forestry (BioEconomy Sciences & Technology)",
+    participants: 412,
+    carbonOffsetKg: 14250,
+    trend: "+18% this month",
+  },
+  {
+    rank: 2,
+    faculty: "Faculty of Applied Science (Engineering)",
+    participants: 680,
+    carbonOffsetKg: 12900,
+    trend: "+12% this month",
+  },
+  {
+    rank: 3,
+    faculty: "Sauder School of Business",
+    participants: 530,
+    carbonOffsetKg: 9840,
+    trend: "+8% this month",
+  },
+  {
+    rank: 4,
+    faculty: "Faculty of Science",
+    participants: 890,
+    carbonOffsetKg: 9120,
+    trend: "+15% this month",
+  },
+  {
+    rank: 5,
+    faculty: "Faculty of Arts",
+    participants: 610,
+    carbonOffsetKg: 7450,
+    trend: "+5% this month",
+  },
+];
 
-  // Memoize client to prevent re-creation during re-renders
-  const supabase = useMemo(() => createClient(), [])
-
-  const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
-      .from('faculty_leaderboard')
-      .select('*')
-      .order('total_points', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching leaderboard:', error.message)
-    } else if (data) {
-      setLeaderboard(data)
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    // Initial fetch on mount
-    fetchLeaderboard()
-
-    // Re-fetch whenever the browser window or tab regains focus
-    const handleFocus = () => {
-      fetchLeaderboard()
-    }
-    window.addEventListener('focus', handleFocus)
-
-    // Subscribe to changes on the underlying 'submissions' table
-    const channel = supabase
-      .channel('realtime-competition')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'submissions'
-        },
-        () => {
-          // Delay allows database view aggregation to complete before fetching
-          setTimeout(() => {
-            fetchLeaderboard()
-          }, 300)
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Realtime listener connected to public.submissions')
-        }
-      })
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-      supabase.removeChannel(channel)
-    }
-  }, [supabase])
-
-  const totalCampusActions = leaderboard.reduce((acc, curr) => acc + Number(curr.total_actions), 0)
-  const totalCampusPoints = leaderboard.reduce((acc, curr) => acc + Number(curr.total_points), 0)
-  const maxPoints = leaderboard.length > 0 ? Math.max(...leaderboard.map(f => Number(f.total_points)), 1) : 1
-
-  // Calculated Impact Metrics
-  const estimatedCo2SavedKg = Math.round(totalCampusPoints * 0.45)
-  const estimatedSingleUseDiverted = Math.round(totalCampusActions * 1.8)
+export default function UBCCompetitionPage() {
+  const [activeTab, setActiveTab] = useState<"leaderboard" | "guidelines">("leaderboard");
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-10 z-10 space-y-8">
-        <div>
-          <Link href="/institution" className="text-xs font-semibold text-emerald-800 hover:underline mb-2 inline-block">
-            ← Back to Institutional Hub
-          </Link>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
-            <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
-                🏆 Campus Competition
-              </span>
-              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-                UBC Sustainability Challenge
-              </h1>
-            </div>
+    <main className="min-h-screen bg-white text-[#102f26] pb-24">
+      {/* Editorial Page Header */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+              Institutional Challenge · Initiative / 01
+            </p>
+            <Link
+              href="/initiatives"
+              className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] hover:text-[#102f26]"
+            >
+              ← Back to Initiatives
+            </Link>
           </div>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            UBC Faculty Sustainability Challenge &amp; Leaderboard
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Measure aggregate campus carbon savings, track faculty-wide participation metrics, and compete to drive institutional sustainability forward.
+          </p>
         </div>
+      </section>
 
-        {/* Aggregate Impact Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total Actions</span>
-            <p className="text-2xl font-extrabold text-[#0f382c] mt-1">{totalCampusActions}</p>
-          </div>
-          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Est. CO₂ Offset</span>
-            <p className="text-2xl font-extrabold text-emerald-700 mt-1">{estimatedCo2SavedKg} kg</p>
-          </div>
-          <div className="p-4 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Packaging Diverted</span>
-            <p className="text-2xl font-extrabold text-[#0f382c] mt-1">{estimatedSingleUseDiverted} items</p>
-          </div>
-        </div>
-
-        {/* Live Standings Container */}
-        <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-emerald-900/10">
-            <h2 className="text-base font-bold text-[#0f382c]">Faculty Live Standings</h2>
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              Realtime Sync Active
+      {/* Main Content Hub */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
+        {/* Toggle Nav Bar */}
+        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+              Active View
             </span>
+            <p className="text-sm font-medium text-[#102f26]">
+              Currently displaying: <span className="underline font-mono uppercase text-xs">{activeTab}</span>
+            </p>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-12 text-xs font-medium text-muted-foreground animate-pulse">
-              Fetching live scores...
-            </div>
-          ) : leaderboard.length === 0 ? (
-            <div className="text-center py-12 text-xs text-muted-foreground">
-              No faculty actions recorded yet. Be the first to log points!
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {leaderboard.map((faculty, index) => {
-                const percentage = Math.round((faculty.total_points / maxPoints) * 100)
-                const rank = index + 1
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("leaderboard")}
+              className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                activeTab === "leaderboard" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
+              }`}
+            >
+              Faculty Leaderboard
+            </button>
+            <button
+              onClick={() => setActiveTab("guidelines")}
+              className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                activeTab === "guidelines" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
+              }`}
+            >
+              Challenge Guidelines &amp; Rules
+            </button>
+          </div>
+        </div>
 
-                return (
+        {activeTab === "leaderboard" ? (
+          <div className="grid gap-16 lg:grid-cols-[1.2fr_0.8fr]">
+            {/* Leaderboard Table Feed */}
+            <div>
+              <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
+                <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
+                  Faculty Carbon Offset Standings
+                </h2>
+                <span className="font-mono text-[10px] text-[#39705d]">Updated Real-Time</span>
+              </div>
+
+              <div className="space-y-4">
+                {leaderboardData.map((entry) => (
                   <div
-                    key={faculty.faculty_id}
-                    className="p-4 rounded-xl border border-emerald-900/10 bg-background/60 space-y-3 transition hover:border-emerald-700/30"
+                    key={entry.rank}
+                    className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] transition hover:border-[#102f26] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`font-black w-6 h-6 rounded-full flex items-center justify-center text-[11px] ${
-                            rank === 1
-                              ? 'bg-amber-400 text-slate-950 font-bold'
-                              : rank === 2
-                              ? 'bg-slate-300 text-slate-950 font-bold'
-                              : rank === 3
-                              ? 'bg-amber-700 text-white font-bold'
-                              : 'bg-emerald-100 text-[#0f382c]'
-                          }`}
-                        >
-                          #{rank}
-                        </span>
-                        <div>
-                          <h3 className="font-bold text-foreground text-sm">{faculty.faculty_name}</h3>
-                          <span className="text-[10px] text-muted-foreground">
-                            {faculty.total_actions} total action{faculty.total_actions === 1 ? '' : 's'} logged
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-base font-extrabold text-[#0f382c] block">
-                          {faculty.total_points} <span className="text-xs font-normal text-muted-foreground">pts</span>
-                        </span>
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-lg font-bold text-[#39705d] w-6">
+                        0{entry.rank}
+                      </span>
+                      <div>
+                        <h3 className="text-lg font-medium tracking-tight text-[#102f26]">
+                          {entry.faculty}
+                        </h3>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
+                          {entry.participants} Active Participants · <span className="text-[#39705d]">{entry.trend}</span>
+                        </p>
                       </div>
                     </div>
 
-                    <div className="w-full bg-emerald-950/10 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#0f382c] h-full rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${Math.max(percentage, 3)}%` }}
-                      />
+                    <div className="text-left sm:text-right">
+                      <span className="font-mono text-xl font-medium text-[#102f26] block">
+                        {entry.carbonOffsetKg.toLocaleString()} kg
+                      </span>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d]">
+                        CO₂ Equivalent Offset
+                      </span>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </main>
+                ))}
+              </div>
 
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
-        © {new Date().getFullYear()} Green Collective. All rights reserved.
-      </footer>
-    </div>
-  )
+              <div className="mt-8 p-6 border border-dashed border-[#102f26]/30 bg-white">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
+                  Contribute to Your Faculty
+                </span>
+                <p className="text-xs text-[#526760] mb-4">
+                  Log your daily transit choices, energy reductions, and community conservation hours to push your faculty up the standings.
+                </p>
+                <Link
+                  href="/habits"
+                  className="inline-flex items-center gap-2 bg-[#102f26] text-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em]"
+                >
+                  Log Action to Personal Ledger →
+                </Link>
+              </div>
+            </div>
+
+            {/* Challenge Statistics & Context Sidebar */}
+            <div>
+              <div className="border-b border-[#102f26]/15 pb-4 mb-6">
+                <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
+                  Aggregate Campus Impact
+                </h2>
+              </div>
+
+              <div className="space-y-6 text-xs text-[#526760]">
+                <div className="p-6 border border-[#102f26]/15 bg-white">
+                  <span className="font-mono text-[10px] text-[#39705d] block mb-1">Total Carbon Mitigated</span>
+                  <p className="font-medium text-[#102f26] text-2xl mb-1">
+                    53,560 kg
+                  </p>
+                  <p className="text-[#71847d]">
+                    Equivalent to removing 11.6 standard passenger vehicles from the road for an entire year.
+                  </p>
+                </div>
+
+                <div className="p-6 border border-[#102f26]/15 bg-white">
+                  <span className="font-mono text-[10px] text-[#39705d] block mb-1">Active Community Engagement</span>
+                  <p className="font-medium text-[#102f26] text-2xl mb-1">
+                    3,142 Students
+                  </p>
+                  <p className="text-[#71847d]">
+                    Actively recording metrics across 12 participating faculties and colleges at UBC Vancouver.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="p-8 border border-[#102f26]/15 bg-[#f1f6f2]">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-2">
+                Competition Rules &amp; Framework
+              </span>
+              <h2 className="text-2xl font-medium text-[#102f26] mb-4">
+                UBC Faculty Sustainability Challenge Guidelines
+              </h2>
+              <div className="space-y-4 text-sm text-[#526760] leading-relaxed">
+                <p>
+                  The UBC Sustainability Challenge is an institutional-grade platform designed to quantify and compare grassroots environmental action across campus faculties.
+                </p>
+                <p>
+                  <strong>Eligibility:</strong> At least one participant or team member must be currently enrolled as an undergraduate or graduate student at the University of British Columbia.
+                </p>
+                <p>
+                  <strong>Verification &amp; Calculation:</strong> Actions logged through the personal ledger are verified against standardized carbon-intensity coefficients for modal transit shift, energy conservation, and ecological restoration hours.
+                </p>
+                <p>
+                  <strong>Institutional Impact:</strong> Aggregate faculty savings are compiled into quarterly sustainability briefing reports shared with UBC Campus &amp; Community Planning.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    </main>
+  );
 }
