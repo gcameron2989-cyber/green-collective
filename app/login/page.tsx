@@ -20,8 +20,8 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Read target return URL from query params (?redirectTo=... or ?next=...), fallback to /dashboard
-  const redirectTo = searchParams.get("redirectTo") || searchParams.get("next") || "/dashboard";
+  // Read return path from URL (?redirectTo=/actions), fallback to /actions
+  const redirectTo = searchParams.get("redirectTo") || searchParams.get("next") || "/actions";
 
   const switchView = (newView: AuthView) => {
     setView(newView);
@@ -92,6 +92,7 @@ function LoginFormContent() {
       }
     }
 
+    // Redirect directly back to /actions (or specified page)
     router.push(redirectTo);
     router.refresh();
   };
@@ -205,7 +206,7 @@ function LoginFormContent() {
         {view === "signin" && (
           <div>
             New to Green Collective?{" "}
-            <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline">
+            <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline font-semibold">
               Create Account
             </button>
           </div>
@@ -225,12 +226,9 @@ function LoginFormContent() {
 
 export default function LoginPage() {
   return (
-    <div className="flex-1 flex flex-col justify-center relative overflow-hidden w-full">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
-
+    <div className="flex-1 flex flex-col justify-center relative overflow-hidden w-full min-h-screen bg-[#f9f8f6]">
       <main className="flex-1 flex items-center justify-center px-6 py-12 z-10 w-full">
-        <Suspense fallback={<div className="text-center p-8 text-xs font-mono text-[#526760]">Loading...</div>}>
+        <Suspense fallback={<div className="text-xs font-mono text-[#526760]">Loading login...</div>}>
           <LoginFormContent />
         </Suspense>
       </main>
