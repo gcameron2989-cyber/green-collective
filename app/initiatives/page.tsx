@@ -1,254 +1,242 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
-export interface InitiativeItem {
+export interface RealInitiative {
   id: string;
-  slug?: string;
   title: string;
-  tagline: string;
-  category: "Public Community" | "Campus & Student";
-  location: string;
-  currentPoints: number;
-  targetPoints: number;
-  co2SavedKg: number;
-  participantsCount: number;
-  status: "Active" | "Milestone Reached" | "Planning";
+  leadOrg: string;
+  category: string;
+  status: string;
+  region: "VANCOUVER / UBC" | "TORONTO / GTA" | "GLOBAL / REMOTE";
+  locationTag: string;
   description: string;
+  impactScope: string;
+  officialPortalUrl: string;
 }
 
-export const CATALOG_INITIATIVES: InitiativeItem[] = [
+export const VERIFIED_INITIATIVES: RealInitiative[] = [
   {
-    id: "kitsilano-zero-waste-canopy",
-    slug: "kitsilano-zero-waste-canopy",
-    title: "Kitsilano Zero Waste & Tree Canopy Expansion",
-    tagline: "Boosting local urban canopy coverage and scaling reusable container adoption across Kitsilano.",
-    category: "Public Community",
-    location: "Kitsilano, Vancouver",
-    currentPoints: 14200,
-    targetPoints: 20000,
-    co2SavedKg: 1840,
-    participantsCount: 312,
-    status: "Active",
-    description: "A community-led project uniting West 4th and Broadway businesses with local residents to plant native shade trees, set up public organic scrap collection hubs, and build out a zero-waste reusable takeaway container network.",
+    id: "ubc-urban-forestry",
+    title: "UBC Urban Forestry & Canopy Stewardship",
+    leadOrg: "UBC Faculty of Forestry",
+    category: "ECOSYSTEM STEWARDSHIP",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "VANCOUVER",
+    description: "Long-term monitoring of forest health, wildfire fuel loads, and carbon sequestration across research forests and campus canopy plots.",
+    impactScope: "100+ Regional Plots Audited · Carbon Sink Monitoring",
+    officialPortalUrl: "https://forestry.ubc.ca/",
   },
   {
-    id: "ubc-forestry-climate-hub",
-    slug: "ubc-forestry-climate-hub",
-    title: "UBC Forestry Campus Climate Hub",
-    tagline: "Student-driven fuel reduction, research plot monitoring, and organic waste diversion at Point Grey.",
-    category: "Campus & Student",
-    location: "Faculty of Forestry, UBC",
-    currentPoints: 18900,
-    targetPoints: 25000,
-    co2SavedKg: 2450,
-    participantsCount: 480,
-    status: "Active",
-    description: "Integrating forestry research with campus action: monitoring experimental forest plots, managing fuel loads in surrounding woodlands, scaling composting in student housing, and running active transportation transit challenges.",
+    id: "vancouver-zero-waste-2040",
+    title: "City of Vancouver Zero Waste 2040 Framework",
+    leadOrg: "City of Vancouver",
+    category: "CIRCULAR ECONOMY",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "VANCOUVER",
+    description: "Comprehensive city policy and merchant network targeted at eliminating disposable packaging and expanding reusable food container systems.",
+    impactScope: "Municipal Single-Use Reduction Strategy",
+    officialPortalUrl: "https://vancouver.ca/zero-waste",
   },
   {
-    id: "mount-pleasant-active-mobility",
-    slug: "mount-pleasant-active-mobility",
-    title: "Mount Pleasant Active Mobility Corridor",
-    tagline: "Safer bike infrastructure and micro-mobility incentives along Main Street and Broadway.",
-    category: "Public Community",
-    location: "Mount Pleasant, Vancouver",
-    currentPoints: 9400,
-    targetPoints: 15000,
-    co2SavedKg: 1120,
-    participantsCount: 195,
-    status: "Active",
-    description: "Working with local housing associations and commuters to replace single-occupancy vehicle trips with e-bikes, cycling, and public transit journeys across the Mount Pleasant neighborhood.",
+    id: "translink-climate-action-plan",
+    title: "TransLink Climate Action Plan & Fleet Electrification",
+    leadOrg: "TransLink BC",
+    category: "SUSTAINABLE MOBILITY",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "VANCOUVER",
+    description: "Regional transit decarbonization roadmap prioritizing electric bus deployment and active transportation corridor integration.",
+    impactScope: "Zero-Emission Bus Fleet · RapidBus Corridor Expansion",
+    officialPortalUrl: "https://www.translink.ca/plans-and-projects/strategies-plans-and-guidelines/environment-and-sustainability/climate-action-plan",
   },
   {
-    id: "point-grey-shoreline-restoration",
-    slug: "point-grey-shoreline-restoration",
-    title: "Point Grey & Jericho Shoreline Restoration",
-    tagline: "Protecting coastal biodiversity and removing marine plastics along Jericho and Spanish Banks.",
-    category: "Public Community",
-    location: "Point Grey, Vancouver",
-    currentPoints: 12100,
-    targetPoints: 12000,
-    co2SavedKg: 1680,
-    participantsCount: 260,
-    status: "Milestone Reached",
-    description: "Community shoreline cleanups, dune vegetation restoration, and invasive species removal protecting coastal ecosystems and marine habitats along the Point Grey coastline.",
+    id: "ubc-cap-2030",
+    title: "UBC Climate Action Plan 2030 (CAP 2030)",
+    leadOrg: "UBC Sustainability Hub",
+    category: "CAMPUS DECARBONIZATION",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Institutional net-zero roadmap targeting an 85% reduction in operational emissions and zero-waste residence operations by 2030.",
+    impactScope: "Campus District Energy Systems · Scope 3 Emission Scoping",
+    officialPortalUrl: "https://sustain.ubc.ca/climate-action-plan-2030",
   },
   {
-    id: "false-creek-circular-dining",
-    slug: "false-creek-circular-dining",
-    title: "False Creek Circular Food & Dining Network",
-    tagline: "Eliminating single-use takeaway packaging across local waterfront food vendors and cafes.",
-    category: "Public Community",
-    location: "Fairview / South Granville",
-    currentPoints: 6200,
-    targetPoints: 10000,
-    co2SavedKg: 790,
-    participantsCount: 140,
-    status: "Active",
-    description: "Partnering with waterfront food providers to establish standardized returnable container deposits, community composting drop-offs, and commercial food waste diversion.",
+    id: "toronto-ravine-strategy",
+    title: "City of Toronto Ravine Strategy",
+    leadOrg: "City of Toronto & TRCA",
+    category: "ECOLOGICAL CONSERVATION",
+    status: "ACTIVE PROGRAM",
+    region: "TORONTO / GTA",
+    locationTag: "TORONTO",
+    description: "Protection, management, and ecological enhancement of Toronto's 11,000-hectare ravine system and urban forest canopy.",
+    impactScope: "Ravine Ecosystem Protection · Invasive Species Abatement",
+    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/trees/torontos-ravine-strategy/",
   },
   {
-    id: "ubc-renewable-energy-challenge",
-    slug: "ubc-renewable-energy-challenge",
-    title: "UBC Student Residence Energy Conservation",
-    tagline: "Peer-to-peer residence energy monitoring and heat-loss reduction competition across campus dorms.",
-    category: "Campus & Student",
-    location: "UBC Campus Housing",
-    currentPoints: 3400,
-    targetPoints: 8000,
-    co2SavedKg: 430,
-    participantsCount: 115,
-    status: "Planning",
-    description: "Empowering students across residence halls to optimize winter thermostat settings, eliminate phantom power draws, and switch to cold-water laundry routines.",
+    id: "trca-green-infrastructure",
+    title: "TRCA Watershed & Living City Initiative",
+    leadOrg: "Toronto and Region Conservation Authority",
+    category: "WATERSHED MANAGEMENT",
+    status: "ACTIVE PROGRAM",
+    region: "TORONTO / GTA",
+    locationTag: "GREATER TORONTO AREA",
+    description: "Restoring urban wetlands, improving stormwater quality, and maintaining green infrastructure across major Southern Ontario watersheds.",
+    impactScope: "Regional Watershed Monitoring · Shoreline Protection",
+    officialPortalUrl: "https://trca.ca/conservation/green-infrastructure/",
+  },
+  {
+    id: "c40-cities-climate-network",
+    title: "C40 Cities Global Decarbonization Network",
+    leadOrg: "C40 Climate Leadership Group",
+    category: "GLOBAL POLICY",
+    status: "ACTIVE PROGRAM",
+    region: "GLOBAL / REMOTE",
+    locationTag: "INTERNATIONAL",
+    description: "Global coalition of mayors and municipal leaders taking urgent action to confront the climate crisis and drive urban sustainability.",
+    impactScope: "Urban Climate Action Benchmarking · Global Municipal Standards",
+    officialPortalUrl: "https://www.c40.org/",
   },
 ];
 
 export default function InitiativesPage() {
-  const supabase = createClient();
-  const [initiatives, setInitiatives] = useState<InitiativeItem[]>(CATALOG_INITIATIVES);
-  const [filterCategory, setFilterCategory] = useState<string>("All");
+  const [activeRegion, setActiveRegion] = useState<string>("ALL REGIONS");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    async function loadInitiatives() {
-      const { data, error } = await supabase.from("initiatives").select("*");
-      if (!error && data && data.length > 0) {
-        const mapped: InitiativeItem[] = data.map((item: any) => ({
-          id: item.id || item.slug,
-          slug: item.slug || item.id,
-          title: item.title,
-          tagline: item.tagline || item.description?.slice(0, 110) || "",
-          category: item.category || "Public Community",
-          location: item.location || "Vancouver, BC",
-          currentPoints: item.current_points ?? item.currentPoints ?? 0,
-          targetPoints: item.target_points ?? item.targetPoints ?? 10000,
-          co2SavedKg: item.co2_saved_kg ?? item.co2SavedKg ?? 0,
-          participantsCount: item.participants_count ?? item.participantsCount ?? 0,
-          status: item.status || "Active",
-          description: item.description || "",
-        }));
-        setInitiatives(mapped);
-      }
-    }
-    loadInitiatives();
-  }, []);
+  const filteredInitiatives = useMemo(() => {
+    return VERIFIED_INITIATIVES.filter((item) => {
+      const matchesRegion =
+        activeRegion === "ALL REGIONS" || item.region === activeRegion;
 
-  const filtered = filterCategory === "All"
-    ? initiatives
-    : initiatives.filter((item) => item.category === filterCategory);
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.leadOrg.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query);
+
+      return matchesRegion && matchesSearch;
+    });
+  }, [activeRegion, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      {/* Navigation Header */}
-      <nav className="border-b border-[#102f26]/10 bg-white/90 backdrop-blur sticky top-0 z-30 px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="font-black text-lg tracking-tight text-[#102f26]">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] font-sans antialiased pb-20">
+      {/* Navbar Header matching screenshot */}
+      <nav className="border-b border-gray-200 bg-white sticky top-0 z-30 px-8 py-3.5 flex items-center justify-between text-xs tracking-wider font-semibold">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 font-black text-sm tracking-tight text-[#0F2C23]">
+            <span className="w-4 h-4 bg-[#0F2C23] rounded-sm flex items-center justify-center text-[10px] text-white">■</span>
             Green Collective
           </Link>
-          <div className="flex items-center gap-6 text-xs font-semibold">
-            <Link href="/actions" className="hover:text-[#39705d] transition">Actions</Link>
-            <Link href="/initiatives" className="text-[#39705d] underline underline-offset-4 font-bold">Initiatives</Link>
-            <Link href="/dashboard" className="hover:text-[#39705d] transition">Dashboard</Link>
-            <Link href="/profile" className="hover:text-[#39705d] transition">Profile</Link>
+          <div className="hidden md:flex items-center gap-6 text-gray-500 font-mono text-[11px]">
+            <Link href="/actions" className="hover:text-black transition">ACTIONS</Link>
+            <Link href="/initiatives" className="text-black font-bold underline underline-offset-4">INITIATIVES</Link>
+            <Link href="/about" className="hover:text-black transition">ABOUT</Link>
+            <Link href="/contact" className="hover:text-black transition">CONTACT</Link>
           </div>
+        </div>
+        <div>
+          <Link href="/login" className="text-gray-500 hover:text-black font-mono text-[11px]">LOG IN</Link>
         </div>
       </nav>
 
-      {/* Hero Header */}
-      <section className="bg-[#f1f6f2] border-b border-[#102f26]/10 py-10 px-6">
-        <div className="max-w-7xl mx-auto">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
-            Impact Directives
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight">Community & Campus Initiatives</h1>
-          <p className="text-xs text-[#526760] max-w-2xl mt-1 leading-relaxed">
-            Explore active environmental campaigns in your area. Personal sustainable actions logged on Green Collective automatically route points and carbon savings directly to these targets.
-          </p>
-
-          <div className="flex gap-2 mt-6">
-            {["All", "Public Community", "Campus & Student"].map((cat) => (
+      <main className="max-w-7xl mx-auto px-6 pt-8 pb-16">
+        {/* Region Filters + Search Input Header Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          {/* Region Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 font-mono text-[11px] tracking-wider">
+            {["ALL REGIONS", "VANCOUVER / UBC", "TORONTO / GTA", "GLOBAL / REMOTE"].map((region) => (
               <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-                  filterCategory === cat
-                    ? "bg-[#102f26] text-white shadow-sm"
-                    : "bg-white text-[#526760] border border-[#102f26]/10 hover:border-[#102f26]/30"
+                key={region}
+                onClick={() => setActiveRegion(region)}
+                className={`px-3.5 py-1.5 uppercase transition-all whitespace-nowrap ${
+                  activeRegion === region
+                    ? "bg-[#0F2C23] text-white font-bold"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
                 }`}
               >
-                {cat}
+                {region}
               </button>
             ))}
           </div>
+
+          {/* Search Box */}
+          <div className="w-full lg:w-80">
+            <input
+              type="text"
+              placeholder="Search initiatives, lead orgs, keywords..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3.5 py-1.5 bg-white border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-black font-mono"
+            />
+          </div>
         </div>
-      </section>
 
-      {/* Initiatives Directory Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((item) => {
-            const progressPct = Math.min(100, Math.round((item.currentPoints / item.targetPoints) * 100));
-
-            return (
-              <Link
+        {/* Initiative Cards List */}
+        <div className="space-y-4">
+          {filteredInitiatives.length === 0 ? (
+            <div className="bg-white border border-gray-200 p-12 text-center text-xs font-mono text-gray-500">
+              NO INITIATIVES FOUND MATCHING YOUR CRITERIA.
+            </div>
+          ) : (
+            filteredInitiatives.map((item) => (
+              <div
                 key={item.id}
-                href={`/initiatives/${item.slug || item.id}`}
-                className="bg-white border border-[#102f26]/10 rounded-2xl p-6 shadow-sm hover:border-[#39705d] hover:shadow-md transition flex flex-col justify-between group"
+                className="bg-white border border-gray-200 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-gray-300 transition"
               >
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2.5 py-0.5 rounded-md font-semibold">
-                      {item.category}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        item.status === "Milestone Reached"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : item.status === "Active"
-                          ? "bg-blue-50 text-blue-700"
-                          : "bg-amber-50 text-amber-800"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
+                {/* Content */}
+                <div className="flex-1 max-w-4xl">
+                  {/* Category Tags */}
+                  <div className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-gray-400 uppercase mb-2">
+                    <span>{item.category}</span>
+                    <span>•</span>
+                    <span className="text-gray-500">{item.status}</span>
+                    <span>•</span>
+                    <span className="text-gray-500">{item.locationTag}</span>
                   </div>
 
-                  <h2 className="text-base font-bold text-[#102f26] group-hover:text-[#39705d] transition mb-1">
-                    {item.title}
+                  {/* Title linking to internal subpage */}
+                  <h2 className="text-lg font-bold text-gray-900 hover:text-[#0F2C23] transition mb-0.5">
+                    <Link href={`/initiatives/${item.id}`}>{item.title}</Link>
                   </h2>
-                  <p className="text-[11px] text-gray-500 font-medium mb-3">📍 {item.location}</p>
-                  <p className="text-xs text-[#526760] leading-relaxed mb-6">{item.tagline}</p>
+
+                  {/* Lead Organization */}
+                  <p className="font-mono text-xs text-gray-500 mb-2">
+                    Lead: <span className="text-gray-700 font-semibold">{item.leadOrg}</span>
+                  </p>
+
+                  {/* Summary */}
+                  <p className="text-xs text-gray-600 leading-relaxed mb-3">
+                    {item.description}
+                  </p>
+
+                  {/* Impact Scope */}
+                  <p className="text-[11px] font-mono text-gray-500">
+                    <strong className="text-gray-700 font-semibold">Impact Scope:</strong> {item.impactScope}
+                  </p>
                 </div>
 
-                <div>
-                  {/* Progress Bar */}
-                  <div className="space-y-1.5 mb-4">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-[#102f26]">{item.currentPoints.toLocaleString()} / {item.targetPoints.toLocaleString()} pts</span>
-                      <span className="text-[#39705d]">{progressPct}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#102f26] transition-all duration-500 rounded-full"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-[#102f26]">
-                    <span>👥 {item.participantsCount} Contributors</span>
-                    <span className="text-[#39705d] group-hover:translate-x-1 transition-transform">
-                      View Hub →
-                    </span>
-                  </div>
+                {/* Right Action Button */}
+                <div className="shrink-0 flex items-center">
+                  <a
+                    href={item.officialPortalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full md:w-auto px-5 py-3 bg-[#0F2C23] hover:bg-black text-white text-[11px] font-mono tracking-widest uppercase font-bold transition text-center flex items-center justify-center gap-1.5"
+                  >
+                    VISIT OFFICIAL PORTAL ↗
+                  </a>
                 </div>
-              </Link>
-            );
-          })}
+              </div>
+            ))
+          )}
         </div>
-      </section>
+      </main>
     </div>
   );
 }
