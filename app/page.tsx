@@ -61,7 +61,7 @@ export default function HomePage() {
 
   return (
     <main className="bg-[#f9f8f6] text-[#102f26] font-sans antialiased">
-      {/* 1. HERO SECTION: Clean, Focused, Mission-First */}
+      {/* 1. HERO SECTION */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-5xl px-6 py-20 text-center md:px-10 md:py-28 lg:py-32">
           
@@ -95,38 +95,37 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Quick Impact Metric Ticker */}
-          <div className="mt-16 grid grid-cols-2 gap-4 border-t border-[#102f26]/10 pt-10 sm:grid-cols-4">
-            <div>
-              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">1,420+</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                Actions Logged
+          {/* REAL VALUE PILLARS (Replaces hardcoded / placeholder stats) */}
+          <div className="mt-16 grid grid-cols-1 gap-6 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
+            <div className="border-l-2 border-[#102f26]/20 pl-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                01 / Action Ledger
               </p>
+              <p className="mt-1 text-sm font-medium text-[#102f26]">Multi-select entry</p>
+              <p className="mt-0.5 text-xs text-[#526760]">Log sustainable daily choices in seconds.</p>
             </div>
-            <div>
-              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">8.4t</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                CO₂e Diverted
+
+            <div className="border-l-2 border-[#102f26]/20 pl-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                02 / Campus & Municipal
               </p>
+              <p className="mt-1 text-sm font-medium text-[#102f26]">Institutional tiers</p>
+              <p className="mt-0.5 text-xs text-[#526760]">Group progress by faculty, campus, or local hub.</p>
             </div>
-            <div>
-              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">12</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                UBC Faculties
+
+            <div className="border-l-2 border-[#102f26]/20 pl-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                03 / Impact Models
               </p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">2</p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                Municipal Hubs
-              </p>
+              <p className="mt-1 text-sm font-medium text-[#102f26]">Standardized CO₂e</p>
+              <p className="mt-0.5 text-xs text-[#526760]">Transparent, factor-based carbon offset estimates.</p>
             </div>
           </div>
 
         </div>
       </section>
 
-      {/* 2. INTERACTIVE DEMO SECTION: Spacious & Roomy Action Logger */}
+      {/* 2. INTERACTIVE DEMO SECTION */}
       <section className="border-b border-[#102f26]/10 bg-white py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
