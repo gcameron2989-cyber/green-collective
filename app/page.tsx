@@ -1,9 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
-const actions = [
+const HERO_DEMO_ACTIONS = [
+  { id: 'sustainable-commute', name: 'Public / active transit', impact: 1.5, category: 'TRANSPORT' },
+  { id: 'plant-based-meal', name: 'Plant-forward meal', impact: 1.2, category: 'FOOD' },
+  { id: 'cold-water-laundry', name: 'Cold-water laundry', impact: 0.6, category: 'ENERGY' },
+];
+
+const MAIN_ACTIONS = [
   {
     category: 'TRANSPORT',
     name: 'Public / active transportation',
@@ -35,6 +41,24 @@ const actions = [
 ];
 
 export default function HomePage() {
+  // State for interactive live logger demo in the hero
+  const [selectedDemoActions, setSelectedDemoActions] = useState<string[]>([
+    'sustainable-commute',
+    'plant-based-meal',
+  ]);
+
+  const toggleDemoAction = (id: string) => {
+    setSelectedDemoActions((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const calculatedImpact = HERO_DEMO_ACTIONS.filter((action) =>
+    selectedDemoActions.includes(action.id)
+  )
+    .reduce((sum, action) => sum + action.impact, 0)
+    .toFixed(1);
+
   return (
     <main className="bg-[#f9f8f6] text-[#102f26] font-sans antialiased">
       {/* Hero */}
@@ -75,76 +99,125 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Card Column (Vertically Centered) */}
+            {/* Right Column: Interactive Live Logger & Nav Widget */}
             <div className="lg:col-span-5">
-              <div className="border border-[#102f26]/15 bg-[#f9f8f6] shadow-md">
-                <div className="flex items-center justify-between border-b border-[#102f26]/10 px-5 py-4">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
-                    Live Leaderboards
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
-                    Regional & Institutional
-                  </span>
-                </div>
-
-                <div className="divide-y divide-[#102f26]/10">
-                  <div className="px-5 py-4.5 transition-colors hover:bg-black/[0.02]">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-[#102f26]">
-                          Institutional Tier (UBC Faculties)
-                        </p>
-                        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Compare faculty engagement across campus
-                        </p>
-                      </div>
-                      <span className="font-mono text-[10px] font-semibold text-[#39705d]">
-                        ACTIVE
-                      </span>
-                    </div>
+              <div className="border border-[#102f26]/15 bg-[#f9f8f6] shadow-sm">
+                
+                {/* Header with Live Counter */}
+                <div className="flex items-center justify-between border-b border-[#102f26]/10 px-5 py-3.5 bg-[#e2ede5]/40">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-[#39705d] animate-pulse" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                      Interactive Logger
+                    </span>
                   </div>
-
-                  <div className="px-5 py-4.5 transition-colors hover:bg-black/[0.02]">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-[#102f26]">
-                          Local Tier (Vancouver / Toronto)
-                        </p>
-                        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Track municipal and community impact
-                        </p>
-                      </div>
-                      <span className="font-mono text-[10px] font-semibold text-[#39705d]">
-                        LIVE
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="px-5 py-4.5 transition-colors hover:bg-black/[0.02]">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-[#102f26]">
-                          Multi-select personal ledger
-                        </p>
-                        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
-                          Check off multiple actions in seconds
-                        </p>
-                      </div>
-                      <span className="text-lg leading-none text-[#102f26]">↗</span>
-                    </div>
+                  <div className="font-mono text-xs font-semibold text-[#102f26]">
+                    +{calculatedImpact} kg CO₂e
                   </div>
                 </div>
 
-                <div className="border-t border-[#102f26]/10 bg-[#102f26] px-5 py-3.5 text-white">
+                {/* Interactive Toggles */}
+                <div className="p-4 space-y-2 border-b border-[#102f26]/10">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d] mb-3">
+                    Select actions to test impact:
+                  </p>
+                  
+                  {HERO_DEMO_ACTIONS.map((action) => {
+                    const isSelected = selectedDemoActions.includes(action.id);
+                    return (
+                      <button
+                        key={action.id}
+                        onClick={() => toggleDemoAction(action.id)}
+                        type="button"
+                        className={`w-full flex items-center justify-between p-3 border text-left transition-all ${
+                          isSelected
+                            ? 'bg-[#102f26] text-white border-[#102f26] shadow-sm'
+                            : 'bg-white text-[#102f26] border-[#102f26]/15 hover:border-[#102f26]/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center border text-[10px] ${
+                              isSelected
+                                ? 'border-white bg-white text-[#102f26] font-bold'
+                                : 'border-[#102f26]/30 bg-transparent'
+                            }`}
+                          >
+                            {isSelected ? '✓' : ''}
+                          </span>
+                          <div>
+                            <p className="text-xs font-medium leading-none">{action.name}</p>
+                            <p
+                              className={`text-[9px] font-mono uppercase tracking-wider mt-1 ${
+                                isSelected ? 'text-[#9bb9aa]' : 'text-[#71847d]'
+                              }`}
+                            >
+                              {action.category}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className={`font-mono text-[10px] ${
+                            isSelected ? 'text-[#9bb9aa]' : 'text-[#39705d]'
+                          }`}
+                        >
+                          ~{action.impact} kg
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Quick Board Navigation Links */}
+                <div className="divide-y divide-[#102f26]/10 bg-white/50">
+                  <Link
+                    href="/competition?tab=institutional"
+                    className="group flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#102f26]/[0.04]"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
+                        UBC Faculty Challenge
+                      </p>
+                      <p className="font-mono text-[9px] uppercase tracking-wider text-[#71847d]">
+                        Institutional Leaderboard
+                      </p>
+                    </div>
+                    <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
+                      →
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/competition?tab=local"
+                    className="group flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#102f26]/[0.04]"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
+                        Vancouver & Municipal Hubs
+                      </p>
+                      <p className="font-mono text-[9px] uppercase tracking-wider text-[#71847d]">
+                        Local Regional Board
+                      </p>
+                    </div>
+                    <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
+                      →
+                    </span>
+                  </Link>
+                </div>
+
+                {/* Action CTA Footer */}
+                <Link
+                  href="/habits"
+                  className="block border-t border-[#102f26]/10 bg-[#102f26] px-5 py-3.5 text-white transition-opacity hover:opacity-95"
+                >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
-                      Green Collective
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/80">
+                      Open Full Ledger ({selectedDemoActions.length} Selected)
                     </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em]">
-                      Platform / 01
-                    </span>
+                    <span className="font-mono text-xs">→</span>
                   </div>
-                </div>
+                </Link>
+
               </div>
             </div>
 
@@ -228,7 +301,7 @@ export default function HomePage() {
             </div>
 
             <div className="border-t border-white/15">
-              {actions.map((action) => (
+              {MAIN_ACTIONS.map((action) => (
                 <Link
                   key={action.id}
                   href={`/habits?action=${action.id}`}
@@ -293,7 +366,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <Link
-                    href="/competition"
+                    href="/competition?tab=institutional"
                     className="shrink-0 border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55"
                   >
                     View institutional board →
@@ -313,7 +386,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <Link
-                    href="/competition"
+                    href="/competition?tab=local"
                     className="shrink-0 border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55"
                   >
                     View local board →
