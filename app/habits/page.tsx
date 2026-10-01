@@ -4,32 +4,18 @@ import React, { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import {
+  ACTION_REGISTRY,
+  ActionItem,
+  getFormattedImpact,
+  calculateTotalImpact,
+  calculateTotalPoints,
+} from '@/lib/actions'
 
 interface Faculty {
   id: string
   name: string
 }
-
-interface EcoAction {
-  id: string
-  category: string
-  name: string
-  description: string
-  impact: string
-  points: number
-}
-
-const ALL_ACTIONS: EcoAction[] = [
-  { id: 'sustainable-commute', category: 'TRANSPORT', name: 'Public Transit Commute', description: 'Replaced a personal vehicle trip with Skytrain, bus, or SeaBus.', impact: '~2.04 kg CO₂e total', points: 25 },
-  { id: 'active-transport', category: 'TRANSPORT', name: 'Active Transportation (Bike / Walk)', description: 'Chose cycling or walking instead of motorized transport.', impact: '~1.05 kg CO₂e total', points: 25 },
-  { id: 'carpool-trip', category: 'TRANSPORT', name: 'Carpooling / EV Ride', description: 'Shared a vehicle trip with passengers or traveled via electric vehicle.', impact: '~1.8 kg CO₂e total', points: 20 },
-  { id: 'plant-based-meal', category: 'FOOD', name: 'Plant-Forward Meal', description: 'Consumed a vegetarian or vegan meal, avoiding ruminant meats.', impact: '~1.5 kg CO₂e per meal', points: 20 },
-  { id: 'local-produce', category: 'FOOD', name: 'Local / Seasonal Produce', description: 'Purchased or consumed locally grown regional produce.', impact: '~0.8 kg CO₂e per day', points: 15 },
-  { id: 'zero-food-waste', category: 'FOOD', name: 'Zero Food Waste Meal', description: 'Successfully consumed or repurposed leftovers to prevent food waste.', impact: '~0.6 kg CO₂e per meal', points: 20 },
-  { id: 'waste-sorting', category: 'WASTE', name: 'Waste Sorting', description: 'Sort recyclable, compostable, and landfill materials correctly.', impact: '~0.5 kg CO₂e per action', points: 10 },
-  { id: 'cold-water-laundry', category: 'ENERGY', name: 'Cold-Water Laundry', description: 'Wash clothing using cold water instead of a hot cycle.', impact: '~0.6 kg CO₂e per load', points: 15 },
-  { id: 'campus-cleanup', category: 'COMMUNITY', name: 'Campus Clean-up / Eco Event', description: 'Participated in campus sustainability clean-up or ecological restoration.', impact: '~4.0 kg CO₂e total', points: 50 },
-]
 
 function HabitsContent() {
   const [userType, setUserType] = useState<'student' | 'community'>('student')
@@ -37,7 +23,7 @@ function HabitsContent() {
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
   const [selectedActionIds, setSelectedActionIds] = useState<string[]>([])
-  
+
   const [loading, setLoading] = useState<boolean>(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -64,8 +50,8 @@ function HabitsContent() {
     fetchFaculties()
   }, [supabase, searchParams])
 
-  // Automatically sort actions so any preselected action from homepage appears at the very top
-  const prioritizedActions = [...ALL_ACTIONS].sort((a, b) => {
+  // Sort actions so preselected actions from homepage appear at the top
+  const prioritizedActions = [...ACTION_REGISTRY].sort((a, b) => {
     const aSelected = selectedActionIds.includes(a.id) ? -1 : 0
     const bSelected = selectedActionIds.includes(b.id) ? -1 : 0
     return aSelected - bSelected
@@ -87,7 +73,10 @@ function HabitsContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (userType === 'student' && !selectedFaculty) {
-      setMessage({ type: 'error', text: 'Please select your UBC faculty to contribute to the challenge.' })
+      setMessage({
+        type: 'error',
+        text: 'Please select your UBC faculty to contribute to the challenge.',
+      })
       return
     }
     if (selectedActionIds.length === 0) {
@@ -99,7 +88,9 @@ function HabitsContent() {
     setMessage(null)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
@@ -130,178 +121,248 @@ function HabitsContent() {
     }
   }
 
+  const totalCarbonImpact = calculateTotalImpact(selectedActionIds).toFixed(2)
+  const totalPoints = calculateTotalPoints(selectedActionIds)
+
   return (
     <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
       {/* Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-20 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-              Action Registry · Personal Ledger
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d] font-medium">
+              Action Ledger · Multi-Select Entry
             </p>
-            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
-              <Link href="/competition" className="text-[#526760] hover:text-[#102f26]">
-                View Live Leaderboard →
-              </Link>
-            </div>
+            <Link
+              href="/"
+              className="font-mono text-xs uppercase tracking-wider text-[#102f26]/60 hover:text-[#102f26]"
+            >
+              ← Back to Home
+            </Link>
           </div>
-          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
-            Verified Action Registry
+          <h1 className="text-3xl font-medium tracking-[-0.03em] md:text-5xl text-[#102f26]">
+            Record Daily Sustainable Actions
           </h1>
-          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Check off multiple sustainable actions below to record your footprint. Choose your participation mode to attribute points accordingly.
+          <p className="mt-4 max-w-2xl text-base text-[#526760] leading-relaxed">
+            Select all actions you completed today. Points are calculated using verified carbon factors and attributed to your personal account and faculty leaderboard.
           </p>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="mx-auto max-w-5xl px-6 py-12 md:px-10">
-        {message && (
-          <div
-            className={`mb-8 p-4 border font-mono text-xs ${
-              message.type === 'success'
-                ? 'bg-[#f1f6f2] border-[#39705d] text-[#102f26]'
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Branching Segment: Student vs Community */}
-          <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                  Participation Track
-                </span>
-                <p className="text-xs font-medium text-[#102f26]">Are you participating as a UBC student in the faculty challenge?</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setUserType('student')}
-                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                    userType === 'student' ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
-                  }`}
-                >
-                  UBC Student (Challenge)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUserType('community')}
-                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                    userType === 'community' ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
-                  }`}
-                >
-                  General Community / Public
-                </button>
-              </div>
+      {/* Main Content Area */}
+      <div className="mx-auto max-w-7xl px-6 py-12 md:px-10 lg:px-12">
+        <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-12">
+          
+          {/* Left Column: Action Selection & Category Filter */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Category Pills */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/10 pb-6">
+              {['ALL', 'TRANSPORT', 'FOOD', 'ENERGY', 'WASTE', 'CIRCULARITY', 'COMMUNITY'].map(
+                (cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-[#102f26] text-white'
+                        : 'bg-[#f1f6f2] text-[#102f26]/70 hover:bg-[#e2ede5] hover:text-[#102f26]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                )
+              )}
             </div>
 
-            {userType === 'student' && (
-              <div className="pt-4 border-t border-[#102f26]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <span className="text-xs text-[#526760]">Select your UBC faculty for leaderboard credit:</span>
-                <select
-                  value={selectedFaculty}
-                  onChange={(e) => setSelectedFaculty(e.target.value)}
-                  required={userType === 'student'}
-                  className="px-4 py-2 border border-[#102f26]/20 bg-white font-mono text-xs text-[#102f26] focus:outline-none"
-                >
-                  <option value="">-- Choose UBC Faculty --</option>
-                  {faculties.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
+            {/* Action Cards List */}
+            <div className="space-y-3">
+              {filteredActions.map((action: ActionItem) => {
+                const isSelected = selectedActionIds.includes(action.id)
+                return (
+                  <div
+                    key={action.id}
+                    onClick={() => toggleActionSelection(action.id)}
+                    className={`cursor-pointer border p-5 transition-all ${
+                      isSelected
+                        ? 'border-[#102f26] bg-[#102f26] text-white shadow-sm'
+                        : 'border-[#102f26]/15 bg-[#f9f8f6] text-[#102f26] hover:border-[#102f26]/40 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`font-mono text-[10px] uppercase tracking-wider ${
+                              isSelected ? 'text-[#9bb9aa]' : 'text-[#39705d]'
+                            }`}
+                          >
+                            {action.category}
+                          </span>
+                          <span
+                            className={`font-mono text-[10px] uppercase tracking-wider ${
+                              isSelected ? 'text-white/60' : 'text-[#526760]'
+                            }`}
+                          >
+                            +{action.points} PTS
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-medium leading-tight">{action.name}</h3>
+                        <p
+                          className={`text-sm leading-relaxed ${
+                            isSelected ? 'text-white/80' : 'text-[#526760]'
+                          }`}
+                        >
+                          {action.description}
+                        </p>
+                      </div>
 
-          {/* Category Filter Bar */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/15 pb-6">
-            {['ALL', 'TRANSPORT', 'FOOD', 'ENERGY', 'WASTE', 'COMMUNITY'].map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                  selectedCategory === cat ? 'bg-[#102f26] text-white' : 'bg-white border border-[#102f26]/20 text-[#102f26]'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Action List Feed with Checkboxes & Auto-Sorting */}
-          <div className="border-t border-[#102f26]/15 divide-y divide-[#102f26]/15">
-            {filteredActions.map((action) => {
-              const isSelected = selectedActionIds.includes(action.id)
-              return (
-                <div
-                  key={action.id}
-                  onClick={() => toggleActionSelection(action.id)}
-                  className={`p-6 transition cursor-pointer flex items-center justify-between gap-6 ${
-                    isSelected ? 'bg-[#f1f6f2] border-l-4 border-l-[#102f26]' : 'hover:bg-[#f1f6f2]/40 bg-white'
-                  }`}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] px-2 py-0.5 bg-[#f1f6f2] border border-[#102f26]/10 text-[#39705d]">
-                        {action.category}
-                      </span>
-                      {isSelected && (
-                        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#39705d] font-bold">
-                          ✓ Selected
+                      <div className="text-right shrink-0 space-y-2">
+                        <span
+                          className={`inline-flex h-6 w-6 items-center justify-center border text-xs ${
+                            isSelected
+                              ? 'border-white bg-white text-[#102f26] font-bold'
+                              : 'border-[#102f26]/30 bg-transparent'
+                          }`}
+                        >
+                          {isSelected ? '✓' : ''}
                         </span>
-                      )}
+                        <p
+                          className={`font-mono text-[11px] ${
+                            isSelected ? 'text-[#9bb9aa]' : 'text-[#39705d]'
+                          }`}
+                        >
+                          {getFormattedImpact(action)}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-medium text-[#102f26]">
-                      {action.name}
-                    </h3>
-                    <p className="text-xs text-[#526760] max-w-xl">
-                      {action.description}
-                    </p>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d] pt-1">
-                      {action.impact} · <span className="text-[#39705d]">+{action.points} pts</span>
-                    </p>
                   </div>
+                )
+              })}
+            </div>
+          </div>
 
-                  <div className="shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleActionSelection(action.id)}
-                      className="size-5 accent-[#102f26] cursor-pointer"
-                    />
+          {/* Right Column: Submission Ledger Panel */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-8 border border-[#102f26]/20 bg-[#f9f8f6] p-6 shadow-sm space-y-6">
+              
+              <div className="border-b border-[#102f26]/10 pb-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d] font-semibold">
+                  Submission Summary
+                </p>
+                <h2 className="mt-1 text-2xl font-medium text-[#102f26]">Ledger Impact</h2>
+              </div>
+
+              {/* Realtime Stats Display */}
+              <div className="grid grid-cols-2 gap-4 rounded-sm bg-white p-4 border border-[#102f26]/10">
+                <div>
+                  <p className="font-mono text-[10px] uppercase text-[#526760]">Actions</p>
+                  <p className="text-2xl font-bold text-[#102f26] mt-1">
+                    {selectedActionIds.length}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] uppercase text-[#526760]">Est. Impact</p>
+                  <p className="text-xl font-bold text-[#39705d] mt-1">
+                    -{totalCarbonImpact} <span className="text-xs font-normal">kg CO₂e</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* User Identity Toggles */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <label className="block font-mono text-[10px] uppercase tracking-wider text-[#39705d] mb-2">
+                    Affiliation Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setUserType('student')}
+                      className={`p-2.5 text-xs font-mono uppercase tracking-wider border transition-all ${
+                        userType === 'student'
+                          ? 'bg-[#102f26] text-white border-[#102f26]'
+                          : 'bg-white text-[#102f26] border-[#102f26]/20 hover:border-[#102f26]/40'
+                      }`}
+                    >
+                      UBC Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserType('community')}
+                      className={`p-2.5 text-xs font-mono uppercase tracking-wider border transition-all ${
+                        userType === 'community'
+                          ? 'bg-[#102f26] text-white border-[#102f26]'
+                          : 'bg-white text-[#102f26] border-[#102f26]/20 hover:border-[#102f26]/40'
+                      }`}
+                    >
+                      Community
+                    </button>
                   </div>
                 </div>
-              )
-            })}
+
+                {userType === 'student' && (
+                  <div>
+                    <label className="block font-mono text-[10px] uppercase tracking-wider text-[#39705d] mb-1">
+                      Faculty / Department
+                    </label>
+                    <select
+                      value={selectedFaculty}
+                      onChange={(e) => setSelectedFaculty(e.target.value)}
+                      className="w-full border border-[#102f26]/20 bg-white px-3 py-2 text-sm text-[#102f26] focus:border-[#102f26] focus:outline-none"
+                    >
+                      <option value="">Select your faculty...</option>
+                      {faculties.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Message Display */}
+              {message && (
+                <div
+                  className={`p-3 text-xs font-mono ${
+                    message.type === 'success'
+                      ? 'bg-[#e2ede5] text-[#102f26] border border-[#39705d]/30'
+                      : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
+
+              {/* Submission Button */}
+              <button
+                type="submit"
+                disabled={loading || selectedActionIds.length === 0}
+                className="w-full bg-[#102f26] py-4 text-xs font-mono uppercase tracking-[0.18em] text-white transition-all hover:bg-[#1a4438] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading ? 'Logging Entry...' : `Log Actions (+${totalPoints} PTS) →`}
+              </button>
+
+            </div>
           </div>
 
-          {/* Submit Action Bar */}
-          <div className="pt-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50 shadow-md"
-            >
-              {loading ? 'Logging Actions...' : `Submit ${selectedActionIds.length} Selected Action(s) to Ledger →`}
-            </button>
-          </div>
         </form>
-      </section>
+      </div>
     </main>
   )
 }
 
 export default function HabitsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Action Registry...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center font-mono text-xs uppercase tracking-widest text-[#102f26]">
+          Loading Green Collective Ledger...
+        </div>
+      }
+    >
       <HabitsContent />
     </Suspense>
   )
