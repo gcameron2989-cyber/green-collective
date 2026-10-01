@@ -12,22 +12,23 @@ type PublicAffiliationType = "neighbourhood" | "association" | "company" | "othe
 interface ActionCatalogItem {
   id: string;
   title: string;
-  category: string;
+  category: "Mobility" | "Circular Economy" | "Food & Agriculture" | "Energy & Water" | "Ecosystem Stewardship";
   points: number;
   co2SavedKg: number;
   unitLabel: string;
   description: string;
 }
 
-const ACTIONS: ActionCatalogItem[] = [
+// Fallback catalog featuring a comprehensive range of sustainability actions
+const DEFAULT_ACTIONS: ActionCatalogItem[] = [
   {
     id: "transit-commute",
     title: "Transit or Active Bike Commute",
-    category: "Sustainable Mobility",
+    category: "Mobility",
     points: 25,
     co2SavedKg: 2.4,
     unitLabel: "trips",
-    description: "Replaced single-occupancy driving with transit, cycling, or walking.",
+    description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
   },
   {
     id: "reusable-container",
@@ -36,16 +37,79 @@ const ACTIONS: ActionCatalogItem[] = [
     points: 30,
     co2SavedKg: 0.8,
     unitLabel: "containers",
-    description: "Used a reusable cup, mug, or food container at local businesses.",
+    description: "Used a reusable cup, mug, or food container at local businesses or dining halls.",
   },
   {
     id: "tree-care",
-    title: "Urban Tree & Ecosystem Care",
+    title: "Urban Tree & Ecosystem Stewardship",
     category: "Ecosystem Stewardship",
     points: 50,
     co2SavedKg: 5.0,
     unitLabel: "sessions",
-    description: "Participated in canopy care, invasive species removal, or local gardening.",
+    description: "Participated in canopy care, invasive species removal, or community garden maintenance.",
+  },
+  {
+    id: "plant-based-meal",
+    title: "Plant-Based Meal Choice",
+    category: "Food & Agriculture",
+    points: 20,
+    co2SavedKg: 1.8,
+    unitLabel: "meals",
+    description: "Chose a fully plant-based meal over animal-intensive protein options.",
+  },
+  {
+    id: "food-waste-compost",
+    title: "Organic Waste Diversion & Composting",
+    category: "Food & Agriculture",
+    points: 15,
+    co2SavedKg: 0.6,
+    unitLabel: "days",
+    description: "Diverted 100% of household food scraps to municipal green bins or home compost.",
+  },
+  {
+    id: "cold-water-laundry",
+    title: "Cold Water Wash & Line Dry",
+    category: "Energy & Water",
+    points: 15,
+    co2SavedKg: 1.1,
+    unitLabel: "loads",
+    description: "Washed laundry in cold water and air-dried garments instead of using a heated dryer.",
+  },
+  {
+    id: "energy-conservation",
+    title: "Home & Office Energy Reduction",
+    category: "Energy & Water",
+    points: 20,
+    co2SavedKg: 1.5,
+    unitLabel: "days",
+    description: "Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.",
+  },
+  {
+    id: "repair-upcycle",
+    title: "Repair, Upcycle, or Thrift Goods",
+    category: "Circular Economy",
+    points: 40,
+    co2SavedKg: 3.2,
+    unitLabel: "items",
+    description: "Repaired clothing, electronics, or furniture instead of purchasing new items.",
+  },
+  {
+    id: "ev-charging-shared",
+    title: "Shared EV / Carpool Trip",
+    category: "Mobility",
+    points: 35,
+    co2SavedKg: 4.1,
+    unitLabel: "trips",
+    description: "Shared an electric vehicle ride or organized carpooling for commutes.",
+  },
+  {
+    id: "community-clean-up",
+    title: "Shoreline / Park Clean-Up",
+    category: "Ecosystem Stewardship",
+    points: 60,
+    co2SavedKg: 6.0,
+    unitLabel: "events",
+    description: "Collected and properly sorted litter from public parks, beaches, or campus grounds.",
   },
 ];
 
@@ -66,13 +130,18 @@ const UBC_FACULTIES = [
   "Faculty of Applied Science",
   "Sauder School of Business",
   "Faculty of Arts",
+  "Faculty of Land and Food Systems",
 ];
+
+const CATEGORIES = ["All", "Mobility", "Circular Economy", "Food & Agriculture", "Energy & Water", "Ecosystem Stewardship"];
 
 export default function ActionsPage() {
   const router = useRouter();
   const supabase = createClient();
 
   const [user, setUser] = useState<any>(null);
+  const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedAction, setSelectedAction] = useState<ActionCatalogItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -87,15 +156,35 @@ export default function ActionsPage() {
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
+    // Check Auth State
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
     });
 
+    // Try fetching custom actions from Supabase database; fallback to DEFAULT_ACTIONS
+    async function loadActions() {
+      const { data, error } = await supabase.from("actions").select("*");
+      if (!error && data && data.length > 0) {
+        const mapped: ActionCatalogItem[] = data.map((item: any) => ({
+          id: item.id || item.slug,
+          title: item.title,
+          category: item.category || "Circular Economy",
+          points: item.points || 25,
+          co2SavedKg: item.co2_saved_kg || item.co2SavedKg || 1.0,
+          unitLabel: item.unit_label || item.unitLabel || "times",
+          description: item.description || "",
+        }));
+        setActionsList(mapped);
+      }
+    }
+    loadActions();
+
+    // Check for pending action logged prior to sign-in redirect
     const pending = localStorage.getItem("pending_action_submit");
     if (pending) {
       try {
         const parsed = JSON.parse(pending);
-        const match = ACTIONS.find((a) => a.id === parsed.actionId);
+        const match = DEFAULT_ACTIONS.find((a) => a.id === parsed.actionId);
         if (match) {
           setSelectedAction(match);
           if (parsed.sector) setSector(parsed.sector);
@@ -111,6 +200,10 @@ export default function ActionsPage() {
       localStorage.removeItem("pending_action_submit");
     }
   }, []);
+
+  const filteredActions = selectedCategory === "All"
+    ? actionsList
+    : actionsList.filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
     if (sector === "campus") return faculty;
@@ -161,7 +254,7 @@ export default function ActionsPage() {
 
       setStatusMsg({
         type: "success",
-        text: `Action successfully logged! Credited to ${finalAffiliationName}.`,
+        text: `Action logged! Credited directly to ${finalAffiliationName}.`,
       });
       setTimeout(() => setSelectedAction(null), 1800);
     } catch (err: any) {
@@ -173,24 +266,26 @@ export default function ActionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      <nav className="border-b border-[#102f26]/10 bg-white/80 backdrop-blur sticky top-0 z-30 px-6 py-4">
+      {/* Consolidated Navigation Header */}
+      <nav className="border-b border-[#102f26]/10 bg-white/90 backdrop-blur sticky top-0 z-30 px-6 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="font-extrabold text-lg tracking-tight text-[#102f26]">
+          <Link href="/" className="font-black text-lg tracking-tight text-[#102f26]">
             Green Collective
           </Link>
-          <div className="flex gap-6 text-xs font-semibold">
-            <Link href="/actions" className="text-[#39705d] underline underline-offset-4">Actions</Link>
+          <div className="flex items-center gap-6 text-xs font-semibold">
+            <Link href="/actions" className="text-[#39705d] underline underline-offset-4 font-bold">Actions</Link>
             <Link href="/initiatives" className="hover:text-[#39705d] transition">Initiatives</Link>
             <Link href="/dashboard" className="hover:text-[#39705d] transition">Dashboard</Link>
             {user ? (
               <Link href="/profile" className="hover:text-[#39705d] transition">Profile</Link>
             ) : (
-              <Link href="/login?redirectTo=%2Factions" className="text-[#39705d] font-bold">Sign In</Link>
+              <Link href="/login?redirectTo=%2Factions" className="px-3.5 py-1.5 bg-[#102f26] text-white rounded-full font-bold">Sign In</Link>
             )}
           </div>
         </div>
       </nav>
 
+      {/* Hero Banner */}
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
@@ -200,19 +295,37 @@ export default function ActionsPage() {
           <p className="text-xs text-[#526760] max-w-xl mt-1">
             Log sustainable actions and route impact points directly to your local neighbourhood or campus faculty.
           </p>
+
+          {/* Category Filter Bar */}
+          <div className="flex flex-wrap gap-2 mt-6">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
+                  selectedCategory === cat
+                    ? "bg-[#102f26] text-white"
+                    : "bg-white text-[#526760] border border-[#102f26]/10 hover:border-[#102f26]/30"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
+      {/* Action Directory Grid */}
       <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ACTIONS.map((action) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredActions.map((action) => (
             <div
               key={action.id}
               className="bg-white border border-[#102f26]/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-[#102f26]/30 transition"
             >
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded font-semibold">
                     {action.category}
                   </span>
                   <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
@@ -221,17 +334,21 @@ export default function ActionsPage() {
                 <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
               </div>
 
-              <button
-                onClick={() => handleOpenActionModal(action)}
-                className="w-full py-2.5 bg-[#102f26] text-white text-xs font-bold rounded-full hover:bg-[#39705d] transition"
-              >
-                Log Action
-              </button>
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-[11px] text-gray-500 font-medium">~{action.co2SavedKg} kg CO₂e / {action.unitLabel}</span>
+                <button
+                  onClick={() => handleOpenActionModal(action)}
+                  className="px-4 py-2 bg-[#102f26] text-white text-xs font-bold rounded-full hover:bg-[#39705d] transition"
+                >
+                  Log Action
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
+      {/* Action Logging Modal */}
       {selectedAction && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
@@ -263,7 +380,7 @@ export default function ActionsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold mb-1.5 text-[#102f26]">
-                  1. Which sector are you logging this for?
+                  1. Sector Attribution:
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -367,26 +484,26 @@ export default function ActionsPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold mb-1">Quantity:</label>
+                  <label className="block text-xs font-semibold mb-1">Quantity ({selectedAction.unitLabel}):</label>
                   <input
                     type="number"
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="w-full p-2 text-xs rounded-lg border border-gray-300"
+                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold mb-1">Impact Total:</label>
                   <div className="p-2 bg-gray-100 rounded-lg text-xs font-bold text-[#102f26]">
-                    +{selectedAction.points * quantity} pts
+                    +{selectedAction.points * quantity} pts ({(selectedAction.co2SavedKg * quantity).toFixed(1)} kg CO₂)
                   </div>
                 </div>
               </div>
 
               {!user && (
                 <p className="text-[11px] text-[#39705d] bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
-                  ℹ You are signed out. Submitting will save your choices, send you to sign in, and automatically log the action when you return.
+                  ℹ You are signed out. Submitting will save your choices, prompt sign in, and automatically log the action upon return.
                 </p>
               )}
 
