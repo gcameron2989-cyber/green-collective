@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthView = "signin" | "signup" | "forgot";
@@ -17,7 +17,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  // Read target return URL from query params (?redirectTo=... or ?next=...), fallback to /dashboard
+  const redirectTo = searchParams.get("redirectTo") || searchParams.get("next") || "/dashboard";
 
   const switchView = (newView: AuthView) => {
     setView(newView);
@@ -45,17 +49,19 @@ export default function LoginPage() {
       } else {
         setInfoMsg("Password reset link sent! Check your inbox.");
       }
-      loading && setLoading(false);
+      setLoading(false);
       return;
     }
 
     if (view === "signup") {
       const origin = window.location.origin;
+      const emailRedirectTarget = `${origin}/login?redirectTo=${encodeURIComponent(redirectTo)}`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${origin}/login`,
+          emailRedirectTo: emailRedirectTarget,
           data: {
             institution: institution || "Independent Member",
           },
@@ -86,7 +92,8 @@ export default function LoginPage() {
       }
     }
 
-    router.push("/dashboard");
+    // Redirect to the intended destination instead of forcing /dashboard
+    router.push(redirectTo);
     router.refresh();
   };
 
