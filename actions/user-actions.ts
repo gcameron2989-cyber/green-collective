@@ -3,10 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export type AffiliationType = 'neighbourhood' | 'association' | 'company' | 'faculty' | 'other'
+
 export interface LogActionInput {
   actionId: string
   sector: 'public' | 'campus'
-  affiliationType: 'neighbourhood' | 'association' | 'company' | 'faculty'
+  affiliationType: AffiliationType
   affiliationName: string
   quantity: number
   notes?: string
@@ -24,16 +26,16 @@ export async function logUserAction(input: LogActionInput) {
   const { actionId, sector, affiliationType, affiliationName, quantity, notes } = input
 
   if (!actionId || !sector || !affiliationType || !affiliationName) {
-    throw new Error('Please select both a sector and a specific neighbourhood/faculty.')
+    throw new Error('Please select both a sector and a specific affiliation.')
   }
 
-  // 2. Insert into Supabase table with exact selected affiliation name (e.g. "Kitsilano")
+  // 2. Insert into Supabase table with exact selected affiliation name
   const { error } = await supabase.from('logged_actions').insert({
     user_id: user.id,
     action_id: actionId,
-    sector: sector, // 'public' | 'campus'
-    affiliation_type: affiliationType, // 'neighbourhood' | 'faculty' etc.
-    affiliation_name: affiliationName, // e.g., 'Kitsilano' instead of profile fallback
+    sector: sector,
+    affiliation_type: affiliationType,
+    affiliation_name: affiliationName,
     quantity: quantity || 1,
     notes: notes || '',
     created_at: new Date().toISOString(),
