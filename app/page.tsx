@@ -158,7 +158,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* CLICKABLE PILLARS (Linked to correct routes) */}
+          {/* CLICKABLE PILLARS */}
           <div className="mt-16 grid grid-cols-1 gap-4 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
             <Link
               href="/habits"
