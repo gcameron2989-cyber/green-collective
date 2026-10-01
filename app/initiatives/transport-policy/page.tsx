@@ -21,7 +21,7 @@ const transitProjects: TransitProject[] = [
     title: "TransLink Future Mobility & Zero-Emission Bus Consultations",
     organization: "TransLink Regional Transit",
     description: "Participate in public engagement forums shaping the rollout of zero-emission battery-electric and hydrogen fuel cell buses across the Lower Mainland network.",
-    link: "https://www.translink.ca",
+    link: "https://www.translink.ca/about-us/about-translink/corporate-sustainability",
   },
   {
     id: "tr-02",
@@ -30,7 +30,7 @@ const transitProjects: TransitProject[] = [
     title: "Protected Bike Lane & Pedestrian Corridor Expansion",
     organization: "HUB Cycling & Vancouver Active Mobility",
     description: "Support regional cycling advocacy campaigns and community workshops pushing for separated active transportation infrastructure across major urban corridors.",
-    link: "https://bikehub.ca",
+    link: "https://hubcycling.ca/committees/vancouver-ubc",
   },
   {
     id: "tr-03",
@@ -39,16 +39,16 @@ const transitProjects: TransitProject[] = [
     title: "Commercial & Municipal Fleet Transition Working Group",
     organization: "Environmental Defence / Clean Transport Toronto",
     description: "Engage with regional policy roundtables addressing logistical hurdles, depot charging constraints, and emissions standards for heavy-duty commercial freight.",
-    link: "https://environmentaldefence.ca",
+    link: "https://environmentaldefence.ca/campaign/clean-transport-toronto/",
   },
   {
     id: "tr-04",
     city: "Toronto",
     category: "Charging Infrastructure",
     title: "Multi-Unit Residential EV Charging Initiative",
-    organization: "ChargeLab / Toronto Sustainability Office",
+    organization: "Toronto Atmospheric Fund & City Planning",
     description: "Advocate for and coordinate retrofitting incentives for Level 2 EV charging infrastructure across high-density residential and commercial parking blocks.",
-    link: "https://www.toronto.ca",
+    link: "https://www.toronto.ca/services-payments/water-environment/live-green-toronto/",
   },
 ];
 
