@@ -10,27 +10,37 @@ interface Faculty {
   name: string
 }
 
+const LOCAL_HUBS = [
+  { id: 'kitsilano', name: 'Kitsilano Community Hub (Vancouver West)' },
+  { id: 'point-grey', name: 'Point Grey & Campus Perimeter' },
+  { id: 'mount-pleasant', name: 'Mount Pleasant Eco-Network (Vancouver East)' },
+  { id: 'downtown', name: 'Downtown Core Collective' },
+  { id: 'grandview', name: 'Grandview-Woodland' },
+]
+
 const ECO_ACTIONS = [
   // UBC Campus & Forestry Specific
   { id: 'ubc-forestry-field', category: 'UBC Stewardship', title: 'Participated in Campus Tree Care or Ecosystem Field Audit', points: 50 },
-  { id: 'sustainable-commute-ubc', category: 'Mobility & Energy', title: 'Commuted to UBC via 99 B-Line, Transit, Cycling, or Walking', points: 25 },
+  { id: 'sustainable-commute-ubc', category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
   
   // Zero-Waste & Food
   { id: 'home-meal', category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
-  { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea in Reusable Mug on Campus', points: 25 },
-  { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container at UBC Food Services', points: 15 },
+  { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea in Reusable Mug', points: 25 },
+  { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container for Takeout/Dining', points: 15 },
   { id: 'refillable-water', category: 'Zero Waste & Dining', title: 'Used Refillable Water Station vs. Bottled Water', points: 20 },
-  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose Plant-Based Dining Option at Totem/Open Kitchen', points: 20 },
+  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose Plant-Based Dining Option', points: 20 },
 
   // Circular Economy & Resource Conservation
-  { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost & Recyclables at Campus Hub', points: 10 },
+  { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost & Recyclables at Hub', points: 10 },
   { id: 'thrift-borrow-gear', category: 'Circular Economy', title: 'Borrowed / Thrifted Academic Textbooks or Gear', points: 30 },
-  { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in AMS / Faculty Eco-Action Cleanup', points: 50 },
+  { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in Community or Faculty Eco-Action Cleanup', points: 50 },
 ]
 
 function SubmitFormContent() {
+  const [affiliationType, setAffiliationType] = useState<'institutional' | 'local'>('institutional')
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
+  const [selectedLocalHub, setSelectedLocalHub] = useState<string>('')
   const [selectedAction, setSelectedAction] = useState<string>('')
   const [quantity, setQuantity] = useState<number>(1)
   const [file, setFile] = useState<File | null>(null)
@@ -43,7 +53,6 @@ function SubmitFormContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if an action was pre-selected from a homepage card click via URL params
     const actionParam = searchParams.get('action')
     if (actionParam) {
       setSelectedAction(actionParam)
@@ -66,8 +75,16 @@ function SubmitFormContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedFaculty || !selectedAction) {
-      setMessage({ type: 'error', text: 'Please select both your faculty and an eco-action.' })
+    if (affiliationType === 'institutional' && !selectedFaculty) {
+      setMessage({ type: 'error', text: 'Please select your institutional faculty.' })
+      return
+    }
+    if (affiliationType === 'local' && !selectedLocalHub) {
+      setMessage({ type: 'error', text: 'Please select your local community hub.' })
+      return
+    }
+    if (!selectedAction) {
+      setMessage({ type: 'error', text: 'Please select an eco-action.' })
       return
     }
 
@@ -105,7 +122,7 @@ function SubmitFormContent() {
       }
 
       const { error: insertError } = await supabase.from('submissions').insert({
-        faculty_id: selectedFaculty,
+        faculty_id: affiliationType === 'institutional' ? selectedFaculty : null,
         eco_action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
@@ -115,7 +132,7 @@ function SubmitFormContent() {
 
       if (insertError) throw insertError
 
-      setMessage({ type: 'success', text: 'Action verified and logged! Updating faculty standings...' })
+      setMessage({ type: 'success', text: 'Action verified and logged! Updating standings...' })
       
       router.refresh()
       
@@ -131,7 +148,7 @@ function SubmitFormContent() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
+    <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
@@ -151,7 +168,7 @@ function SubmitFormContent() {
             Log Your Sustainable Action
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Record your daily transit, campus stewardship, and zero-waste choices to compound your faculty&apos;s score on the live leaderboard.
+            Record daily choices and attribute them toward your university faculty or local neighborhood hub.
           </p>
         </div>
       </section>
@@ -169,25 +186,77 @@ function SubmitFormContent() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="border border-[#102f26]/15 bg-[#f1f6f2] p-8 space-y-6">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="border border-[#102f26]/15 bg-white p-8 space-y-6 shadow-sm">
+          {/* Association Toggle */}
+          <div className="space-y-3 pb-4 border-b border-[#102f26]/10">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
-              Select Your UBC Faculty
+              Leaderboard Attribution Tier
             </label>
-            <select
-              value={selectedFaculty}
-              onChange={(e) => setSelectedFaculty(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
-            >
-              <option value="">-- Choose Faculty --</option>
-              {faculties.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setAffiliationType('institutional')}
+                className={`py-2.5 px-4 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                  affiliationType === 'institutional'
+                    ? 'bg-[#102f26] text-white shadow-sm'
+                    : 'bg-[#f9f8f6] border border-[#102f26]/20 text-[#102f26] hover:bg-[#f1f6f2]'
+                }`}
+              >
+                Institutional (UBC Faculty)
+              </button>
+              <button
+                type="button"
+                onClick={() => setAffiliationType('local')}
+                className={`py-2.5 px-4 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                  affiliationType === 'local'
+                    ? 'bg-[#102f26] text-white shadow-sm'
+                    : 'bg-[#f9f8f6] border border-[#102f26]/20 text-[#102f26] hover:bg-[#f1f6f2]'
+                }`}
+              >
+                Local (Vancouver Hub)
+              </button>
+            </div>
           </div>
+
+          {affiliationType === 'institutional' ? (
+            <div className="space-y-2">
+              <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+                Select Your UBC Faculty
+              </label>
+              <select
+                value={selectedFaculty}
+                onChange={(e) => setSelectedFaculty(e.target.value)}
+                required={affiliationType === 'institutional'}
+                className="w-full px-4 py-3 border border-[#102f26]/20 bg-[#f9f8f6] text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
+              >
+                <option value="">-- Choose Faculty --</option>
+                {faculties.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+                Select Your Local Neighborhood Hub
+              </label>
+              <select
+                value={selectedLocalHub}
+                onChange={(e) => setSelectedLocalHub(e.target.value)}
+                required={affiliationType === 'local'}
+                className="w-full px-4 py-3 border border-[#102f26]/20 bg-[#f9f8f6] text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
+              >
+                <option value="">-- Choose Local Hub --</option>
+                {LOCAL_HUBS.map((hub) => (
+                  <option key={hub.id} value={hub.id}>
+                    {hub.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
@@ -197,7 +266,7 @@ function SubmitFormContent() {
               value={selectedAction}
               onChange={(e) => setSelectedAction(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
+              className="w-full px-4 py-3 border border-[#102f26]/20 bg-[#f9f8f6] text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
             >
               <option value="">-- Choose Eco-Action --</option>
               {ECO_ACTIONS.map((a) => (
@@ -219,7 +288,7 @@ function SubmitFormContent() {
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               required
-              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
+              className="w-full px-4 py-3 border border-[#102f26]/20 bg-[#f9f8f6] text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
             />
           </div>
 
@@ -238,7 +307,7 @@ function SubmitFormContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50"
+            className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50 shadow-sm"
           >
             {loading ? 'Submitting to Ledger...' : 'Submit Action to Ledger →'}
           </button>
@@ -250,7 +319,7 @@ function SubmitFormContent() {
 
 export default function SubmitActionPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Submission Portal...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Submission Portal...</div>}>
       <SubmitFormContent />
     </Suspense>
   )
