@@ -14,6 +14,7 @@ interface CommunityProject {
 }
 
 const communityProjects: CommunityProject[] = [
+  // VANCOUVER
   {
     id: "comm-01",
     city: "Vancouver",
@@ -21,19 +22,39 @@ const communityProjects: CommunityProject[] = [
     title: "Stanley Park Ecological Restoration & Canopy Monitoring",
     organization: "Stanley Park Ecology Society (SPES)",
     description: "Join field crews and volunteer cohorts engaged in invasive species removal, native understory planting, and post-looper moth forest recovery monitoring.",
-    link: "https://stanleyparkecology.ca/ecology/conservation/",
+    link: "https://stanleyparkecology.ca/about-stanley-park-ecology/volunteer/",
   },
   {
     id: "comm-02",
     city: "Vancouver",
-    category: "Watershed Health",
-    title: "Urban Streamkeepers & Salmon Habitat Sampling",
-    organization: "Pacific Salmon Foundation & Streamkeepers",
-    description: "Participate in benthic macroinvertebrate sampling, water quality testing, and riparian zone rehabilitation across regional urban watersheds.",
-    link: "https://psf.ca/what-we-do/community-salmon-program/",
+    category: "Community Stewardship",
+    title: "Repair Café & Zero-Waste Circular Economy Workshops",
+    organization: "Society Promoting Environmental Conservation (SPEC)",
+    description: "Help extend the lifecycle of everyday items, repair household goods, and promote waste reduction in Kitsilano and surrounding Vancouver communities.",
+    link: "https://spec.bc.ca/volunteer/",
   },
   {
     id: "comm-03",
+    city: "Vancouver",
+    category: "Watershed Health",
+    title: "Metro Vancouver Regional Parks Ecological Restoration",
+    organization: "Metro Vancouver Regional Parks Foundation",
+    description: "Participate in hands-on habitat restoration, invasive species management, and biodiversity monitoring across regional parks like Burnaby Lake and Pacific Spirit.",
+    link: "https://mvrpfoundation.ca/get-involved/volunteer-2/",
+  },
+  {
+    id: "comm-04",
+    city: "Vancouver",
+    category: "Habitat Restoration",
+    title: "Biodiversity Counts & iNaturalist Project Administration",
+    organization: "Nature Vancouver",
+    description: "Contribute to local bird censuses, flora/fauna field trips, and admin support for the Metro Vancouver Regional District City Nature Challenge.",
+    link: "https://naturevancouver.ca/volunteers/",
+  },
+
+  // TORONTO
+  {
+    id: "comm-05",
     city: "Toronto",
     category: "Urban Forestry",
     title: "Ravine Strategy Canopy & Stewardship Initiative",
@@ -42,7 +63,7 @@ const communityProjects: CommunityProject[] = [
     link: "https://www.toronto.ca/city-government/accountability-operations-customer-service/long-term-vision-plans-and-strategies/ravine-strategy/",
   },
   {
-    id: "comm-04",
+    id: "comm-06",
     city: "Toronto",
     category: "Community Stewardship",
     title: "Backyard Tree Planting & Neighborhood Canopy Growth",
@@ -51,7 +72,18 @@ const communityProjects: CommunityProject[] = [
     link: "https://www.yourleaf.org/planting-private-property",
   },
   {
-    id: "comm-05",
+    id: "comm-07",
+    city: "Toronto",
+    category: "Virtual Research & Advocacy",
+    title: "Toronto Climate Action Network (TCAN) Coalition",
+    organization: "TCAN Member Groups",
+    description: "Connect with municipal climate advocacy groups across the GTA working on housing energy efficiency, transit expansion, and green jobs.",
+    link: "https://www.tcan.ca/volunteer",
+  },
+
+  // GLOBAL / REMOTE
+  {
+    id: "comm-08",
     city: "Global / Remote",
     category: "Virtual Research & Advocacy",
     title: "Global Forest Watch & Satellite Canopy Mapping",
@@ -60,7 +92,7 @@ const communityProjects: CommunityProject[] = [
     link: "https://www.globalforestwatch.org/help/get-involved/",
   },
   {
-    id: "comm-06",
+    id: "comm-09",
     city: "Global / Remote",
     category: "Virtual Research & Advocacy",
     title: "Open Climate Data & Greenhouse Gas Inventory Mapping",
@@ -69,7 +101,7 @@ const communityProjects: CommunityProject[] = [
     link: "https://climatetrace.org/",
   },
   {
-    id: "comm-07",
+    id: "comm-10",
     city: "Global / Remote",
     category: "Virtual Research & Advocacy",
     title: "Zooniverse Citizen Science: Biodiversity & Climate Observations",
