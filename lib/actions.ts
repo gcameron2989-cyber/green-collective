@@ -1,122 +1,152 @@
 export interface ActionItem {
   id: string;
-  title: string;
-  category: 'TRANSPORT' | 'FOOD' | 'ENERGY' | 'WASTE' | 'CIRCULARITY' | 'COMMUNITY';
-  shortDescription: string;
-  fullDescription: string;
-  impactValue: number; // e.g. 2.04 kg CO2e saved per unit
-  unitLabel: string; // e.g. "trip", "meal", "load", "day"
+  category: 'TRANSPORT' | 'FOOD' | 'ENERGY' | 'WASTE' | 'CIRCULARITY' | 'CONSUMPTION' | 'COMMUNITY';
+  name: string;
+  description: string;
+  impactValue: number; // e.g. 2.4 kg CO2e
+  unitLabel: string; // e.g. "trip", "meal", "load", "day", "item"
   points: number;
   calculationNote?: string;
 }
 
 export const ACTION_REGISTRY: ActionItem[] = [
   {
-    id: 'public-transit',
-    title: 'Public Transit Commute',
+    id: 'active-transit',
     category: 'TRANSPORT',
-    shortDescription: 'Share efficient high-capacity transit instead of driving.',
-    fullDescription: 'Replaced a personal vehicle trip with SkyTrain, bus, or SeaBus.',
+    name: 'Active Transit (Cycling / Walking)',
+    description: 'Completely eliminate vehicle emissions by commuting under human power.',
+    impactValue: 2.4,
+    unitLabel: 'trip',
+    points: 30,
+    calculationNote: 'Based on displacing direct fossil fuel vehicle emissions.',
+  },
+  {
+    id: 'public-transit',
+    category: 'TRANSPORT',
+    name: 'Public Transit (Bus / SkyTrain)',
+    description: 'Share efficient high-capacity transit instead of driving a single-occupancy vehicle.',
     impactValue: 2.04,
     unitLabel: 'trip',
     points: 25,
-    calculationNote: 'Based on 12km average commute replacing gas vehicle emissions.',
+    calculationNote: 'Calculated using regional bus and SkyTrain grid emission averages.',
   },
   {
-    id: 'active-transit',
-    title: 'Active Transit (Bike / Walk)',
+    id: 'carpool-trip',
     category: 'TRANSPORT',
-    shortDescription: 'Completely eliminate vehicle emissions by commuting under human power.',
-    fullDescription: 'Commuted via bicycle, e-bike, scooter, or walking.',
-    impactValue: 2.40,
+    name: 'Carpooling / EV Ride',
+    description: 'Shared a vehicle trip with passengers or traveled via electric vehicle.',
+    impactValue: 1.8,
     unitLabel: 'trip',
-    points: 30,
-    calculationNote: '0.18 kg CO2e/km direct displacement.',
+    points: 20,
   },
   {
-    id: 'plant-forward-meal',
-    title: 'Plant-Forward Meal',
+    id: 'plant-based-meal',
     category: 'FOOD',
-    shortDescription: 'Opt for whole plant ingredients over high-emission livestock alternatives.',
-    fullDescription: 'Chose a plant-based or vegetarian lunch or dinner option.',
-    impactValue: 1.40,
+    name: 'Plant-Forward Meal',
+    description: 'Opt for whole plant ingredients over high-emission livestock alternatives.',
+    impactValue: 1.5,
     unitLabel: 'meal',
     points: 20,
     calculationNote: 'Replaces ruminant meat baseline carbon footprint.',
   },
   {
-    id: 'locally-sourced-food',
+    id: 'local-produce',
     category: 'FOOD',
-    title: 'Locally Sourced / Seasonal Food',
-    shortDescription: 'Reduce long-distance cold-chain transport and freight emissions.',
-    fullDescription: 'Sourced regional produce or local seasonal food items.',
-    impactValue: 0.70,
+    name: 'Locally Sourced / Seasonal Food',
+    description: 'Reduce long-distance cold-chain transport and freight emissions.',
+    impactValue: 0.8,
     unitLabel: 'meal',
-    points: 10,
+    points: 15,
   },
   {
-    id: 'line-dry-laundry',
+    id: 'zero-food-waste',
+    category: 'FOOD',
+    name: 'Zero Food Waste Meal',
+    description: 'Successfully consumed or repurposed leftovers to prevent food waste.',
+    impactValue: 0.6,
+    unitLabel: 'meal',
+    points: 20,
+  },
+  {
+    id: 'line-dry',
     category: 'ENERGY',
-    title: 'Air-Dry Clothing (Line Dry)',
-    shortDescription: 'Bypass energy-intensive electric heating elements in clothes dryers.',
-    fullDescription: 'Hung laundry to line dry or air dry indoors instead of running a tumble dryer.',
-    impactValue: 2.40,
+    name: 'Air-Dry Clothing (Line Dry)',
+    description: 'Bypass energy-intensive electric heating elements in clothes dryers completely.',
+    impactValue: 2.4,
     unitLabel: 'load',
     points: 25,
   },
   {
-    id: 'winter-heat-setback',
+    id: 'thermostat-setback',
     category: 'ENERGY',
-    title: 'Thermostat Setback (-2°C)',
-    shortDescription: 'Lower residential heating setpoints slightly to reduce gas or electric load.',
-    fullDescription: 'Maintained a lower residential heating temperature during winter/cool periods.',
-    impactValue: 1.80,
+    name: 'Winter Heat Setback (-2°C)',
+    description: 'Lower residential heating setpoints slightly to reduce natural gas / electric load.',
+    impactValue: 1.8,
     unitLabel: 'day',
     points: 20,
   },
   {
-    id: 'cold-water-wash',
+    id: 'cold-water-laundry',
     category: 'ENERGY',
-    title: 'Cold-Water Laundry Load',
-    shortDescription: 'Eliminate water heating during washing machine cycles.',
-    fullDescription: 'Washed laundry using cold water settings.',
-    impactValue: 0.60,
+    name: 'Cold-Water Laundry Load',
+    description: 'Wash clothing using cold water settings instead of heated water cycles.',
+    impactValue: 0.6,
     unitLabel: 'load',
-    points: 10,
+    points: 15,
   },
   {
-    id: 'three-stream-sorting',
+    id: 'waste-sorting',
     category: 'WASTE',
-    title: 'Three-Stream Waste Sorting',
-    shortDescription: 'Prevent organic methane generation in landfills by diverting compost and recycling.',
-    fullDescription: 'Properly sorted organics, recyclables, and landfill waste throughout the day.',
-    impactValue: 0.50,
-    unitLabel: 'day',
+    name: 'Three-Stream Waste Sorting',
+    description: 'Prevent organic methane generation in landfills by diverting compost and recycling.',
+    impactValue: 0.5,
+    unitLabel: 'action',
     points: 10,
   },
   {
     id: 'repair-item',
     category: 'CIRCULARITY',
-    title: 'Repair or Mend Clothing / Gear',
-    shortDescription: 'Extend product lifespans to offset raw material extraction and manufacturing.',
-    fullDescription: 'Repaired footwear, mended garments, or fixed gear instead of replacing.',
-    impactValue: 3.20,
+    name: 'Repair / Mend Clothing or Gear',
+    description: 'Extend product lifespans to offset raw material extraction and manufacturing.',
+    impactValue: 3.2,
     unitLabel: 'item',
     points: 40,
   },
   {
-    id: 'second-hand-purchase',
+    id: 'second-hand',
     category: 'CIRCULARITY',
-    title: 'Thrift / Second-Hand Purchase',
-    shortDescription: 'Source apparel or goods second-hand to avoid supply chain production impacts.',
-    fullDescription: 'Purchased pre-owned goods or clothing instead of buying new.',
-    impactValue: 4.50,
+    name: 'Thrift / Second-Hand Purchase',
+    description: 'Source apparel or goods second-hand to avoid supply chain production impacts.',
+    impactValue: 4.5,
     unitLabel: 'item',
+    points: 50,
+  },
+  {
+    id: 'reusable-cup',
+    category: 'CIRCULARITY',
+    name: 'Reusable Mug / Container',
+    description: 'Eliminate single-use paper cups and takeout packaging footprints.',
+    impactValue: 0.2,
+    unitLabel: 'use',
+    points: 10,
+  },
+  {
+    id: 'campus-cleanup',
+    category: 'COMMUNITY',
+    name: 'Campus Clean-Up / Eco Event',
+    description: 'Participated in campus sustainability clean-up or ecological restoration.',
+    impactValue: 4.0,
+    unitLabel: 'event',
     points: 50,
   },
 ];
 
-/** Helper function to calculate total carbon saved for selected action IDs */
+/** Calculated formatted string (e.g. "~2.4 kg CO₂e / trip") */
+export function getFormattedImpact(action: ActionItem): string {
+  return `~${action.impactValue.toFixed(2)} kg CO₂e / ${action.unitLabel}`;
+}
+
+/** Helper function to calculate total carbon impact for selected action IDs */
 export function calculateTotalImpact(selectedIds: string[]): number {
   return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
     (sum, action) => sum + action.impactValue,
@@ -124,7 +154,7 @@ export function calculateTotalImpact(selectedIds: string[]): number {
   );
 }
 
-/** Helper function to calculate total points earned */
+/** Helper function to calculate total points for selected action IDs */
 export function calculateTotalPoints(selectedIds: string[]): number {
   return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
     (sum, action) => sum + action.points,
