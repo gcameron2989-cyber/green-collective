@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { logUserAction } from "@/actions/user-actions";
+import { logUserAction, AffiliationType } from "@/actions/user-actions";
 
 type Sector = "public" | "campus";
-type AffiliationType = "neighbourhood" | "association" | "company" | "faculty";
+type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
 
 interface ActionCatalogItem {
   id: string;
@@ -79,14 +79,13 @@ export default function ActionsPage() {
 
   // Form states
   const [sector, setSector] = useState<Sector>("public");
-  const [affiliationType, setAffiliationType] = useState<AffiliationType>("neighbourhood");
+  const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [customAffiliation, setCustomAffiliation] = useState("");
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
 
-  // Restore pending action state after login & get current user
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -100,7 +99,7 @@ export default function ActionsPage() {
         if (match) {
           setSelectedAction(match);
           if (parsed.sector) setSector(parsed.sector);
-          if (parsed.affiliationType) setAffiliationType(parsed.affiliationType);
+          if (parsed.publicAffiliationType) setPublicAffiliationType(parsed.publicAffiliationType);
           if (parsed.neighbourhood) setNeighbourhood(parsed.neighbourhood);
           if (parsed.customAffiliation) setCustomAffiliation(parsed.customAffiliation);
           if (parsed.faculty) setFaculty(parsed.faculty);
@@ -115,7 +114,7 @@ export default function ActionsPage() {
 
   const getAffiliationName = (): string => {
     if (sector === "campus") return faculty;
-    if (affiliationType === "neighbourhood") return neighbourhood;
+    if (publicAffiliationType === "neighbourhood") return neighbourhood;
     return customAffiliation.trim() || "Local Community";
   };
 
@@ -128,12 +127,13 @@ export default function ActionsPage() {
     e.preventDefault();
     if (!selectedAction) return;
 
-    // If non-user, save form state to localStorage and redirect to login
+    const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
+
     if (!user) {
       const pendingData = {
         actionId: selectedAction.id,
         sector,
-        affiliationType: sector === "campus" ? "faculty" : affiliationType,
+        publicAffiliationType,
         neighbourhood,
         customAffiliation,
         faculty,
@@ -148,7 +148,6 @@ export default function ActionsPage() {
     setStatusMsg(null);
 
     try {
-      const finalAffiliationType = sector === "campus" ? "faculty" : affiliationType;
       const finalAffiliationName = getAffiliationName();
 
       await logUserAction({
@@ -174,7 +173,6 @@ export default function ActionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      {/* Navigation Header */}
       <nav className="border-b border-[#102f26]/10 bg-white/80 backdrop-blur sticky top-0 z-30 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="font-extrabold text-lg tracking-tight text-[#102f26]">
@@ -193,7 +191,6 @@ export default function ActionsPage() {
         </div>
       </nav>
 
-      {/* Hero Banner */}
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
@@ -206,7 +203,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Action Directory Grid */}
       <section className="max-w-7xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {ACTIONS.map((action) => (
@@ -236,7 +232,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Action Logging Modal Drawer */}
       {selectedAction && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
@@ -266,7 +261,6 @@ export default function ActionsPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Sector Selection */}
               <div>
                 <label className="block text-xs font-bold mb-1.5 text-[#102f26]">
                   1. Which sector are you logging this for?
@@ -297,20 +291,19 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              {/* Affiliation Selection */}
               {sector === "public" ? (
                 <div className="p-3.5 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
                   <label className="block text-xs font-bold text-[#102f26]">
                     2. Choose Community Attribution:
                   </label>
                   <div className="flex gap-2">
-                    {(["neighbourhood", "association", "company"] as AffiliationType[]).map((type) => (
+                    {(["neighbourhood", "association", "company", "other"] as PublicAffiliationType[]).map((type) => (
                       <button
                         key={type}
                         type="button"
-                        onClick={() => setAffiliationType(type)}
+                        onClick={() => setPublicAffiliationType(type)}
                         className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg capitalize border ${
-                          affiliationType === type
+                          publicAffiliationType === type
                             ? "bg-[#39705d] text-white border-[#39705d]"
                             : "bg-white text-[#526760] border-gray-200"
                         }`}
@@ -320,7 +313,7 @@ export default function ActionsPage() {
                     ))}
                   </div>
 
-                  {affiliationType === "neighbourhood" ? (
+                  {publicAffiliationType === "neighbourhood" ? (
                     <div>
                       <label className="block text-[11px] text-[#526760] mb-1 font-medium">
                         Select Neighbourhood:
@@ -340,12 +333,12 @@ export default function ActionsPage() {
                   ) : (
                     <div>
                       <label className="block text-[11px] text-[#526760] mb-1 font-medium">
-                        Name of {affiliationType}:
+                        Name of {publicAffiliationType}:
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder={`e.g., Local ${affiliationType} name`}
+                        placeholder={`e.g., Local ${publicAffiliationType} name`}
                         value={customAffiliation}
                         onChange={(e) => setCustomAffiliation(e.target.value)}
                         className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white"
@@ -372,7 +365,6 @@ export default function ActionsPage() {
                 </div>
               )}
 
-              {/* Quantity */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold mb-1">Quantity:</label>
