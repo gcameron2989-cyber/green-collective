@@ -1,4 +1,4 @@
-'use client'
+\'use client'
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -99,7 +99,7 @@ export default function SubmitActionPage() {
       }
 
       const { error: insertError } = await supabase.from('submissions').insert({
-        faculty_id: selectedFaculty, // This is now the exact UUID from the database row
+        faculty_id: selectedFaculty,
         eco_action_id: selectedAction,
         quantity: Number(quantity),
         proof_image_url: photoUrl,
@@ -125,57 +125,56 @@ export default function SubmitActionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          Green Collective
-        </Link>
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          <Link href="/profile" className="text-emerald-800 hover:underline">
-            👤 My Profile
-          </Link>
-          <Link href="/competition" className="text-emerald-800 hover:underline">
-            Leaderboard →
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-xl mx-auto w-full px-6 py-10 z-10 space-y-6">
-        <div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
-            🌱 Action Logger
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            Log Your Eco-Action
+    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
+      {/* Editorial Page Header */}
+      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
+              Action Logger · Personal Ledger
+            </p>
+            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
+              <Link href="/profile" className="text-[#526760] hover:text-[#102f26]">
+                My Profile →
+              </Link>
+              <Link href="/competition" className="text-[#526760] hover:text-[#102f26]">
+                Leaderboard →
+              </Link>
+            </div>
+          </div>
+          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
+            Log Your Sustainable Action
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Submit your sustainable choices to earn points for your faculty on the live standings.
+          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
+            Submit your daily sustainable choices to calculate cumulative ecological offsets and earn points for your faculty on the live standings.
           </p>
         </div>
+      </section>
 
+      {/* Main Submission Section */}
+      <section className="mx-auto max-w-2xl px-6 py-16 md:px-10 lg:px-12">
         {message && (
           <div
-            className={`p-4 rounded-xl text-xs font-semibold ${
+            className={`mb-8 p-4 border font-mono text-xs ${
               message.type === 'success'
-                ? 'bg-emerald-100 border border-emerald-300 text-[#0f382c]'
-                : 'bg-red-100 border border-red-200 text-red-800'
+                ? 'bg-[#f1f6f2] border-[#39705d] text-[#102f26]'
+                : 'bg-red-50 border-red-200 text-red-800'
             }`}
           >
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0f382c]">Select Your Faculty</label>
+        <form onSubmit={handleSubmit} className="border border-[#102f26]/15 bg-[#f1f6f2] p-8 space-y-6">
+          <div className="space-y-2">
+            <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+              Select Your Faculty
+            </label>
             <select
               value={selectedFaculty}
               onChange={(e) => setSelectedFaculty(e.target.value)}
               required
-              className="w-full px-3 py-2.5 rounded-xl border border-emerald-900/10 bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
             >
               <option value="">-- Choose Faculty --</option>
               {faculties.map((f) => (
@@ -186,13 +185,15 @@ export default function SubmitActionPage() {
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0f382c]">Select Eco-Action</label>
+          <div className="space-y-2">
+            <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+              Select Eco-Action
+            </label>
             <select
               value={selectedAction}
               onChange={(e) => setSelectedAction(e.target.value)}
               required
-              className="w-full px-3 py-2.5 rounded-xl border border-emerald-900/10 bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
             >
               <option value="">-- Choose Eco-Action --</option>
               {ECO_ACTIONS.map((a) => (
@@ -203,8 +204,10 @@ export default function SubmitActionPage() {
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0f382c]">Quantity / Times Performed</label>
+          <div className="space-y-2">
+            <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+              Quantity / Frequency
+            </label>
             <input
               type="number"
               min="1"
@@ -212,35 +215,31 @@ export default function SubmitActionPage() {
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               required
-              className="w-full px-3 py-2.5 rounded-xl border border-emerald-900/10 bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              className="w-full px-4 py-3 border border-[#102f26]/20 bg-white text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0f382c]">
-              Attach Photo Proof (Optional)
+          <div className="space-y-2">
+            <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
+              Attach Proof (Optional)
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-muted-foreground file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-[#0f382c] hover:file:bg-emerald-200"
+              className="w-full text-xs text-[#526760] file:mr-4 file:py-2 file:px-4 file:border-0 file:font-mono file:text-[10px] file:uppercase file:tracking-[0.14em] file:bg-[#102f26] file:text-white hover:file:opacity-90 cursor-pointer"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full text-xs font-bold bg-[#0f382c] text-white py-3 rounded-xl hover:bg-emerald-900 transition shadow-md shadow-emerald-900/10 disabled:opacity-50"
+            className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50"
           >
-            {loading ? 'Submitting...' : 'Submit Action →'}
+            {loading ? 'Submitting to Ledger...' : 'Submit Action to Ledger →'}
           </button>
         </form>
-      </main>
-
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
-        © {new Date().getFullYear()} Green Collective. All rights reserved.
-      </footer>
-    </div>
+      </section>
+    </main>
   )
 }
