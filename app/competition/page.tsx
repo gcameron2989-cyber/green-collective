@@ -9,7 +9,6 @@ interface LeaderboardEntry {
   faculty: string;
   participants: number;
   carbonOffsetKg: number;
-  trend: string;
 }
 
 export default function UBCCompetitionPage() {
@@ -63,12 +62,11 @@ export default function UBCCompetitionPage() {
         });
 
         const computedStandings: LeaderboardEntry[] = Object.values(facultyMap)
-          .map((f, index) => ({
-            rank: index + 1,
+          .map((f) => ({
+            rank: 0,
             faculty: f.name,
-            participants: f.users.size > 0 ? f.users.size : 1,
+            participants: f.users.size,
             carbonOffsetKg: Math.round(f.points * 3.5),
-            trend: "+12% this week",
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
@@ -83,6 +81,9 @@ export default function UBCCompetitionPage() {
 
     fetchLiveStandings();
   }, [supabase]);
+
+  const totalCarbon = standings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
+  const totalParticipants = standings.reduce((acc, curr) => acc + curr.participants, 0);
 
   return (
     <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
@@ -175,7 +176,7 @@ export default function UBCCompetitionPage() {
                             {entry.faculty}
                           </h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
-                            {entry.participants} Active Contributors · <span className="text-[#39705d]">{entry.trend}</span>
+                            {entry.participants} Active Contributor{entry.participants === 1 ? '' : 's'}
                           </p>
                         </div>
                       </div>
@@ -225,20 +226,20 @@ export default function UBCCompetitionPage() {
                 <div className="p-6 border border-[#102f26]/15 bg-white">
                   <span className="font-mono text-[10px] text-[#39705d] block mb-1">Total Carbon Mitigated</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
-                    {standings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0).toLocaleString()} kg
+                    {totalCarbon.toLocaleString()} kg
                   </p>
                   <p className="text-[#71847d]">
-                    Calculated dynamically from verified student action submissions in the database.
+                    Aggregated directly from verified student action submissions in the database.
                   </p>
                 </div>
 
                 <div className="p-6 border border-[#102f26]/15 bg-white">
                   <span className="font-mono text-[10px] text-[#39705d] block mb-1">Active Participation</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
-                    {standings.reduce((acc, curr) => acc + curr.participants, 0)} Students
+                    {totalParticipants} Student{totalParticipants === 1 ? '' : 's'}
                   </p>
                   <p className="text-[#71847d]">
-                    Actively recording metrics across participating faculties at UBC.
+                    Unique contributors across participating faculties.
                   </p>
                 </div>
               </div>
