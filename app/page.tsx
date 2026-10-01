@@ -4,74 +4,90 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 
 const DEMO_ACTIONS = [
-  { id: 'sustainable-commute', name: 'Public / active transit', impact: 1.5, category: 'TRANSPORT' },
-  { id: 'plant-based-meal', name: 'Plant-forward meal', impact: 1.2, category: 'FOOD' },
-  { id: 'cold-water-laundry', name: 'Cold-water laundry', impact: 0.6, category: 'ENERGY' },
-  { id: 'waste-sorting', name: 'Proper waste sorting', impact: 0.5, category: 'WASTE' },
+  { id: 'active-transit', name: 'Active transit (Bike / Walk)', impact: 2.4, category: 'TRANSPORT' },
+  { id: 'public-transit', name: 'Public transit (Bus / Train)', impact: 1.3, category: 'TRANSPORT' },
+  { id: 'plant-based-meal', name: 'Plant-forward meal', impact: 1.4, category: 'FOOD' },
+  { id: 'line-dry', name: 'Air-dry clothing (Line dry)', impact: 2.4, category: 'ENERGY' },
+  { id: 'cold-water-laundry', name: 'Cold-water laundry load', impact: 0.6, category: 'ENERGY' },
+  { id: 'waste-sorting', name: 'Three-stream waste sorting', impact: 0.5, category: 'WASTE' },
 ];
 
 const MAIN_ACTIONS = [
   {
-    id: 'sustainable-commute',
+    id: 'active-transit',
     category: 'TRANSPORT',
-    name: 'Public / active transportation',
-    description: 'Replace a personal vehicle trip with walking, cycling, or public transit.',
-    impact: '~1.5 kg CO₂e / trip',
+    name: 'Active transit (Cycling / Walking)',
+    description: 'Completely eliminate vehicle emissions by commuting under human power.',
+    impact: '~2.4 kg CO₂e / trip',
+  },
+  {
+    id: 'public-transit',
+    category: 'TRANSPORT',
+    name: 'Public transit (Bus / SkyTrain)',
+    description: 'Share efficient high-capacity transit instead of driving a single-occupancy vehicle.',
+    impact: '~1.3 kg CO₂e / trip',
   },
   {
     id: 'plant-based-meal',
     category: 'FOOD',
     name: 'Plant-forward meal',
-    description: 'Choose a meal centered around whole plant ingredients instead of high-emission livestock.',
-    impact: '~1.2 kg CO₂e / meal',
+    description: 'Opt for whole plant ingredients over high-emission livestock alternatives.',
+    impact: '~1.4 kg CO₂e / meal',
   },
   {
-    id: 'cold-water-laundry',
+    id: 'local-food',
+    category: 'FOOD',
+    name: 'Locally sourced / seasonal food',
+    description: 'Reduce long-distance cold-chain transport and freight emissions.',
+    impact: '~0.7 kg CO₂e / meal',
+  },
+  {
+    id: 'line-dry',
     category: 'ENERGY',
-    name: 'Cold-water laundry load',
-    description: 'Wash clothing in cold water to eliminate heating energy demand per cycle.',
-    impact: '~0.6 kg CO₂e / load',
+    name: 'Air-dry clothing (Line dry)',
+    description: 'Bypass energy-intensive electric heating elements in clothes dryers completely.',
+    impact: '~2.4 kg CO₂e / load',
+  },
+  {
+    id: 'thermostat-setback',
+    category: 'ENERGY',
+    name: 'Winter heat setback (-2°C)',
+    description: 'Lower residential heating setpoints slightly to reduce natural gas / electric load.',
+    impact: '~1.8 kg CO₂e / day',
   },
   {
     id: 'waste-sorting',
     category: 'WASTE',
     name: 'Three-stream waste sorting',
-    description: 'Direct organics, recyclables, and landfill materials into their correct streams.',
-    impact: '~0.5 kg CO₂e / action',
+    description: 'Prevent organic methane generation in landfills by diverting to compost and recycling.',
+    impact: '~0.5 kg CO₂e / day',
+  },
+  {
+    id: 'repair-item',
+    category: 'CIRCULARITY',
+    name: 'Repair / mend clothing or gear',
+    description: 'Extend product lifespans to offset raw material extraction and manufacturing.',
+    impact: '~3.2 kg CO₂e / item',
+  },
+  {
+    id: 'second-hand',
+    category: 'CONSUMPTION',
+    name: 'Thrift / second-hand purchase',
+    description: 'Source apparel or goods second-hand to avoid supply chain production impacts.',
+    impact: '~4.5 kg CO₂e / item',
   },
   {
     id: 'reusable-cup',
     category: 'CIRCULARITY',
     name: 'Reusable mug / container',
-    description: 'Divert single-use paper cups and takeaway packaging with personal reusables.',
-    impact: '~0.15 kg CO₂e / use',
-  },
-  {
-    id: 'line-dry',
-    category: 'ENERGY',
-    name: 'Air-dry clothing',
-    description: 'Bypass electric tumble drying completely in favor of drying racks or clothing lines.',
-    impact: '~2.4 kg CO₂e / load',
-  },
-  {
-    id: 'shower-timer',
-    category: 'WATER & ENERGY',
-    name: 'Low-flow 5-min shower',
-    description: 'Limit hot water usage time to conserve municipal energy and water treatment resources.',
-    impact: '~0.9 kg CO₂e / shower',
-  },
-  {
-    id: 'second-hand',
-    category: 'CONSUMPTION',
-    name: 'Thrift / second-hand item',
-    description: 'Source apparel or goods second-hand to avoid manufacturing supply chain footprints.',
-    impact: '~4.2 kg CO₂e / item',
+    description: 'Eliminate single-use paper cups and takeout packaging footprints.',
+    impact: '~0.2 kg CO₂e / use',
   },
 ];
 
 export default function HomePage() {
   const [selectedDemoActions, setSelectedDemoActions] = useState<string[]>([
-    'sustainable-commute',
+    'active-transit',
     'plant-based-meal',
   ]);
 
@@ -142,7 +158,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* CLICKABLE PILLARS (Directs to subpages) */}
+          {/* CLICKABLE PILLARS (Linked to correct routes) */}
           <div className="mt-16 grid grid-cols-1 gap-4 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
             <Link
               href="/habits"
@@ -181,21 +197,21 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/about#methodology"
+              href="/initiatives"
               className="group block rounded-sm border border-[#102f26]/10 bg-white/40 p-4 transition-all hover:border-[#102f26]/30 hover:bg-white hover:shadow-sm"
             >
               <div className="flex items-center justify-between">
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
-                  03 / Impact Models
+                  03 / Initiatives
                 </p>
                 <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
                   →
                 </span>
               </div>
               <p className="mt-2 text-sm font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
-                Standardized CO₂e
+                Community Projects
               </p>
-              <p className="mt-0.5 text-xs text-[#526760]">Transparent, factor-based carbon offset estimates.</p>
+              <p className="mt-0.5 text-xs text-[#526760]">Explore active campaigns and localized initiatives.</p>
             </Link>
           </div>
 
@@ -447,6 +463,9 @@ export default function HomePage() {
               <Link href="/competition" className="hover:text-[#102f26]">
                 Leaderboards →
               </Link>
+              <Link href="/initiatives" className="hover:text-[#102f26]">
+                Initiatives →
+              </Link>
               <Link href="/about" className="hover:text-[#102f26]">
                 About →
               </Link>
@@ -496,7 +515,7 @@ export default function HomePage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g., Solar panel maintenance, Backyard composting"
+                    placeholder="e.g., Backyard composting, Heat pump installation"
                     value={proposedName}
                     onChange={(e) => setProposedName(e.target.value)}
                     className="w-full border border-[#102f26]/20 bg-white px-3 py-2 text-sm text-[#102f26] focus:border-[#102f26] focus:outline-none"
@@ -516,8 +535,8 @@ export default function HomePage() {
                     <option value="FOOD">Food</option>
                     <option value="ENERGY">Energy</option>
                     <option value="WASTE">Waste</option>
-                    <option value="WATER & ENERGY">Water & Energy</option>
                     <option value="CIRCULARITY">Circularity</option>
+                    <option value="CONSUMPTION">Consumption</option>
                   </select>
                 </div>
 
