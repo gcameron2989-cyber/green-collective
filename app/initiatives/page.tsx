@@ -4,170 +4,136 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-export interface InitiativeItem {
+export interface Initiative {
   id: string;
+  slug: string;
   title: string;
   tagline: string;
+  description: string;
   category: "Public Community" | "Campus & Student";
   location: string;
-  currentPoints: number;
-  targetPoints: number;
-  co2SavedKg: number;
-  participantsCount: number;
+  current_points: number;
+  target_points: number;
+  co2_saved_kg: number;
+  participants_count: number;
   status: "Active" | "Milestone Reached" | "Planning";
-  description: string;
 }
 
-export const DEFAULT_INITIATIVES: InitiativeItem[] = [
+// Structured default data matching actual database fields
+const SEED_INITIATIVES: Initiative[] = [
   {
-    id: "kitsilano-zero-waste-canopy",
-    title: "Kitsilano Zero Waste & Tree Canopy Expansion",
-    tagline: "Boosting local urban canopy coverage and scaling reusable container adoption across Kitsilano.",
+    id: "kitsilano-canopy",
+    slug: "kitsilano-canopy",
+    title: "Kitsilano Zero Waste & Tree Canopy",
+    tagline: "Expanding neighborhood urban canopy and scaling reusable container adoption across Kitsilano.",
+    description: "A community initiative partnering with West 4th businesses and Kitsilano residents to plant native shade trees, install organic scrap diversion hubs, and eliminate single-use takeaway containers.",
     category: "Public Community",
     location: "Kitsilano, Vancouver",
-    currentPoints: 14200,
-    targetPoints: 20000,
-    co2SavedKg: 1840,
-    participantsCount: 312,
+    current_points: 14200,
+    target_points: 20000,
+    co2_saved_kg: 1840,
+    participants_count: 312,
     status: "Active",
-    description: "A community-led project uniting local businesses and residents to plant native shade trees along 4th Avenue and Broadway while establishing reusable cup sharing networks.",
   },
   {
-    id: "ubc-forestry-climate-hub",
-    title: "UBC Forestry Campus Climate Hub",
-    tagline: "Student-driven fuel reduction, research plot monitoring, and organic waste diversion at Point Grey.",
+    id: "ubc-forestry-hub",
+    slug: "ubc-forestry-hub",
+    title: "UBC Forestry Climate Action Hub",
+    tagline: "Student-led fuel load management, research plot care, and campus waste reduction.",
     category: "Campus & Student",
     location: "Faculty of Forestry, UBC",
-    currentPoints: 18900,
-    targetPoints: 25000,
-    co2SavedKg: 2450,
-    participantsCount: 480,
+    description: "Bridging forestry field metrics with campus action. Students log active commutes, participate in canopy care on campus grounds, and divert organic waste across residence halls.",
+    current_points: 18900,
+    target_points: 25000,
+    co2_saved_kg: 2450,
+    participants_count: 480,
     status: "Active",
-    description: "Integrating forestry research with campus action: monitoring experimental forest plots, scaling composting in student housing, and running mid-week active transportation challenges.",
   },
   {
-    id: "mount-pleasant-active-mobility",
-    title: "Mount Pleasant Active Mobility Corridor",
-    tagline: "Safer bike infrastructure and micro-mobility incentives along Main Street.",
-    category: "Public Community",
-    location: "Mount Pleasant, Vancouver",
-    currentPoints: 9400,
-    targetPoints: 15000,
-    co2SavedKg: 1120,
-    participantsCount: 195,
-    status: "Active",
-    description: "Working with local housing associations and commuters to replace vehicle trips with e-bikes and transit journeys across the Mount Pleasant neighborhood.",
-  },
-  {
-    id: "point-grey-shoreline-restoration",
-    title: "Point Grey & Jericho Shoreline Restoration",
-    tagline: "Protecting coastal biodiversity and removing marine plastics along Jericho and Spanish Banks.",
+    id: "point-grey-shoreline",
+    slug: "point-grey-shoreline",
+    title: "Point Grey Coastal & Shoreline Care",
+    tagline: "Restoring coastal dune ecosystems and removing microplastics along Jericho and Spanish Banks.",
     category: "Public Community",
     location: "Point Grey, Vancouver",
-    currentPoints: 12100,
-    targetPoints: 12000,
-    co2SavedKg: 1680,
-    participantsCount: 260,
+    description: "Regular cleanup drives, invasive plant management, and shoreline protection projects uniting local neighborhood volunteers and university student groups.",
+    current_points: 12100,
+    target_points: 12000,
+    co2_saved_kg: 1680,
+    participants_count: 260,
     status: "Milestone Reached",
-    description: "Community shoreline cleanups, dune vegetation restoration, and invasive species removal protecting coastal habitats.",
   },
   {
-    id: "false-creek-circular-dining",
-    title: "False Creek Circular Food & Dining Network",
-    tagline: "Eliminating single-use takeaway packaging across local waterfront restaurants.",
+    id: "mount-pleasant-mobility",
+    slug: "mount-pleasant-mobility",
+    title: "Mount Pleasant Active Transit Corridor",
+    tagline: "Incentivizing zero-emission trips and active bike commutes along major commuter corridors.",
     category: "Public Community",
-    location: "Fairview / South Granville",
-    currentPoints: 6200,
-    targetPoints: 10000,
-    co2SavedKg: 790,
-    participantsCount: 140,
+    location: "Mount Pleasant, Vancouver",
+    description: "Community-driven active transportation push focused on shifting single-occupancy driving trips to transit, cycling, and micro-mobility options.",
+    current_points: 9400,
+    target_points: 15000,
+    co2_saved_kg: 1120,
+    participants_count: 195,
     status: "Active",
-    description: "Partnering with food vendors to establish standardized returnable container deposits and organic scrap collection.",
-  },
-  {
-    id: "ubc-renewable-energy-challenge",
-    title: "UBC Student Dorm Energy Conservation Challenge",
-    tagline: "Peer-to-peer residence energy monitoring and heat-loss reduction competition.",
-    category: "Campus & Student",
-    location: "UBC Campus Housing",
-    currentPoints: 3400,
-    targetPoints: 8000,
-    co2SavedKg: 430,
-    participantsCount: 115,
-    status: "Planning",
-    description: "Empowering students across residence halls to optimize heating, eliminate phantom power draw, and adopt cold-water laundry routines.",
   },
 ];
 
 export default function InitiativesPage() {
   const supabase = createClient();
-  const [initiatives, setInitiatives] = useState<InitiativeItem[]>(DEFAULT_INITIATIVES);
-  const [filterCategory, setFilterCategory] = useState<string>("All");
+  const [initiatives, setInitiatives] = useState<Initiative[]>(SEED_INITIATIVES);
+  const [filter, setFilter] = useState<string>("All");
 
   useEffect(() => {
-    async function loadInitiatives() {
+    async function fetchInitiatives() {
       const { data, error } = await supabase.from("initiatives").select("*");
       if (!error && data && data.length > 0) {
-        const mapped: InitiativeItem[] = data.map((item: any) => ({
-          id: item.id || item.slug,
-          title: item.title,
-          tagline: item.tagline || item.description?.slice(0, 100) || "",
-          category: item.category || "Public Community",
-          location: item.location || "Vancouver, BC",
-          currentPoints: item.current_points || item.currentPoints || 0,
-          targetPoints: item.target_points || item.targetPoints || 10000,
-          co2SavedKg: item.co2_saved_kg || item.co2SavedKg || 0,
-          participantsCount: item.participants_count || item.participantsCount || 0,
-          status: item.status || "Active",
-          description: item.description || "",
-        }));
-        setInitiatives(mapped);
+        setInitiatives(data as Initiative[]);
       }
     }
-    loadInitiatives();
+    fetchInitiatives();
   }, []);
 
-  const filtered = filterCategory === "All"
-    ? initiatives
-    : initiatives.filter((item) => item.category === filterCategory);
+  const filtered = filter === "All" ? initiatives : initiatives.filter((i) => i.category === filter);
 
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      {/* Consolidated Header Navigation */}
-      <nav className="border-b border-[#102f26]/10 bg-white/90 backdrop-blur sticky top-0 z-30 px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="font-black text-lg tracking-tight text-[#102f26]">
+    <div className="min-h-screen bg-[#F7F8F6] text-[#0F2C23] font-sans">
+      {/* Header */}
+      <header className="border-b border-[#0F2C23]/10 bg-white sticky top-0 z-30 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="font-black text-xl tracking-tight text-[#0F2C23]">
             Green Collective
           </Link>
-          <div className="flex items-center gap-6 text-xs font-semibold">
-            <Link href="/actions" className="hover:text-[#39705d] transition">Actions</Link>
-            <Link href="/initiatives" className="text-[#39705d] underline underline-offset-4 font-bold">Initiatives</Link>
-            <Link href="/dashboard" className="hover:text-[#39705d] transition">Dashboard</Link>
-            <Link href="/profile" className="hover:text-[#39705d] transition">Profile</Link>
-          </div>
+          <nav className="flex items-center gap-6 text-xs font-bold">
+            <Link href="/actions" className="text-gray-500 hover:text-[#0F2C23] transition">Actions</Link>
+            <Link href="/initiatives" className="text-[#0F2C23] border-b-2 border-[#0F2C23] pb-0.5">Initiatives</Link>
+            <Link href="/dashboard" className="text-gray-500 hover:text-[#0F2C23] transition">Dashboard</Link>
+            <Link href="/profile" className="text-gray-500 hover:text-[#0F2C23] transition">Profile</Link>
+          </nav>
         </div>
-      </nav>
+      </header>
 
-      {/* Hero Header */}
-      <section className="bg-[#f1f6f2] border-b border-[#102f26]/10 py-10 px-6">
-        <div className="max-w-7xl mx-auto">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
-            Impact Directives
+      {/* Hero Section */}
+      <section className="bg-[#EAEFEA] border-b border-[#0F2C23]/10 py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[#2A5E4E] font-semibold block mb-2">
+            Local Impact Directives
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight">Community & Campus Initiatives</h1>
-          <p className="text-xs text-[#526760] max-w-2xl mt-1">
-            Explore active environmental campaigns in your area. Every logged action direct-credits points and carbon savings toward these collective goals.
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Active Environmental Initiatives</h1>
+          <p className="text-sm text-gray-600 max-w-2xl mt-2 leading-relaxed">
+            Real-world campaigns organized across Vancouver neighborhoods and UBC campus units. Points logged from verified personal actions credit directly toward these targets.
           </p>
 
-          <div className="flex gap-2 mt-6">
+          {/* Filter Pills */}
+          <div className="flex gap-2 mt-8">
             {["All", "Public Community", "Campus & Student"].map((cat) => (
               <button
                 key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
-                  filterCategory === cat
-                    ? "bg-[#102f26] text-white"
-                    : "bg-white text-[#526760] border border-[#102f26]/10 hover:border-[#102f26]/30"
+                onClick={() => setFilter(cat)}
+                className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                  filter === cat
+                    ? "bg-[#0F2C23] text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
                 }`}
               >
                 {cat}
@@ -177,62 +143,58 @@ export default function InitiativesPage() {
         </div>
       </section>
 
-      {/* Initiatives Directory Grid */}
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid */}
+      <section className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filtered.map((item) => {
-            const progressPct = Math.min(100, Math.round((item.currentPoints / item.targetPoints) * 100));
+            const pct = Math.min(100, Math.round((item.current_points / item.target_points) * 100));
+            const targetRoute = `/initiatives/${item.slug || item.id}`;
 
             return (
               <Link
                 key={item.id}
-                href={`/initiatives/${item.id}`}
-                className="bg-white border border-[#102f26]/10 rounded-2xl p-6 shadow-sm hover:border-[#39705d] hover:shadow-md transition flex flex-col justify-between group"
+                href={targetRoute}
+                className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:border-[#0F2C23] hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2.5 py-0.5 rounded-md font-semibold">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-mono uppercase bg-[#EAEFEA] text-[#2A5E4E] px-2.5 py-1 rounded-md font-bold">
                       {item.category}
                     </span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                         item.status === "Milestone Reached"
                           ? "bg-emerald-100 text-emerald-800"
-                          : item.status === "Active"
-                          ? "bg-blue-50 text-blue-700"
-                          : "bg-amber-50 text-amber-800"
+                          : "bg-emerald-50 text-[#2A5E4E]"
                       }`}
                     >
                       {item.status}
                     </span>
                   </div>
 
-                  <h2 className="text-base font-bold text-[#102f26] group-hover:text-[#39705d] transition mb-1">
+                  <h2 className="text-lg font-bold text-[#0F2C23] group-hover:text-[#2A5E4E] transition-colors mb-1">
                     {item.title}
                   </h2>
-                  <p className="text-[11px] text-gray-500 font-medium mb-3">📍 {item.location}</p>
-                  <p className="text-xs text-[#526760] leading-relaxed mb-6">{item.tagline}</p>
+                  <p className="text-xs text-gray-400 font-medium mb-3">📍 {item.location}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed mb-6">{item.tagline}</p>
                 </div>
 
                 <div>
                   {/* Progress Bar */}
-                  <div className="space-y-1.5 mb-4">
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-[#102f26]">{item.currentPoints.toLocaleString()} / {item.targetPoints.toLocaleString()} pts</span>
-                      <span className="text-[#39705d]">{progressPct}%</span>
+                  <div className="space-y-2 mb-5">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-[#0F2C23]">{item.current_points.toLocaleString()} / {item.target_points.toLocaleString()} pts</span>
+                      <span className="text-[#2A5E4E]">{pct}%</span>
                     </div>
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#102f26] transition-all duration-500 rounded-full"
-                        style={{ width: `${progressPct}%` }}
-                      />
+                      <div className="h-full bg-[#0F2C23] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-[#102f26]">
-                    <span>👥 {item.participantsCount} Contributors</span>
-                    <span className="text-[#39705d] group-hover:translate-x-1 transition-transform">
-                      View Hub →
+                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-[#0F2C23]">
+                    <span>👥 {item.participants_count} Contributors</span>
+                    <span className="text-[#2A5E4E] group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      View Campaign →
                     </span>
                   </div>
                 </div>
