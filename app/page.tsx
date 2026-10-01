@@ -2,88 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-
-const DEMO_ACTIONS = [
-  { id: 'active-transit', name: 'Active transit (Bike / Walk)', impact: 2.4, category: 'TRANSPORT' },
-  { id: 'public-transit', name: 'Public transit (Bus / Train)', impact: 1.3, category: 'TRANSPORT' },
-  { id: 'plant-based-meal', name: 'Plant-forward meal', impact: 1.4, category: 'FOOD' },
-  { id: 'line-dry', name: 'Air-dry clothing (Line dry)', impact: 2.4, category: 'ENERGY' },
-  { id: 'cold-water-laundry', name: 'Cold-water laundry load', impact: 0.6, category: 'ENERGY' },
-  { id: 'waste-sorting', name: 'Three-stream waste sorting', impact: 0.5, category: 'WASTE' },
-];
-
-const MAIN_ACTIONS = [
-  {
-    id: 'active-transit',
-    category: 'TRANSPORT',
-    name: 'Active transit (Cycling / Walking)',
-    description: 'Completely eliminate vehicle emissions by commuting under human power.',
-    impact: '~2.4 kg CO₂e / trip',
-  },
-  {
-    id: 'public-transit',
-    category: 'TRANSPORT',
-    name: 'Public transit (Bus / SkyTrain)',
-    description: 'Share efficient high-capacity transit instead of driving a single-occupancy vehicle.',
-    impact: '~1.3 kg CO₂e / trip',
-  },
-  {
-    id: 'plant-based-meal',
-    category: 'FOOD',
-    name: 'Plant-forward meal',
-    description: 'Opt for whole plant ingredients over high-emission livestock alternatives.',
-    impact: '~1.4 kg CO₂e / meal',
-  },
-  {
-    id: 'local-food',
-    category: 'FOOD',
-    name: 'Locally sourced / seasonal food',
-    description: 'Reduce long-distance cold-chain transport and freight emissions.',
-    impact: '~0.7 kg CO₂e / meal',
-  },
-  {
-    id: 'line-dry',
-    category: 'ENERGY',
-    name: 'Air-dry clothing (Line dry)',
-    description: 'Bypass energy-intensive electric heating elements in clothes dryers completely.',
-    impact: '~2.4 kg CO₂e / load',
-  },
-  {
-    id: 'thermostat-setback',
-    category: 'ENERGY',
-    name: 'Winter heat setback (-2°C)',
-    description: 'Lower residential heating setpoints slightly to reduce natural gas / electric load.',
-    impact: '~1.8 kg CO₂e / day',
-  },
-  {
-    id: 'waste-sorting',
-    category: 'WASTE',
-    name: 'Three-stream waste sorting',
-    description: 'Prevent organic methane generation in landfills by diverting to compost and recycling.',
-    impact: '~0.5 kg CO₂e / day',
-  },
-  {
-    id: 'repair-item',
-    category: 'CIRCULARITY',
-    name: 'Repair / mend clothing or gear',
-    description: 'Extend product lifespans to offset raw material extraction and manufacturing.',
-    impact: '~3.2 kg CO₂e / item',
-  },
-  {
-    id: 'second-hand',
-    category: 'CONSUMPTION',
-    name: 'Thrift / second-hand purchase',
-    description: 'Source apparel or goods second-hand to avoid supply chain production impacts.',
-    impact: '~4.5 kg CO₂e / item',
-  },
-  {
-    id: 'reusable-cup',
-    category: 'CIRCULARITY',
-    name: 'Reusable mug / container',
-    description: 'Eliminate single-use paper cups and takeout packaging footprints.',
-    impact: '~0.2 kg CO₂e / use',
-  },
-];
+import { ACTION_REGISTRY, getFormattedImpact, calculateTotalImpact } from '@/lib/actions';
 
 export default function HomePage() {
   const [selectedDemoActions, setSelectedDemoActions] = useState<string[]>([
@@ -104,11 +23,7 @@ export default function HomePage() {
     );
   };
 
-  const calculatedImpact = DEMO_ACTIONS.filter((action) =>
-    selectedDemoActions.includes(action.id)
-  )
-    .reduce((sum, action) => sum + action.impact, 0)
-    .toFixed(1);
+  const calculatedImpact = calculateTotalImpact(selectedDemoActions).toFixed(2);
 
   const handleProposeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +36,8 @@ export default function HomePage() {
       setProposedDesc('');
     }, 2000);
   };
+
+  const demoActions = ACTION_REGISTRY.slice(0, 6);
 
   return (
     <main className="bg-[#f9f8f6] text-[#102f26] font-sans antialiased">
@@ -260,7 +177,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="p-6 grid gap-3 sm:grid-cols-2">
-                  {DEMO_ACTIONS.map((action) => {
+                  {demoActions.map((action) => {
                     const isSelected = selectedDemoActions.includes(action.id);
                     return (
                       <button
@@ -290,7 +207,7 @@ export default function HomePage() {
                             {isSelected ? '✓' : ''}
                           </span>
                           <p className="font-mono text-[11px] opacity-80">
-                            ~{action.impact} kg
+                            ~{action.impactValue.toFixed(1)} kg
                           </p>
                         </div>
                       </button>
@@ -300,7 +217,7 @@ export default function HomePage() {
 
                 <div className="border-t border-[#102f26]/10 bg-[#102f26] px-6 py-4 text-white flex items-center justify-between">
                   <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/80">
-                    Selected Actions: {selectedDemoActions.length} of {DEMO_ACTIONS.length}
+                    Selected Actions: {selectedDemoActions.length} of {demoActions.length}
                   </span>
                   <Link
                     href="/habits"
@@ -347,7 +264,7 @@ export default function HomePage() {
             </div>
 
             <div className="border-t border-white/15">
-              {MAIN_ACTIONS.map((action) => (
+              {ACTION_REGISTRY.map((action) => (
                 <Link
                   key={action.id}
                   href={`/habits?action=${action.id}`}
@@ -369,7 +286,7 @@ export default function HomePage() {
 
                     <div className="flex items-center justify-between gap-8 md:justify-end">
                       <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#9bb9aa]">
-                        {action.impact}
+                        {getFormattedImpact(action)}
                       </span>
                       <span className="text-lg transition-transform group-hover:translate-x-1">
                         →
@@ -537,6 +454,7 @@ export default function HomePage() {
                     <option value="WASTE">Waste</option>
                     <option value="CIRCULARITY">Circularity</option>
                     <option value="CONSUMPTION">Consumption</option>
+                    <option value="COMMUNITY">Community</option>
                   </select>
                 </div>
 
