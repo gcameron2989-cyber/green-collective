@@ -39,7 +39,7 @@ const communityProjects: CommunityProject[] = [
     title: "Neighborhood Food Systems & Composting Hubs",
     organization: "Vancouver Local Food Networks",
     description: "Engage in community composting initiatives and localized urban agriculture projects designed to minimize transport emissions and foster food resilience.",
-    link: "https://vancouver.ca",
+    link: "https://vancouver.ca/home-property-development/composting.aspx",
   },
   {
     id: "proj-04",
@@ -48,7 +48,7 @@ const communityProjects: CommunityProject[] = [
     title: "Community Canopy Planting & Tree Vulnerability Audits",
     organization: "LEAF (Local Enhancement & Appreciation of Forests)",
     description: "Participate in neighborhood planting blitzes and residential tree care programs to expand Toronto's urban forest canopy density.",
-    link: "https://www.torontoleaf.org",
+    link: "https://www.torontoleaf.org/get-involved/volunteer/",
   },
   {
     id: "proj-05",
@@ -57,7 +57,7 @@ const communityProjects: CommunityProject[] = [
     title: "Active Transportation & Transit Corridor Advocacy",
     organization: "Environmental Defence / Toronto Active Mobility",
     description: "Contribute to regional public consultations promoting protected bike lanes, pedestrianized corridors, and electrified municipal transit expansion.",
-    link: "https://environmentaldefence.ca",
+    link: "https://environmentaldefence.ca/campaign/clean-transport-toronto/",
   },
 ];
 
