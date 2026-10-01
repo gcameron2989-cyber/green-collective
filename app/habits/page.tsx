@@ -63,7 +63,7 @@ function HabitsContent() {
     fetchFaculties()
   }, [supabase, searchParams])
 
-  // Sort actions so any preselected action from homepage appears at the top
+  // Automatically sort actions so any preselected action from homepage appears at the very top
   const prioritizedActions = [...ALL_ACTIONS].sort((a, b) => {
     const aSelected = selectedActionIds.includes(a.id) ? -1 : 0
     const bSelected = selectedActionIds.includes(b.id) ? -1 : 0
@@ -104,7 +104,6 @@ function HabitsContent() {
         return
       }
 
-      // Insert all selected actions into Supabase
       for (const actionId of selectedActionIds) {
         const { error: insertError } = await supabase.from('submissions').insert({
           faculty_id: selectedFaculty,
@@ -192,7 +191,7 @@ function HabitsContent() {
             </select>
           </div>
 
-          {/* Category Filter Bar */}
+          {/* Category Filter Bar (Matches Screenshot 2 layout) */}
           <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/15 pb-6">
             {['ALL', 'TRANSPORT', 'FOOD', 'ENERGY', 'WASTE', 'COMMUNITY'].map((cat) => (
               <button
@@ -208,7 +207,7 @@ function HabitsContent() {
             ))}
           </div>
 
-          {/* Action List Feed */}
+          {/* Action List Feed (Matches Screenshot 2 layout with Checkboxes) */}
           <div className="border-t border-[#102f26]/15 divide-y divide-[#102f26]/15">
             {filteredActions.map((action) => {
               const isSelected = selectedActionIds.includes(action.id)
@@ -227,7 +226,7 @@ function HabitsContent() {
                       </span>
                       {isSelected && (
                         <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#39705d] font-bold">
-                          ✓ Selected
+                          ✓ Selected from Homepage
                         </span>
                       )}
                     </div>
