@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 
-const HERO_DEMO_ACTIONS = [
+const DEMO_ACTIONS = [
   { id: 'sustainable-commute', name: 'Public / active transit', impact: 1.5, category: 'TRANSPORT' },
   { id: 'plant-based-meal', name: 'Plant-forward meal', impact: 1.2, category: 'FOOD' },
   { id: 'cold-water-laundry', name: 'Cold-water laundry', impact: 0.6, category: 'ENERGY' },
+  { id: 'waste-sorting', name: 'Proper waste sorting', impact: 0.5, category: 'WASTE' },
 ];
 
 const MAIN_ACTIONS = [
@@ -41,7 +42,6 @@ const MAIN_ACTIONS = [
 ];
 
 export default function HomePage() {
-  // State for interactive live logger demo in the hero
   const [selectedDemoActions, setSelectedDemoActions] = useState<string[]>([
     'sustainable-commute',
     'plant-based-meal',
@@ -53,7 +53,7 @@ export default function HomePage() {
     );
   };
 
-  const calculatedImpact = HERO_DEMO_ACTIONS.filter((action) =>
+  const calculatedImpact = DEMO_ACTIONS.filter((action) =>
     selectedDemoActions.includes(action.id)
   )
     .reduce((sum, action) => sum + action.impact, 0)
@@ -61,83 +61,139 @@ export default function HomePage() {
 
   return (
     <main className="bg-[#f9f8f6] text-[#102f26] font-sans antialiased">
-      {/* Hero */}
+      {/* 1. HERO SECTION: Clean, Focused, Mission-First */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12 lg:py-28">
-          <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="mx-auto max-w-5xl px-6 py-20 text-center md:px-10 md:py-28 lg:py-32">
+          
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#102f26]/15 bg-white/60 px-4 py-1.5 backdrop-blur-sm">
+            <span className="h-2 w-2 rounded-full bg-[#39705d]" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#39705d] font-medium">
+              Sustainability · Action · Measurement
+            </span>
+          </div>
+
+          <h1 className="mt-8 text-4xl font-medium leading-[1.08] tracking-[-0.04em] sm:text-6xl lg:text-7xl text-[#102f26]">
+            Turn everyday choices into collective environmental progress.
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-[#315148] sm:text-lg md:text-xl">
+            Green Collective gives individuals, campuses, and organizations a simple way to record sustainable actions, track carbon diverted, and compete across regional and institutional leaderboards.
+          </p>
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/habits"
+              className="inline-flex items-center bg-[#102f26] px-7 py-4 text-xs font-mono uppercase tracking-[0.18em] text-white transition-all hover:bg-[#1a4438] shadow-sm"
+            >
+              Explore Action Registry →
+            </Link>
+            <Link
+              href="/competition"
+              className="inline-flex items-center border border-[#102f26]/20 bg-white/80 px-7 py-4 text-xs font-mono uppercase tracking-[0.18em] text-[#102f26] transition-all hover:bg-white"
+            >
+              View Leaderboards →
+            </Link>
+          </div>
+
+          {/* Quick Impact Metric Ticker */}
+          <div className="mt-16 grid grid-cols-2 gap-4 border-t border-[#102f26]/10 pt-10 sm:grid-cols-4">
+            <div>
+              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">1,420+</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
+                Actions Logged
+              </p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">8.4t</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
+                CO₂e Diverted
+              </p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">12</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
+                UBC Faculties
+              </p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-[#102f26] sm:text-3xl">2</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#71847d]">
+                Municipal Hubs
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 2. INTERACTIVE DEMO SECTION: Spacious & Roomy Action Logger */}
+      <section className="border-b border-[#102f26]/10 bg-white py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-6 md:px-10 lg:px-12">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             
-            {/* Left Content Column */}
-            <div className="lg:col-span-7 space-y-6">
-              <div>
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-                  Sustainability · Action · Measurement
-                </p>
-              </div>
-
-              <h1 className="max-w-2xl text-4xl sm:text-5xl lg:text-[3.5rem] font-medium leading-[1.08] tracking-[-0.04em] text-[#102f26]">
-                Turn everyday choices into collective environmental progress.
-              </h1>
-
-              <p className="max-w-xl text-base sm:text-lg leading-relaxed text-[#315148]">
-                Green Collective gives individuals, campuses, and organizations a simple way to record sustainable actions,
-                track carbon diverted, and compete across regional and institutional leaderboards.
+            {/* Left Explanation */}
+            <div className="lg:col-span-5 space-y-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#39705d]">
+                Interactive Micro-Demo
+              </p>
+              <h2 className="text-3xl font-medium tracking-[-0.03em] md:text-4xl text-[#102f26]">
+                See how small choices compound into real impact.
+              </h2>
+              <p className="text-base text-[#526760] leading-relaxed">
+                Test our multi-select ledger right here. Select actions you completed today to see instant carbon savings calculated in real time.
               </p>
 
-              <div className="pt-2 flex flex-wrap items-center gap-6">
+              <div className="pt-2">
                 <Link
                   href="/habits"
-                  className="inline-flex items-center bg-[#102f26] px-6 py-3.5 text-xs font-mono uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 shadow-sm"
-                >
-                  Explore Action Registry →
-                </Link>
-                <Link
-                  href="/competition"
                   className="inline-flex items-center border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55 text-[#102f26]"
                 >
-                  View leaderboards <span className="ml-2">→</span>
+                  Open complete personal ledger →
                 </Link>
               </div>
             </div>
 
-            {/* Right Column: Interactive Live Logger & Nav Widget */}
-            <div className="lg:col-span-5">
+            {/* Right Interactive Logger Box */}
+            <div className="lg:col-span-7">
               <div className="border border-[#102f26]/15 bg-[#f9f8f6] shadow-sm">
                 
                 {/* Header with Live Counter */}
-                <div className="flex items-center justify-between border-b border-[#102f26]/10 px-5 py-3.5 bg-[#e2ede5]/40">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-[#39705d] animate-pulse" />
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
-                      Interactive Logger
+                <div className="flex items-center justify-between border-b border-[#102f26]/10 px-6 py-4 bg-[#e2ede5]/50">
+                  <div className="flex items-center gap-2.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#39705d] animate-pulse" />
+                    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-[#39705d] font-semibold">
+                      Live Impact Calculator
                     </span>
                   </div>
-                  <div className="font-mono text-xs font-semibold text-[#102f26]">
+                  <div className="font-mono text-sm font-bold text-[#102f26]">
                     +{calculatedImpact} kg CO₂e
                   </div>
                 </div>
 
-                {/* Interactive Toggles */}
-                <div className="p-4 space-y-2 border-b border-[#102f26]/10">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d] mb-3">
-                    Select actions to test impact:
-                  </p>
-                  
-                  {HERO_DEMO_ACTIONS.map((action) => {
+                {/* Actions Grid */}
+                <div className="p-6 grid gap-3 sm:grid-cols-2">
+                  {DEMO_ACTIONS.map((action) => {
                     const isSelected = selectedDemoActions.includes(action.id);
                     return (
                       <button
                         key={action.id}
                         onClick={() => toggleDemoAction(action.id)}
                         type="button"
-                        className={`w-full flex items-center justify-between p-3 border text-left transition-all ${
+                        className={`flex items-start justify-between p-4 border text-left transition-all ${
                           isSelected
                             ? 'bg-[#102f26] text-white border-[#102f26] shadow-sm'
                             : 'bg-white text-[#102f26] border-[#102f26]/15 hover:border-[#102f26]/40'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-mono uppercase tracking-wider opacity-70">
+                            {action.category}
+                          </p>
+                          <p className="text-sm font-medium leading-tight">{action.name}</p>
+                        </div>
+                        <div className="text-right space-y-1">
                           <span
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center border text-[10px] ${
+                            className={`inline-flex h-5 w-5 items-center justify-center border text-[11px] ${
                               isSelected
                                 ? 'border-white bg-white text-[#102f26] font-bold'
                                 : 'border-[#102f26]/30 bg-transparent'
@@ -145,78 +201,27 @@ export default function HomePage() {
                           >
                             {isSelected ? '✓' : ''}
                           </span>
-                          <div>
-                            <p className="text-xs font-medium leading-none">{action.name}</p>
-                            <p
-                              className={`text-[9px] font-mono uppercase tracking-wider mt-1 ${
-                                isSelected ? 'text-[#9bb9aa]' : 'text-[#71847d]'
-                              }`}
-                            >
-                              {action.category}
-                            </p>
-                          </div>
+                          <p className="font-mono text-[11px] opacity-80">
+                            ~{action.impact} kg
+                          </p>
                         </div>
-                        <span
-                          className={`font-mono text-[10px] ${
-                            isSelected ? 'text-[#9bb9aa]' : 'text-[#39705d]'
-                          }`}
-                        >
-                          ~{action.impact} kg
-                        </span>
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Quick Board Navigation Links */}
-                <div className="divide-y divide-[#102f26]/10 bg-white/50">
+                {/* Footer Link */}
+                <div className="border-t border-[#102f26]/10 bg-[#102f26] px-6 py-4 text-white flex items-center justify-between">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/80">
+                    Selected Actions: {selectedDemoActions.length} of {DEMO_ACTIONS.length}
+                  </span>
                   <Link
-                    href="/competition?tab=institutional"
-                    className="group flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#102f26]/[0.04]"
+                    href="/habits"
+                    className="font-mono text-xs uppercase tracking-[0.14em] text-white hover:underline"
                   >
-                    <div>
-                      <p className="text-xs font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
-                        UBC Faculty Challenge
-                      </p>
-                      <p className="font-mono text-[9px] uppercase tracking-wider text-[#71847d]">
-                        Institutional Leaderboard
-                      </p>
-                    </div>
-                    <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
-                      →
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/competition?tab=local"
-                    className="group flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-[#102f26]/[0.04]"
-                  >
-                    <div>
-                      <p className="text-xs font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
-                        Vancouver & Municipal Hubs
-                      </p>
-                      <p className="font-mono text-[9px] uppercase tracking-wider text-[#71847d]">
-                        Local Regional Board
-                      </p>
-                    </div>
-                    <span className="text-xs text-[#102f26]/40 transition-transform group-hover:translate-x-1 group-hover:text-[#102f26]">
-                      →
-                    </span>
+                    Log to profile →
                   </Link>
                 </div>
-
-                {/* Action CTA Footer */}
-                <Link
-                  href="/habits"
-                  className="block border-t border-[#102f26]/10 bg-[#102f26] px-5 py-3.5 text-white transition-opacity hover:opacity-95"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/80">
-                      Open Full Ledger ({selectedDemoActions.length} Selected)
-                    </span>
-                    <span className="font-mono text-xs">→</span>
-                  </div>
-                </Link>
 
               </div>
             </div>
@@ -225,7 +230,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Collective progression */}
+      {/* 3. THE COLLECTIVE FRAMEWORK */}
       <section className="border-b border-[#102f26]/10 bg-[#f9f8f6]">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
@@ -283,7 +288,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Action library */}
+      {/* 4. ACTION LIBRARY */}
       <section className="bg-[#102f26] text-white">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
@@ -337,7 +342,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Leaderboards overview */}
+      {/* 5. LEADERBOARDS OVERVIEW */}
       <section className="border-b border-[#102f26]/10 bg-[#f9f8f6]">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="grid gap-12 lg:grid-cols-[0.7fr_1.3fr]">
@@ -398,7 +403,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Closing */}
+      {/* 6. CLOSING CTA */}
       <section className="bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28 lg:px-12">
           <div className="max-w-5xl">
