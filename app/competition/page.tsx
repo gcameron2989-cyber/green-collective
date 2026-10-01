@@ -19,13 +19,13 @@ export default function CompetitionPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const supabase = createClient();
 
-  // Local regional standings for Vancouver neighborhood hubs
+  // Clean local regional hubs with zeroed initial metrics, ready for live data or submissions
   const localStandings: LeaderboardEntry[] = [
-    { rank: 1, name: 'Kitsilano Community Hub', category: 'Vancouver West', participants: 412, carbonOffsetKg: 18450 },
-    { rank: 2, name: 'Point Grey & Campus Perimeter', category: 'Vancouver West', participants: 389, carbonOffsetKg: 16920 },
-    { rank: 3, name: 'Mount Pleasant Eco-Network', category: 'Vancouver East', participants: 310, carbonOffsetKg: 13400 },
-    { rank: 4, name: 'Downtown Core Collective', category: 'Central Vancouver', participants: 275, carbonOffsetKg: 11800 },
-    { rank: 5, name: 'Grandview-Woodland', category: 'Vancouver East', participants: 195, carbonOffsetKg: 8950 },
+    { rank: 1, name: 'Kitsilano Community Hub', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
+    { rank: 2, name: 'Point Grey & Campus Perimeter', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
+    { rank: 3, name: 'Mount Pleasant Eco-Network', category: 'Vancouver East', participants: 0, carbonOffsetKg: 0 },
+    { rank: 4, name: 'Downtown Core Collective', category: 'Central Vancouver', participants: 0, carbonOffsetKg: 0 },
+    { rank: 5, name: 'Grandview-Woodland', category: 'Vancouver East', participants: 0, carbonOffsetKg: 0 },
   ];
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export default function CompetitionPage() {
                       : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
                   }`}
                 >
-                  Institutional (UBC / Orgs)
+                  Institutional (UBC Faculty)
                 </button>
                 <button
                   onClick={() => setBoardTier("local")}
@@ -153,7 +153,7 @@ export default function CompetitionPage() {
                       : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
                   }`}
                 >
-                  Local (Vancouver / Regional)
+                  Local (Vancouver Hubs)
                 </button>
               </div>
             </div>
@@ -189,10 +189,10 @@ export default function CompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  {boardTier === "institutional" ? "Faculty & Organizational Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings"}
+                  {boardTier === "institutional" ? "Faculty Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings"}
                 </h2>
                 <span className="font-mono text-[10px] text-[#39705d]">
-                  {boardTier === "institutional" ? "Synced via Database" : "Aggregated Community Metrics"}
+                  {boardTier === "institutional" ? "Synced via Database" : "Awaiting Initial Submissions"}
                 </span>
               </div>
 
