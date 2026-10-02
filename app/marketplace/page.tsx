@@ -146,7 +146,9 @@ export default function MarketplacePage() {
                 <div className="mt-6 pt-4 border-t border-[#102f26]/10 flex items-center justify-between text-xs font-mono text-[#526760]">
                   <span>{item.location}</span>
                   <span className="text-[#102f26] uppercase group-hover:underline">
-                    View Details →
+                    View Details → <Link href={`/marketplace/${item.id}`} className="text-[#102f26] uppercase group-hover:underline">
+  View Details →
+</Link>
                   </span>
                 </div>
               </div>
