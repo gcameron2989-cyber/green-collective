@@ -11,7 +11,6 @@ interface ResearchPost {
   department: string;
   research_type: 'study_participant' | 'policy_brief' | 'dataset_share';
   contact_email: string;
-  external_url: string | null;
   created_at: string;
 }
 
@@ -143,23 +142,12 @@ export default function ResearchHubPage() {
 
                 <div className="mt-8 pt-4 border-t border-[#102f26]/10 flex items-center justify-between text-xs font-mono">
                   <span className="text-[#526760]">Contact: {item.contact_email}</span>
-                  {item.external_url ? (
-                    <a
-                      href={item.external_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#102f26] font-semibold uppercase group-hover:underline flex items-center gap-1"
-                    >
-                      View Official Post ↗
-                    </a>
-                  ) : (
-                    <Link
-                      href={`/research/${item.id}`}
-                      className="text-[#102f26] font-semibold uppercase group-hover:underline"
-                    >
-                      Learn More →
-                    </Link>
-                  )}
+                  <Link
+                    href={`/research/${item.id}`}
+                    className="text-[#102f26] font-semibold uppercase group-hover:underline"
+                  >
+                    Read & Inquire →
+                  </Link>
                 </div>
               </div>
             ))}
