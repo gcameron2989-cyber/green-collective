@@ -10,7 +10,7 @@ interface Listing {
   description: string;
   price: number;
   category: string;
-  listing_type: 'bio_product' | 'recycle_p2p' | 'research_study';
+  listing_type: 'bio_product' | 'recycle_p2p';
   image_url: string | null;
   location: string;
   status: string;
@@ -44,7 +44,6 @@ export default function MarketplacePage() {
     if (activeTab === 'ALL') return true;
     if (activeTab === 'BIO' && item.listing_type === 'bio_product') return true;
     if (activeTab === 'RECYCLE' && item.listing_type === 'recycle_p2p') return true;
-    if (activeTab === 'RESEARCH' && item.listing_type === 'research_study') return true;
     return false;
   });
 
@@ -55,7 +54,7 @@ export default function MarketplacePage() {
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-20 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d] font-medium">
-              Circular Economy & Research Network
+              Circular Economy Network
             </p>
             <Link
               href="/"
@@ -70,7 +69,7 @@ export default function MarketplacePage() {
                 Community Marketplace
               </h1>
               <p className="mt-4 max-w-2xl text-base text-[#526760] leading-relaxed">
-                Exchange sustainable bio-products, rehome items through local P2P recycling, or participate in active campus climate research studies.
+                Exchange sustainable bio-products, construction offcuts, and rehome reusable goods through local P2P recycling.
               </p>
             </div>
             <Link
@@ -88,9 +87,8 @@ export default function MarketplacePage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-[#102f26]/10 pb-6">
           {[
             { id: 'ALL', label: 'All Listings' },
-            { id: 'BIO', label: 'Bio-Products & Goods' },
+            { id: 'BIO', label: 'Bio-Products & Materials' },
             { id: 'RECYCLE', label: 'P2P Recycling & Giveaways' },
-            { id: 'RESEARCH', label: 'Research Studies & Participants' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -116,7 +114,7 @@ export default function MarketplacePage() {
               No active listings found in this category
             </p>
             <p className="mt-2 text-sm text-[#526760]">
-              Be the first to list a sustainable item or post a research study for the community.
+              Be the first to list a sustainable item or material for the community.
             </p>
           </div>
         ) : (
@@ -145,11 +143,12 @@ export default function MarketplacePage() {
 
                 <div className="mt-6 pt-4 border-t border-[#102f26]/10 flex items-center justify-between text-xs font-mono text-[#526760]">
                   <span>{item.location}</span>
-                  <span className="text-[#102f26] uppercase group-hover:underline">
-                    View Details → <Link href={`/marketplace/${item.id}`} className="text-[#102f26] uppercase group-hover:underline">
-  View Details →
-</Link>
-                  </span>
+                  <Link 
+                    href={`/marketplace/${item.id}`} 
+                    className="text-[#102f26] uppercase font-semibold group-hover:underline"
+                  >
+                    View Details →
+                  </Link>
                 </div>
               </div>
             ))}
