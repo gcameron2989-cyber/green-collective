@@ -121,7 +121,7 @@ export default function ResearchHubPage() {
             {filteredPosts.map((item) => (
               <div
                 key={item.id}
-                className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 flex flex-col justify-between transition-all hover:border-[#102f26]/40 hover:bg-white"
+                className="group border border-[#102f26]/15 bg-[#f9f8f6] p-8 flex flex-col justify-between transition-all hover:border-[#102f26]/40 hover:bg-white"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -132,24 +132,22 @@ export default function ResearchHubPage() {
                       {item.department}
                     </span>
                   </div>
-                  <h3 className="text-2xl font-medium text-[#102f26] tracking-tight">
+                  <h3 className="text-2xl font-medium text-[#102f26] tracking-tight group-hover:text-[#39705d] transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-[#526760] leading-relaxed">
+                  <p className="text-sm text-[#526760] leading-relaxed line-clamp-3">
                     {item.description}
                   </p>
                 </div>
 
                 <div className="mt-8 pt-4 border-t border-[#102f26]/10 flex items-center justify-between text-xs font-mono">
                   <span className="text-[#526760]">Contact: {item.contact_email}</span>
-                  <a
-                    href={`mailto:${item.contact_email}`}
-                    className="text-[#102f26] font-medium uppercase hover:underline"
+                  <Link
+                    href={`/research/${item.id}`}
+                    className="text-[#102f26] font-semibold uppercase group-hover:underline"
                   >
-                    Inquire → <Link href={`/research/${item.id}`} className="text-[#102f26] font-medium uppercase hover:underline">
-  Read & Inquire →
-</Link>
-                  </a>
+                    Read & Inquire →
+                  </Link>
                 </div>
               </div>
             ))}
