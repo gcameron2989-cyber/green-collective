@@ -146,7 +146,9 @@ export default function ResearchHubPage() {
                     href={`mailto:${item.contact_email}`}
                     className="text-[#102f26] font-medium uppercase hover:underline"
                   >
-                    Inquire →
+                    Inquire → <Link href={`/research/${item.id}`} className="text-[#102f26] font-medium uppercase hover:underline">
+  Read & Inquire →
+</Link>
                   </a>
                 </div>
               </div>
