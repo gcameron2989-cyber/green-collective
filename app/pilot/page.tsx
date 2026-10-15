@@ -11,21 +11,50 @@ interface LeaderboardEntry {
   cohort: string;
 }
 
+interface EcoAction {
+  id: string;
+  title: string;
+  points: number;
+  category?: string;
+  icon?: string;
+}
+
 function PilotContent() {
   const searchParams = useSearchParams();
   const cohortParam = searchParams?.get('cohort');
-  
-  // Default cohort for BEST 301
   const defaultCohort = cohortParam || 'BEST-301-W2026';
   
   const [cohort] = useState(defaultCohort);
   const [displayName, setDisplayName] = useState('');
   const [isNameSet, setIsNameSet] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [actionsList, setActionsList] = useState<EcoAction[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [logging, setLogging] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const supabase = createClient();
+
+  // Fetch Full Actions Catalog from Supabase
+  const fetchActionsCatalog = async () => {
+    const { data, error } = await supabase
+      .from('eco_actions')
+      .select('id, title, points, category, icon')
+      .order('points', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      setActionsList(data as EcoAction[]);
+    } else {
+      // Fallback defaults if eco_actions table is empty
+      setActionsList([
+        { id: '1', title: 'Sustainable Transit Trip', points: 150, category: 'Transit', icon: '🚲' },
+        { id: '2', title: 'Zero-Waste Container / Mug', points: 75, category: 'Waste', icon: '☕' },
+        { id: '3', title: 'Plant-Based Meal Choice', points: 100, category: 'Food', icon: '🥗' },
+        { id: '4', title: 'Cold Water Wash / Line Dry', points: 80, category: 'Energy', icon: '🧺' },
+        { id: '5', title: 'Campus Eco-Event Attendance', points: 200, category: 'Community', icon: '🌱' },
+      ]);
+    }
+  };
 
   // Fetch Cohort Leaderboard
   const fetchLeaderboard = async () => {
@@ -42,10 +71,10 @@ function PilotContent() {
   };
 
   useEffect(() => {
+    fetchActionsCatalog();
     fetchLeaderboard();
   }, [cohort]);
 
-  // Handle Quick Onboarding
   const handleJoinPilot = (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
@@ -53,20 +82,23 @@ function PilotContent() {
     }
   };
 
-  // Quick 1-Tap Action Logging
-  const handleQuickLog = async (actionName: string, points: number) => {
+  // Log Action (Compatible with eco_actions schema)
+  const handleLogAction = async (action: EcoAction) => {
     setLogging(true);
     setStatusMessage(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Insert logged action into Supabase
-    const { error: logError } = await supabase.from('logged_actions').insert({
+    // Try inserting with standard column structure
+    const payload = {
       user_id: user?.id || null,
-      action_name: actionName,
-      points_earned: points,
+      action_id: action.id,
+      action_name: action.title,
+      points_earned: action.points,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    const { error: logError } = await supabase.from('logged_actions').insert(payload);
 
     if (logError) {
       if (logError.message.includes('cooldown') || logError.message.includes('too recently')) {
@@ -78,16 +110,21 @@ function PilotContent() {
         setStatusMessage({ text: logError.message, type: 'error' });
       }
     } else {
-      setStatusMessage({ text: `✓ Success! +${points} PTS added for ${cohort}`, type: 'success' });
+      setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
       await fetchLeaderboard();
     }
 
     setLogging(false);
   };
 
+  const categories = ['All', ...Array.from(new Set(actionsList.map(a => a.category).filter(Boolean)))];
+
+  const filteredActions = selectedCategory === 'All' 
+    ? actionsList 
+    : actionsList.filter(a => a.category === selectedCategory);
+
   return (
     <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
-      {/* Header Banner */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2] px-6 py-12 text-center">
         <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d] font-semibold">
           Live Campus Competition Pilot
@@ -96,27 +133,26 @@ function PilotContent() {
           {cohort} Climate Challenge
         </h1>
         <p className="mt-3 text-sm text-[#526760] max-w-md mx-auto">
-          Log daily eco-actions in 1 tap, earn points for BEST 301, and watch real-time impact standings update live.
+          Log daily eco-actions, earn points for BEST 301, and watch real-time impact standings update live.
         </p>
       </section>
 
-      <div className="mx-auto max-w-3xl px-6 py-10 space-y-10">
-        {/* Onboarding */}
+      <div className="mx-auto max-w-4xl px-6 py-10 space-y-10">
         {!isNameSet ? (
-          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-4 text-center">
+          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-4 text-center max-w-md mx-auto">
             <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
               Join The BEST 301 Pilot
             </h2>
-            <p className="text-xs text-[#526760] max-w-sm mx-auto">
-              Enter your name or an anonymous alias to start logging points on the live class leaderboard.
+            <p className="text-xs text-[#526760]">
+              Enter your name or handle to start logging actions on the live leaderboard.
             </p>
-            <form onSubmit={handleJoinPilot} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto pt-2">
+            <form onSubmit={handleJoinPilot} className="flex flex-col gap-3 pt-2">
               <input
                 type="text"
                 placeholder="Display Name (e.g. Alex or Anonymous)"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="flex-1 border border-[#102f26]/20 bg-white px-4 py-2.5 text-xs text-[#102f26] focus:outline-none focus:border-[#102f26]"
+                className="border border-[#102f26]/20 bg-white px-4 py-2.5 text-xs text-[#102f26] focus:outline-none focus:border-[#102f26]"
                 required
               />
               <button
@@ -128,14 +164,13 @@ function PilotContent() {
             </form>
           </section>
         ) : (
-          /* 1-Tap Action Logger */
-          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-4">
-            <div className="flex items-center justify-between">
+          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
               <div>
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
-                  ⚡ Log Impact ({displayName})
+                  ⚡ Full Eco-Action Catalog ({displayName})
                 </h2>
-                <p className="text-[11px] text-[#526760] mt-0.5">Tap an action to earn points immediately</p>
+                <p className="text-[11px] text-[#526760] mt-0.5">Select an action below to log points instantly</p>
               </div>
               <button
                 onClick={() => setIsNameSet(false)}
@@ -145,7 +180,6 @@ function PilotContent() {
               </button>
             </div>
 
-            {/* Notification Banner */}
             {statusMessage && (
               <div
                 className={`p-3 text-xs font-mono border ${
@@ -158,45 +192,52 @@ function PilotContent() {
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-3 pt-2">
-              <button
-                disabled={logging}
-                onClick={() => handleQuickLog('Sustainable Transit Trip', 150)}
-                className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50"
-              >
-                <div className="text-2xl mb-1">🚲</div>
-                <div className="text-xs font-semibold text-[#102f26]">Sustainable Transit</div>
-                <div className="font-mono text-[10px] text-[#39705d] mt-1">+150 PTS</div>
-              </button>
+            {/* Category Filter Pills */}
+            {categories.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat || 'All')}
+                    className={`px-3 py-1 font-mono text-[11px] border transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-[#102f26] text-white border-[#102f26]'
+                        : 'bg-white text-[#526760] border-[#102f26]/20 hover:border-[#102f26]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              <button
-                disabled={logging}
-                onClick={() => handleQuickLog('Zero-Waste Mug / Container', 75)}
-                className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50"
-              >
-                <div className="text-2xl mb-1">☕</div>
-                <div className="text-xs font-semibold text-[#102f26]">Zero-Waste Container</div>
-                <div className="font-mono text-[10px] text-[#39705d] mt-1">+75 PTS</div>
-              </button>
-
-              <button
-                disabled={logging}
-                onClick={() => handleQuickLog('Plant-Based Meal Choice', 100)}
-                className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50"
-              >
-                <div className="text-2xl mb-1">🥗</div>
-                <div className="text-xs font-semibold text-[#102f26]">Plant-Based Meal</div>
-                <div className="font-mono text-[10px] text-[#39705d] mt-1">+100 PTS</div>
-              </button>
+            {/* Actions Grid */}
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {filteredActions.map((action) => (
+                <button
+                  key={action.id}
+                  disabled={logging}
+                  onClick={() => handleLogAction(action)}
+                  className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="text-2xl mb-1">{action.icon || '🌱'}</div>
+                    <div className="text-xs font-semibold text-[#102f26]">{action.title}</div>
+                  </div>
+                  <div className="font-mono text-[10px] text-[#39705d] mt-3 font-bold">
+                    +{action.points} PTS
+                  </div>
+                </button>
+              ))}
             </div>
           </section>
         )}
 
-        {/* Live Standings */}
+        {/* Live Leaderboard */}
         <section className="space-y-4">
           <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-3">
             <h2 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
-              🏆 Live Leaderboard — BEST 301
+              🏆 Live Standings — BEST 301
             </h2>
             <button
               onClick={fetchLeaderboard}
@@ -238,7 +279,6 @@ function PilotContent() {
   );
 }
 
-// Parent Page Export with Suspense Wrapper for Next.js prerendering
 export default function ClassPilotPage() {
   return (
     <Suspense fallback={
