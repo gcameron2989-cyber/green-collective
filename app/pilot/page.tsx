@@ -35,6 +35,18 @@ function PilotContent() {
 
   const supabase = createClient();
 
+  // Consistent guest ID generator for pilot presentation users
+  const getOrCreateGuestId = () => {
+    let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
+    if (!guestId) {
+      guestId = 'guest-' + Math.random().toString(36).substring(2, 15);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pilot_guest_id', guestId);
+      }
+    }
+    return guestId;
+  };
+
   // Fetch Full Actions Catalog from Supabase
   const fetchActionsCatalog = async () => {
     const { data, error } = await supabase
@@ -45,7 +57,6 @@ function PilotContent() {
     if (!error && data && data.length > 0) {
       setActionsList(data as EcoAction[]);
     } else {
-      // Fallback defaults if eco_actions table is empty
       setActionsList([
         { id: '1', title: 'Sustainable Transit Trip', points: 150, category: 'Transit', icon: '🚲' },
         { id: '2', title: 'Zero-Waste Mug / Container', points: 75, category: 'Waste', icon: '☕' },
@@ -75,46 +86,39 @@ function PilotContent() {
     fetchLeaderboard();
   }, [cohort]);
 
+  // Join Pilot: Supports both auth users and guests with display names
   const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('profiles').upsert({
-          id: user.id,
-          full_name: displayName.trim(),
-          cohort: cohort,
-        });
-      }
+      const currentUserId = user?.id || getOrCreateGuestId();
+
+      await supabase.from('profiles').upsert({
+        id: currentUserId,
+        full_name: displayName.trim(),
+        cohort: cohort,
+      });
+
       setIsNameSet(true);
       fetchLeaderboard();
     }
   };
 
-  // Log Action (Supplying both points and points_earned to eliminate cache mismatch)
+  // Log Action: Maps guest IDs, points, and sector safely
   const handleLogAction = async (action: EcoAction) => {
     setLogging(true);
     setStatusMessage(null);
 
     const { data: { user } } = await supabase.auth.getUser();
-
-    // Persistent guest ID fallback if user isn't fully authenticated
-    let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
-    if (!guestId) {
-      guestId = 'guest-' + Math.random().toString(36).substring(2, 15);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('pilot_guest_id', guestId);
-      }
-    }
-
-    const currentUserId = user?.id || guestId;
+    const currentUserId = user?.id || getOrCreateGuestId();
 
     const payload = {
       user_id: currentUserId,
       action_id: action.id,
       action_name: action.title,
       points: action.points,
-      points_earned: action.points, // Covers both column variations
+      points_earned: action.points,
+      sector: action.category || 'General',
       created_at: new Date().toISOString(),
     };
 
