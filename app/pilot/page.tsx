@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useSearchParams } from 'next/navigation';
 
@@ -11,11 +11,11 @@ interface LeaderboardEntry {
   cohort: string;
 }
 
-export default function ClassPilotPage() {
+function PilotContent() {
   const searchParams = useSearchParams();
   const cohortParam = searchParams?.get('cohort');
   
-  // Hardcoded default for your presentation class
+  // Default cohort for BEST 301
   const defaultCohort = cohortParam || 'BEST-301-W2026';
   
   const [cohort] = useState(defaultCohort);
@@ -235,5 +235,18 @@ export default function ClassPilotPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+// Parent Page Export with Suspense Wrapper for Next.js prerendering
+export default function ClassPilotPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white text-[#102f26] flex items-center justify-center font-mono text-xs">
+        Loading BEST 301 Pilot...
+      </div>
+    }>
+      <PilotContent />
+    </Suspense>
   );
 }
