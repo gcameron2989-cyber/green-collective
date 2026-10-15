@@ -75,9 +75,7 @@ function PilotContent() {
       .order('total_points', { ascending: false })
       .limit(10);
 
-    if (error) {
-      console.error('Leaderboard fetch error:', error.message);
-    } else if (data) {
+    if (!error && data) {
       setLeaderboard(data as LeaderboardEntry[]);
     }
     setIsRefreshing(false);
@@ -90,8 +88,10 @@ function PilotContent() {
 
   const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
+    setStatusMessage(null);
     if (displayName.trim().length > 0) {
-      const currentUserId = getOrCreateGuestId();
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id || getOrCreateGuestId();
 
       const { error } = await supabase.from('profiles').upsert({
         id: currentUserId,
@@ -113,9 +113,9 @@ function PilotContent() {
     setLogging(true);
     setStatusMessage(null);
 
-    const currentUserId = getOrCreateGuestId();
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || getOrCreateGuestId();
 
-    // 1. Log the action
     const { error: logError } = await supabase.from('logged_actions').insert({
       user_id: currentUserId,
       action_id: action.id,
@@ -132,7 +132,6 @@ function PilotContent() {
       const nextScore = userScore + action.points;
       setUserScore(nextScore);
 
-      // 2. Force update the profile standings table
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: currentUserId,
         full_name: displayName.trim() || 'Student',
@@ -180,6 +179,13 @@ function PilotContent() {
             <p className="text-xs text-[#526760]">
               Enter your name or handle to start logging actions on the live leaderboard.
             </p>
+
+            {statusMessage && (
+              <div className="p-3 text-xs font-mono border bg-red-50 border-red-200 text-red-800">
+                {statusMessage.text}
+              </div>
+            )}
+
             <form onSubmit={handleJoinPilot} className="flex flex-col gap-3 pt-2">
               <input
                 type="text"
