@@ -22,7 +22,7 @@ interface EcoAction {
 function PilotContent() {
   const searchParams = useSearchParams();
   const cohortParam = searchParams?.get('cohort');
-  const defaultCohort = cohortParam || 'BEST-301-W2026';
+  const defaultCohort = cohortParam || 'BEST-301 W1-2026';
   
   const [cohort] = useState(defaultCohort);
   const [displayName, setDisplayName] = useState('');
