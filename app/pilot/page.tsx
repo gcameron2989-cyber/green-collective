@@ -8,7 +8,7 @@ interface LeaderboardEntry {
   id: string;
   full_name: string;
   total_points: number;
-  cohort: string;
+  cohort?: string;
 }
 
 interface EcoAction {
@@ -31,6 +31,7 @@ function PilotContent() {
   const [actionsList, setActionsList] = useState<EcoAction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [logging, setLogging] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const supabase = createClient();
@@ -66,16 +67,18 @@ function PilotContent() {
   };
 
   const fetchLeaderboard = async () => {
+    setIsRefreshing(true);
+    // Fetch top profiles sorted by points
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, total_points, cohort')
-      .eq('cohort', cohort)
       .order('total_points', { ascending: false })
       .limit(10);
 
     if (!error && data) {
       setLeaderboard(data as LeaderboardEntry[]);
     }
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -274,9 +277,10 @@ function PilotContent() {
             </h2>
             <button
               onClick={fetchLeaderboard}
-              className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] hover:underline"
+              disabled={isRefreshing}
+              className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] hover:underline disabled:opacity-50"
             >
-              ↻ Refresh Standings
+              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh Standings'}
             </button>
           </div>
 
