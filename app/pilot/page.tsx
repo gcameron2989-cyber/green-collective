@@ -75,7 +75,9 @@ function PilotContent() {
       .order('total_points', { ascending: false })
       .limit(10);
 
-    if (!error && data) {
+    if (error) {
+      console.error('Leaderboard fetch error:', error.message);
+    } else if (data) {
       setLeaderboard(data as LeaderboardEntry[]);
     }
     setIsRefreshing(false);
@@ -89,19 +91,21 @@ function PilotContent() {
   const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id || getOrCreateGuestId();
+      const currentUserId = getOrCreateGuestId();
 
-      // Clean up old anonymous rows with 0 points
-      await supabase.from('profiles').upsert({
+      const { error } = await supabase.from('profiles').upsert({
         id: currentUserId,
         full_name: displayName.trim(),
         cohort: cohort,
         total_points: userScore,
       });
 
-      setIsNameSet(true);
-      await fetchLeaderboard();
+      if (error) {
+        setStatusMessage({ text: `Join error: ${error.message}`, type: 'error' });
+      } else {
+        setIsNameSet(true);
+        await fetchLeaderboard();
+      }
     }
   };
 
@@ -109,10 +113,10 @@ function PilotContent() {
     setLogging(true);
     setStatusMessage(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id || getOrCreateGuestId();
+    const currentUserId = getOrCreateGuestId();
 
-    const payload = {
+    // 1. Log the action
+    const { error: logError } = await supabase.from('logged_actions').insert({
       user_id: currentUserId,
       action_id: action.id,
       action_name: action.title,
@@ -120,18 +124,15 @@ function PilotContent() {
       points_earned: action.points,
       sector: action.category || 'General',
       created_at: new Date().toISOString(),
-    };
-
-    const { error: logError } = await supabase.from('logged_actions').insert(payload);
+    });
 
     if (logError) {
-      setStatusMessage({ text: logError.message, type: 'error' });
+      setStatusMessage({ text: `Log error: ${logError.message}`, type: 'error' });
     } else {
-      // Calculate new score reliably in local state
       const nextScore = userScore + action.points;
       setUserScore(nextScore);
 
-      // Force upsert your exact name and new total score to profiles
+      // 2. Force update the profile standings table
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: currentUserId,
         full_name: displayName.trim() || 'Student',
@@ -140,11 +141,11 @@ function PilotContent() {
       });
 
       if (profileError) {
-        console.error('Profile upsert error:', profileError.message);
+        setStatusMessage({ text: `Profile error: ${profileError.message}`, type: 'error' });
+      } else {
+        setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
+        await fetchLeaderboard();
       }
-
-      setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
-      await fetchLeaderboard();
     }
 
     setLogging(false);
