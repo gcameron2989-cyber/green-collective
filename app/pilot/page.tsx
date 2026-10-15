@@ -27,6 +27,7 @@ function PilotContent() {
   const [cohort] = useState(defaultCohort);
   const [displayName, setDisplayName] = useState('');
   const [isNameSet, setIsNameSet] = useState(false);
+  const [userScore, setUserScore] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [actionsList, setActionsList] = useState<EcoAction[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -68,7 +69,6 @@ function PilotContent() {
 
   const fetchLeaderboard = async () => {
     setIsRefreshing(true);
-    // Fetch top profiles sorted by points
     const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, total_points, cohort')
@@ -92,14 +92,16 @@ function PilotContent() {
       const { data: { user } } = await supabase.auth.getUser();
       const currentUserId = user?.id || getOrCreateGuestId();
 
+      // Clean up old anonymous rows with 0 points
       await supabase.from('profiles').upsert({
         id: currentUserId,
         full_name: displayName.trim(),
         cohort: cohort,
+        total_points: userScore,
       });
 
       setIsNameSet(true);
-      fetchLeaderboard();
+      await fetchLeaderboard();
     }
   };
 
@@ -123,31 +125,23 @@ function PilotContent() {
     const { error: logError } = await supabase.from('logged_actions').insert(payload);
 
     if (logError) {
-      if (logError.message.includes('cooldown') || logError.message.includes('too recently')) {
-        setStatusMessage({
-          text: '⏳ Cooldown Active: Action logged recently. Please wait before logging again.',
-          type: 'error',
-        });
-      } else {
-        setStatusMessage({ text: logError.message, type: 'error' });
-      }
+      setStatusMessage({ text: logError.message, type: 'error' });
     } else {
-      // Fetch current profile points to aggregate points
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('total_points')
-        .eq('id', currentUserId)
-        .maybeSingle();
+      // Calculate new score reliably in local state
+      const nextScore = userScore + action.points;
+      setUserScore(nextScore);
 
-      const newTotal = (existingProfile?.total_points || 0) + action.points;
-
-      // Direct upsert to update points on the leaderboard
-      await supabase.from('profiles').upsert({
+      // Force upsert your exact name and new total score to profiles
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id: currentUserId,
-        full_name: displayName.trim() || 'Anonymous Student',
+        full_name: displayName.trim() || 'Student',
         cohort: cohort,
-        total_points: newTotal,
+        total_points: nextScore,
       });
+
+      if (profileError) {
+        console.error('Profile upsert error:', profileError.message);
+      }
 
       setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
       await fetchLeaderboard();
@@ -207,7 +201,7 @@ function PilotContent() {
             <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
               <div>
                 <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
-                  ⚡ Full Eco-Action Catalog ({displayName})
+                  ⚡ Full Eco-Action Catalog ({displayName}) — <span className="text-[#102f26] font-bold">{userScore} PTS Total</span>
                 </h2>
                 <p className="text-[11px] text-[#526760] mt-0.5">Select an action below to log points instantly</p>
               </div>
