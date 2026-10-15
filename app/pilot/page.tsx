@@ -114,7 +114,6 @@ function PilotContent() {
       points: action.points,
       points_earned: action.points,
       sector: action.category || 'General',
-      affiliation_type: 'Student', // Explicitly included to satisfy constraint
       created_at: new Date().toISOString(),
     };
 
