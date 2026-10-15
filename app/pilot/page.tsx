@@ -129,6 +129,23 @@ function PilotContent() {
         setStatusMessage({ text: logError.message, type: 'error' });
       }
     } else {
+      // Fetch current profile points to aggregate points
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('total_points')
+        .eq('id', currentUserId)
+        .maybeSingle();
+
+      const newTotal = (existingProfile?.total_points || 0) + action.points;
+
+      // Direct upsert to update points on the leaderboard
+      await supabase.from('profiles').upsert({
+        id: currentUserId,
+        full_name: displayName.trim() || 'Anonymous Student',
+        cohort: cohort,
+        total_points: newTotal,
+      });
+
       setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
       await fetchLeaderboard();
     }
