@@ -48,7 +48,7 @@ function PilotContent() {
       // Fallback defaults if eco_actions table is empty
       setActionsList([
         { id: '1', title: 'Sustainable Transit Trip', points: 150, category: 'Transit', icon: '🚲' },
-        { id: '2', title: 'Zero-Waste Container / Mug', points: 75, category: 'Waste', icon: '☕' },
+        { id: '2', title: 'Zero-Waste Mug / Container', points: 75, category: 'Waste', icon: '☕' },
         { id: '3', title: 'Plant-Based Meal Choice', points: 100, category: 'Food', icon: '🥗' },
         { id: '4', title: 'Cold Water Wash / Line Dry', points: 80, category: 'Energy', icon: '🧺' },
         { id: '5', title: 'Campus Eco-Event Attendance', points: 200, category: 'Community', icon: '🌱' },
@@ -56,7 +56,7 @@ function PilotContent() {
     }
   };
 
-  // Fetch Cohort Leaderboard
+  // Fetch Cohort Leaderboard & Profiles
   const fetchLeaderboard = async () => {
     const { data, error } = await supabase
       .from('profiles')
@@ -75,26 +75,35 @@ function PilotContent() {
     fetchLeaderboard();
   }, [cohort]);
 
-  const handleJoinPilot = (e: React.FormEvent) => {
+  const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
+      // Upsert profile with the chosen cohort and display name
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          full_name: displayName.trim(),
+          cohort: cohort,
+        });
+      }
       setIsNameSet(true);
+      fetchLeaderboard();
     }
   };
 
-  // Log Action (Compatible with eco_actions schema)
+  // Log Action (Flawless mapping to 'points' and 'action_name')
   const handleLogAction = async (action: EcoAction) => {
     setLogging(true);
     setStatusMessage(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Try inserting with standard column structure
     const payload = {
       user_id: user?.id || null,
       action_id: action.id,
       action_name: action.title,
-      points_earned: action.points,
+      points: action.points, // Using exact column name 'points'
       created_at: new Date().toISOString(),
     };
 
@@ -192,7 +201,6 @@ function PilotContent() {
               </div>
             )}
 
-            {/* Category Filter Pills */}
             {categories.length > 1 && (
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
@@ -211,7 +219,6 @@ function PilotContent() {
               </div>
             )}
 
-            {/* Actions Grid */}
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
               {filteredActions.map((action) => (
                 <button
@@ -233,7 +240,6 @@ function PilotContent() {
           </section>
         )}
 
-        {/* Live Leaderboard */}
         <section className="space-y-4">
           <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-3">
             <h2 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
