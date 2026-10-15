@@ -35,7 +35,6 @@ function PilotContent() {
 
   const supabase = createClient();
 
-  // Consistent guest ID generator for pilot presentation users
   const getOrCreateGuestId = () => {
     let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
     if (!guestId) {
@@ -47,7 +46,6 @@ function PilotContent() {
     return guestId;
   };
 
-  // Fetch Full Actions Catalog from Supabase
   const fetchActionsCatalog = async () => {
     const { data, error } = await supabase
       .from('eco_actions')
@@ -67,7 +65,6 @@ function PilotContent() {
     }
   };
 
-  // Fetch Cohort Leaderboard & Profiles
   const fetchLeaderboard = async () => {
     const { data, error } = await supabase
       .from('profiles')
@@ -86,7 +83,6 @@ function PilotContent() {
     fetchLeaderboard();
   }, [cohort]);
 
-  // Join Pilot: Supports both auth users and guests with display names
   const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
@@ -104,7 +100,6 @@ function PilotContent() {
     }
   };
 
-  // Log Action: Maps guest IDs, points, and sector safely
   const handleLogAction = async (action: EcoAction) => {
     setLogging(true);
     setStatusMessage(null);
@@ -112,14 +107,14 @@ function PilotContent() {
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id || getOrCreateGuestId();
 
-const payload = {
+    const payload = {
       user_id: currentUserId,
       action_id: action.id,
       action_name: action.title,
       points: action.points,
       points_earned: action.points,
       sector: action.category || 'General',
-      affiliation_type: 'Student', // Satisfies the affiliation_type NOT NULL constraint
+      affiliation_type: 'Student', // Explicitly included to satisfy constraint
       created_at: new Date().toISOString(),
     };
 
