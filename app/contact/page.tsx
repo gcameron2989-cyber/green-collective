@@ -65,7 +65,7 @@ export default function ContactPage() {
                   id="name"
                   required
                   className="w-full px-4 py-3 bg-white border border-[#102f26]/20 font-sans text-sm text-[#102f26] focus:outline-none focus:border-[#102f26]"
-                  placeholder="Cam Letoe"
+                  placeholder="Your Name"
                 />
               </div>
 
