@@ -78,7 +78,6 @@ function PilotContent() {
   const handleJoinPilot = async (e: React.FormEvent) => {
     e.preventDefault();
     if (displayName.trim().length > 0) {
-      // Upsert profile with the chosen cohort and display name
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from('profiles').upsert({
@@ -92,18 +91,30 @@ function PilotContent() {
     }
   };
 
-  // Log Action (Flawless mapping to 'points' and 'action_name')
+  // Log Action (Supplying both points and points_earned to eliminate cache mismatch)
   const handleLogAction = async (action: EcoAction) => {
     setLogging(true);
     setStatusMessage(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Persistent guest ID fallback if user isn't fully authenticated
+    let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
+    if (!guestId) {
+      guestId = 'guest-' + Math.random().toString(36).substring(2, 15);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('pilot_guest_id', guestId);
+      }
+    }
+
+    const currentUserId = user?.id || guestId;
+
     const payload = {
-      user_id: user?.id || null,
+      user_id: currentUserId,
       action_id: action.id,
       action_name: action.title,
-      points: action.points, // Using exact column name 'points'
+      points: action.points,
+      points_earned: action.points, // Covers both column variations
       created_at: new Date().toISOString(),
     };
 
