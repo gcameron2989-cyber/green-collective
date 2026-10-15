@@ -112,13 +112,14 @@ function PilotContent() {
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id || getOrCreateGuestId();
 
-    const payload = {
+const payload = {
       user_id: currentUserId,
       action_id: action.id,
       action_name: action.title,
       points: action.points,
       points_earned: action.points,
       sector: action.category || 'General',
+      affiliation_type: 'Student', // Satisfies the affiliation_type NOT NULL constraint
       created_at: new Date().toISOString(),
     };
 
