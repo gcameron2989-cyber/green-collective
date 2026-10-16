@@ -18,7 +18,7 @@ export interface RealInitiative {
 }
 
 export const INITIAL_INITIATIVES: RealInitiative[] = [
-  // --- UBC & VANCOUVER FACULTIES / CAMPUS INITIATIVES ---
+  // --- VANCOUVER & UBC ---
   {
     id: "ubc-forestry-activism",
     title: "UBC Faculty of Forestry Activism & News",
@@ -41,7 +41,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "UBC POINT GREY",
     description: "Research and community programs advancing sustainable food systems, agroecology, nutritional security, and ecological stewardship.",
     impactScope: "Agroecosystem Research · Global Food Security Labs",
-    officialPortalUrl: "https://www.landfood.ubc.ca/news/",
+    officialPortalUrl: "https://www.landfood.ubc.ca/category/news/",
   },
   {
     id: "ubc-science-climate",
@@ -65,11 +65,11 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "UBC POINT GREY",
     description: "Pioneering green infrastructure, clean energy systems, sustainable mining technologies, and net-zero building engineering.",
     impactScope: "Clean Energy Drivetrains · Net-Zero Infrastructure",
-    officialPortalUrl: "https://apsc.ubc.ca/",
+    officialPortalUrl: "https://apsc.ubc.ca/news",
   },
   {
     id: "ubc-sauder-sustainability",
-    title: "UBC Sauder Centre for Social Innovation & Impact",
+    title: "UBC Sauder School of Business: Sustainability & News",
     leadOrg: "Sauder School of Business",
     category: "SUSTAINABLE ECONOMICS",
     status: "ACTIVE PROGRAM",
@@ -77,11 +77,11 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "UBC POINT GREY",
     description: "Business-driven climate solutions, social venture acceleration, circular economy financial modeling, and sustainability frameworks.",
     impactScope: "Social Venture Incubation · ESG Finance Research",
-    officialPortalUrl: "https://www.sauder.ubc.ca/faculty-research/centres/centre-social-innovation-and-impact-investing",
+    officialPortalUrl: "https://www.sauder.ubc.ca/news",
   },
   {
-    id: "ubc-sustainability-hub",
-    title: "UBC Sustainability Hub & CAP 2030",
+    id: "ubc-cap-2030",
+    title: "UBC Climate Action Plan 2030 (CAP 2030)",
     leadOrg: "UBC Sustainability Hub",
     category: "CAMPUS DECARBONIZATION",
     status: "ACTIVE PROGRAM",
@@ -91,8 +91,6 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     impactScope: "District Energy Systems · Scope 3 Emission Reduction",
     officialPortalUrl: "https://sustain.ubc.ca/campus/climate-action/climate-action-plan",
   },
-
-  // --- VANCOUVER MUNICIPAL WARDS & NEIGHBORHOODS ---
   {
     id: "van-kitsilano-community",
     title: "Kitsilano Neighborhood Sustainable Action",
@@ -106,28 +104,16 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     officialPortalUrl: "https://vancouver.ca/home-property-development/community-plans.aspx",
   },
   {
-    id: "van-mount-pleasant",
-    title: "Mount Pleasant Eco-District & Rainway Initiative",
-    leadOrg: "City of Vancouver Planning",
+    id: "st-george-rainway",
+    title: "St. George Rainway Infrastructure Project",
+    leadOrg: "City of Vancouver & Community Partners",
     category: "GREEN INFRASTRUCTURE",
     status: "ACTIVE PROGRAM",
     region: "VANCOUVER / UBC",
     locationTag: "MOUNT PLEASANT",
-    description: "Urban rainwater filtration networks (including the St. George Rainway), green building retrofits, and commercial district composting.",
-    impactScope: "Urban Stormwater Filtration · Commercial Composting",
+    description: "Transforming historic stream corridors into urban green rainwater systems to reduce storm flooding and restore local biodiversity.",
+    impactScope: "Urban Rainwater Filtration · Biodiversity Corridors",
     officialPortalUrl: "https://www.shapeyourcity.ca/st-george-rainway",
-  },
-  {
-    id: "van-west-end-strathcona",
-    title: "West End & Strathcona Community Greening",
-    leadOrg: "City of Vancouver Community Services",
-    category: "COMMUNITY ACTION",
-    status: "ACTIVE PROGRAM",
-    region: "VANCOUVER / UBC",
-    locationTag: "WEST END / STRATHCONA",
-    description: "High-density urban canopy expansion, community orchard networks, and neighborhood climate preparedness planning.",
-    impactScope: "High-Density Canopy Expansion · Urban Orchards",
-    officialPortalUrl: "https://vancouver.ca/people-programs/local-area-planning.aspx",
   },
   {
     id: "translink-climate-action-plan",
@@ -146,7 +132,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
   {
     id: "toronto-transform-to",
     title: "City of Toronto TransformTO Net-Zero Strategy",
-    leadOrg: "City of Toronto Environment Division",
+    leadOrg: "City of Toronto Environment & Climate Division",
     category: "DECARBONIZATION",
     status: "ACTIVE PROGRAM",
     region: "TORONTO / GTA",
@@ -158,24 +144,24 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
   {
     id: "toronto-ravine-strategy",
     title: "City of Toronto Ravine Strategy",
-    leadOrg: "City of Toronto Parks & Recreation",
+    leadOrg: "City of Toronto & TRCA",
     category: "ECOLOGICAL CONSERVATION",
     status: "ACTIVE PROGRAM",
     region: "TORONTO / GTA",
-    locationTag: "TORONTO RAVINES",
+    locationTag: "TORONTO",
     description: "Protection and ecological enhancement of Toronto's 11,000-hectare ravine system, preserving natural canopy and urban watershed resilience.",
     impactScope: "11,000 Hectares Protected · Invasive Species Abatement",
     officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/trees/torontos-ravine-strategy/",
   },
   {
-    id: "trca-watershed-management",
-    title: "TRCA Watershed & Living City Conservation",
+    id: "trca-green-infrastructure",
+    title: "TRCA Watershed & Living City Initiative",
     leadOrg: "Toronto and Region Conservation Authority",
     category: "WATERSHED MANAGEMENT",
     status: "ACTIVE PROGRAM",
     region: "TORONTO / GTA",
     locationTag: "GREATER TORONTO AREA",
-    description: "Targeted restoration of urban wetlands, flood remediation engineering, and drinking water safeguarding across Southern Ontario watersheds.",
+    description: "Restoring urban wetlands, safeguarding drinking water quality, and developing green infrastructure across Southern Ontario watersheds.",
     impactScope: "9 Regional Watersheds · Wetland Restoration Projects",
     officialPortalUrl: "https://trca.ca/conservation/watershed-management/",
   },
@@ -211,7 +197,7 @@ export default function InitiativesPage() {
   const [initiatives, setInitiatives] = useState<RealInitiative[]>(INITIAL_INITIATIVES);
   const [activeRegion, setActiveRegion] = useState<string>("ALL REGIONS");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -314,7 +300,7 @@ export default function InitiativesPage() {
           <div className="w-full lg:w-80">
             <input
               type="text"
-              placeholder="Search initiatives, faculties, wards..."
+              placeholder="Search initiatives, lead orgs, wards..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-3.5 py-1.5 bg-white border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-black font-mono"
