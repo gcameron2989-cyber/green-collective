@@ -18,176 +18,140 @@ export interface RealInitiative {
 }
 
 export const INITIAL_INITIATIVES: RealInitiative[] = [
-  // --- VANCOUVER & UBC ---
+  // --- VANCOUVER & UBC OPPORTUNITIES ---
   {
-    id: "ubc-forestry-activism",
-    title: "UBC Faculty of Forestry Activism & News",
-    leadOrg: "UBC Faculty of Forestry",
+    id: "ubc-forestry-research",
+    title: "UBC Faculty of Forestry Innovation & Research Hub",
+    leadOrg: "UBC Faculty of Forestry & Environmental Stewardship",
     category: "ECOSYSTEM STEWARDSHIP",
     status: "ACTIVE PROGRAM",
     region: "VANCOUVER / UBC",
     locationTag: "UBC POINT GREY",
-    description: "Student and faculty-led research updates, forest bioeconomy breakthroughs, wildfire coexistence studies, and conservation activism news.",
-    impactScope: "Campus Research & Community Outreach",
-    officialPortalUrl: "https://forestry.ubc.ca/news/",
+    description: "Leading multi-disciplinary research initiatives in ecosystems, climate change, forest bioproducts, and bioeconomy innovations across UBC's educational research forests.",
+    impactScope: "Global Forest Policy · Research Forests Management",
+    officialPortalUrl: "https://forestry.ubc.ca/research/",
   },
   {
-    id: "ubc-land-food-systems",
-    title: "UBC Land and Food Systems (LFS) Sustainability",
-    leadOrg: "Faculty of Land and Food Systems",
+    id: "ubc-lfs-dairy-centre",
+    title: "UBC Land & Food Systems Community & Research Programs",
+    leadOrg: "UBC Faculty of Land and Food Systems",
     category: "SUSTAINABLE AGRICULTURE",
-    status: "ACTIVE PROGRAM",
+    status: "VOLUNTEER & COMMUNITY",
     region: "VANCOUVER / UBC",
-    locationTag: "UBC POINT GREY",
-    description: "Research and community programs advancing sustainable food systems, agroecology, nutritional security, and ecological stewardship.",
-    impactScope: "Agroecosystem Research · Global Food Security Labs",
-    officialPortalUrl: "https://www.landfood.ubc.ca/category/news/",
+    locationTag: "FRASER VALLEY / UBC",
+    description: "Community outreach, educational tours, and working study farm opportunities advancing real-world sustainable agricultural solutions and animal welfare science.",
+    impactScope: "Agroecosystem Research · Community Educational Workshops",
+    officialPortalUrl: "https://dairycentre.landfood.ubc.ca/community/",
   },
   {
-    id: "ubc-science-climate",
-    title: "UBC Faculty of Science: Climate & Environment",
+    id: "ubc-science-atmospheric",
+    title: "UBC Faculty of Science: Atmospheric Science & Climate",
     leadOrg: "UBC Faculty of Science",
     category: "CLIMATE SCIENCE",
-    status: "ACTIVE PROGRAM",
+    status: "ACADEMIC & RESEARCH",
     region: "VANCOUVER / UBC",
     locationTag: "UBC POINT GREY",
-    description: "Cutting-edge environmental research, biodiversity tracking, glacial ecosystem monitoring, and earth science breakthroughs.",
-    impactScope: "Biodiversity Tracking · Glacial & Marine Research",
-    officialPortalUrl: "https://science.ubc.ca/news",
+    description: "Specialized research and academic programs examining air quality, meteorological processes, probabilistic climate forecasting, and global environmental change.",
+    impactScope: "Numerical Weather Prediction · Quantitative Climate Studies",
+    officialPortalUrl: "https://science.ubc.ca/students/programs/atmospheric-science",
   },
   {
-    id: "ubc-applied-science",
-    title: "UBC Applied Science: Clean Energy & Engineering",
-    leadOrg: "Faculty of Applied Science",
+    id: "ubc-apsc-clean-energy",
+    title: "UBC Clean Energy Research Centre (CERC)",
+    leadOrg: "UBC Faculty of Applied Science",
     category: "GREEN INFRASTRUCTURE",
-    status: "ACTIVE PROGRAM",
+    status: "ACTIVE RESEARCH",
     region: "VANCOUVER / UBC",
     locationTag: "UBC POINT GREY",
-    description: "Pioneering green infrastructure, clean energy systems, sustainable mining technologies, and net-zero building engineering.",
-    impactScope: "Clean Energy Drivetrains · Net-Zero Infrastructure",
-    officialPortalUrl: "https://apsc.ubc.ca/news",
+    description: "UBC's flagship clean energy hub focusing on sustainable energy conversion, industrial decarbonization, hydrogen storage, and fuel cell technologies.",
+    impactScope: "Clean Energy Storage · Industrial Decarbonization",
+    officialPortalUrl: "https://apsc.ubc.ca/research-partnerships/arctic/sustainable-energy-resource-management",
   },
   {
-    id: "ubc-sauder-sustainability",
-    title: "UBC Sauder School of Business: Sustainability & News",
-    leadOrg: "Sauder School of Business",
-    category: "SUSTAINABLE ECONOMICS",
-    status: "ACTIVE PROGRAM",
+    id: "van-climate-emergency",
+    title: "City of Vancouver Climate Emergency Action Plan (CEAP)",
+    leadOrg: "City of Vancouver Sustainability Office",
+    category: "MUNICIPAL POLICY",
+    status: "ACTIVE MUNICIPAL PLAN",
     region: "VANCOUVER / UBC",
-    locationTag: "UBC POINT GREY",
-    description: "Business-driven climate solutions, social venture acceleration, circular economy financial modeling, and sustainability frameworks.",
-    impactScope: "Social Venture Incubation · ESG Finance Research",
-    officialPortalUrl: "https://www.sauder.ubc.ca/news",
+    locationTag: "VANCOUVER CITY-WIDE",
+    description: "Municipal roadmap targeting a 50% carbon pollution reduction by 2030 through zero-emission building mandates, active travel networks, and natural climate solutions.",
+    impactScope: "50% Carbon Cut by 2030 · Zero-Emission Transit",
+    officialPortalUrl: "https://vancouver.ca/green-vancouver/climate-emergency-action-plan-in-depth.aspx",
   },
   {
-    id: "ubc-cap-2030",
-    title: "UBC Climate Action Plan 2030 (CAP 2030)",
-    leadOrg: "UBC Sustainability Hub",
-    category: "CAMPUS DECARBONIZATION",
-    status: "ACTIVE PROGRAM",
-    region: "VANCOUVER / UBC",
-    locationTag: "UBC POINT GREY",
-    description: "Institutional net-zero roadmap targeting an 85% reduction in campus operational emissions and zero-waste residence operations by 2030.",
-    impactScope: "District Energy Systems · Scope 3 Emission Reduction",
-    officialPortalUrl: "https://sustain.ubc.ca/campus/climate-action/climate-action-plan",
-  },
-  {
-    id: "van-kitsilano-community",
-    title: "Kitsilano Neighborhood Sustainable Action",
-    leadOrg: "City of Vancouver & Kitsilano Community Centre",
-    category: "MUNICIPAL DISTRICT",
-    status: "ACTIVE PROGRAM",
-    region: "VANCOUVER / UBC",
-    locationTag: "KITSILANO",
-    description: "Local coastal preservation, active transit corridor expansion along 4th Ave and Broadway, and community-led green space micro-gardening.",
-    impactScope: "Coastal Watershed Protection · Active Transit Lanes",
-    officialPortalUrl: "https://vancouver.ca/home-property-development/community-plans.aspx",
-  },
-  {
-    id: "st-george-rainway",
-    title: "St. George Rainway Infrastructure Project",
-    leadOrg: "City of Vancouver & Community Partners",
+    id: "st-george-rainway-project",
+    title: "St. George Rainway Infrastructure & Citizen Science",
+    leadOrg: "City of Vancouver Planning & Community Partners",
     category: "GREEN INFRASTRUCTURE",
-    status: "ACTIVE PROGRAM",
+    status: "COMMUNITY ENGAGEMENT",
     region: "VANCOUVER / UBC",
     locationTag: "MOUNT PLEASANT",
-    description: "Transforming historic stream corridors into urban green rainwater systems to reduce storm flooding and restore local biodiversity.",
-    impactScope: "Urban Rainwater Filtration · Biodiversity Corridors",
+    description: "Transforming historic stream corridors into green rainwater infrastructure to reduce neighborhood flooding, filter urban stormwater, and host baseline biodiversity citizen science campaigns.",
+    impactScope: "Urban Biodiversity Corridors · Stormwater Filtration",
     officialPortalUrl: "https://www.shapeyourcity.ca/st-george-rainway",
   },
   {
-    id: "translink-climate-action-plan",
-    title: "TransLink Climate Action Plan & Fleet Electrification",
-    leadOrg: "TransLink BC",
-    category: "SUSTAINABLE MOBILITY",
-    status: "ACTIVE PROGRAM",
+    id: "van-west-end-community-plan",
+    title: "West End Community Plan & Neighborhood Sustainability",
+    leadOrg: "City of Vancouver Local Planning",
+    category: "MUNICIPAL DISTRICT",
+    status: "ACTIVE COMMUNITY PLAN",
     region: "VANCOUVER / UBC",
-    locationTag: "GREATER VANCOUVER",
-    description: "Regional transit decarbonization roadmap prioritizing electric battery bus deployment, SkyTrain expansion, and active travel integration.",
-    impactScope: "100% Zero-Emission Fleet Target · RapidBus Network",
-    officialPortalUrl: "https://www.translink.ca/about-us/about-translink/sustainability",
+    locationTag: "WEST END",
+    description: "Comprehensive neighborhood planning framework driving urban canopy density, active transportation corridors, green building standards, and local heritage protection.",
+    impactScope: "Urban Forest Enhancement · Micro-Mobility Corridors",
+    officialPortalUrl: "https://vancouver.ca/home-property-development/west-end-community-plan.aspx",
   },
 
-  // --- TORONTO & GTA ---
+  // --- TORONTO & GTA OPPORTUNITIES ---
   {
-    id: "toronto-transform-to",
-    title: "City of Toronto TransformTO Net-Zero Strategy",
-    leadOrg: "City of Toronto Environment & Climate Division",
-    category: "DECARBONIZATION",
-    status: "ACTIVE PROGRAM",
-    region: "TORONTO / GTA",
-    locationTag: "TORONTO",
-    description: "City Council approved action plan targeting net-zero GHG emissions city-wide by 2040 through green building standards and fleet electrification.",
-    impactScope: "Net-Zero by 2040 · Toronto Green Standard Enforcement",
-    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/environmentally-friendly-city-initiatives/transformto/",
-  },
-  {
-    id: "toronto-ravine-strategy",
-    title: "City of Toronto Ravine Strategy",
-    leadOrg: "City of Toronto & TRCA",
+    id: "toronto-ravine-strategy-hub",
+    title: "City of Toronto Ravine Strategy & Community Stewardship",
+    leadOrg: "City of Toronto Parks, Forestry & Recreation",
     category: "ECOLOGICAL CONSERVATION",
-    status: "ACTIVE PROGRAM",
+    status: "VOLUNTEER & MUNICIPAL",
     region: "TORONTO / GTA",
-    locationTag: "TORONTO",
-    description: "Protection and ecological enhancement of Toronto's 11,000-hectare ravine system, preserving natural canopy and urban watershed resilience.",
-    impactScope: "11,000 Hectares Protected · Invasive Species Abatement",
-    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/trees/torontos-ravine-strategy/",
+    locationTag: "TORONTO RAVINES",
+    description: "Protection and ecological enhancement of Toronto's 11,000-hectare ravine system through invasive species management, volunteer stewardship events, and gateway trail construction.",
+    impactScope: "11,000 Hectares Protected · Public Stewardship Programs",
+    officialPortalUrl: "https://www.toronto.ca/city-government/accountability-operations-customer-service/long-term-vision-plans-and-strategies/ravine-strategy/",
   },
   {
-    id: "trca-green-infrastructure",
-    title: "TRCA Watershed & Living City Initiative",
-    leadOrg: "Toronto and Region Conservation Authority",
+    id: "trca-watershed-living-city",
+    title: "TRCA Watershed Management & Conservation Programs",
+    leadOrg: "Toronto and Region Conservation Authority (TRCA)",
     category: "WATERSHED MANAGEMENT",
-    status: "ACTIVE PROGRAM",
+    status: "ACTIVE CONSERVATION",
     region: "TORONTO / GTA",
     locationTag: "GREATER TORONTO AREA",
-    description: "Restoring urban wetlands, safeguarding drinking water quality, and developing green infrastructure across Southern Ontario watersheds.",
+    description: "Regional watershed protection, flood control management, habitat restoration, and eco-system monitoring across 9 major river systems in Southern Ontario.",
     impactScope: "9 Regional Watersheds · Wetland Restoration Projects",
     officialPortalUrl: "https://trca.ca/conservation/watershed-management/",
   },
 
-  // --- GLOBAL & REMOTE ---
+  // --- GLOBAL & REMOTE OPPORTUNITIES ---
   {
-    id: "c40-cities-climate-network",
-    title: "C40 Cities Global Decarbonization Network",
-    leadOrg: "C40 Climate Leadership Group",
+    id: "c40-cities-network",
+    title: "C40 Cities Global Climate Leadership Network",
+    leadOrg: "C40 Cities Climate Leadership Group",
     category: "GLOBAL POLICY",
-    status: "ACTIVE PROGRAM",
+    status: "GLOBAL NETWORK",
     region: "GLOBAL / REMOTE",
     locationTag: "INTERNATIONAL",
-    description: "Global coalition of mayors and urban leaders taking urgent action to confront climate change through peer-reviewed municipal targets.",
+    description: "A global network of mayors and urban leaders taking urgent action to confront the climate crisis and scale urban decarbonization strategies worldwide.",
     impactScope: "100+ World Megacities · Benchmarked Emissions Data",
     officialPortalUrl: "https://www.c40.org",
   },
   {
-    id: "earthshot-prize",
-    title: "The Earthshot Prize Eco-Innovation Accelerator",
+    id: "earthshot-prize-accelerator",
+    title: "The Earthshot Prize Eco-Innovation Hub",
     leadOrg: "The Royal Foundation",
     category: "GLOBAL INNOVATION",
-    status: "ACTIVE PROGRAM",
+    status: "GLOBAL ACCELERATOR",
     region: "GLOBAL / REMOTE",
     locationTag: "INTERNATIONAL",
-    description: "Global climate incentive awards scaling solutions for climate repair, ocean revival, clean air, and zero-waste systems.",
+    description: "Prestigious global environmental prize searching for and scaling solutions across five 'Earthshots': Protect & Restore Nature, Clean Our Air, Revive Our Oceans, Build a Waste-Free World, and Fix Our Climate.",
     impactScope: "£50M Scaling Capital · 5 Environmental Pillars",
     officialPortalUrl: "https://earthshotprize.org",
   },
@@ -195,7 +159,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
 
 export default function InitiativesPage() {
   const [initiatives, setInitiatives] = useState<RealInitiative[]>(INITIAL_INITIATIVES);
-  const [activeRegion, setActiveRegion] = useState<string>("ALL REGIONS");
+  const [activeTab, setActiveTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -212,8 +176,10 @@ export default function InitiativesPage() {
 
   const filteredInitiatives = useMemo(() => {
     return initiatives.filter((item) => {
-      const matchesRegion =
-        activeRegion === "ALL REGIONS" || item.region === activeRegion;
+      let matchesTab = true;
+      if (activeTab === "VANCOUVER") matchesTab = item.region === "VANCOUVER / UBC";
+      if (activeTab === "TORONTO") matchesTab = item.region === "TORONTO / GTA";
+      if (activeTab === "GLOBAL") matchesTab = item.region === "GLOBAL / REMOTE";
 
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -224,9 +190,9 @@ export default function InitiativesPage() {
         item.description.toLowerCase().includes(query) ||
         item.locationTag.toLowerCase().includes(query);
 
-      return matchesRegion && matchesSearch;
+      return matchesTab && matchesSearch;
     });
-  }, [initiatives, activeRegion, searchQuery]);
+  }, [initiatives, activeTab, searchQuery]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,7 +235,7 @@ export default function InitiativesPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-200">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-gray-900">Climate Initiatives Directory</h1>
-            <p className="text-xs font-mono text-gray-500 mt-1">Verified regional programs, campus frameworks, and active climate projects.</p>
+            <p className="text-xs font-mono text-gray-500 mt-1">Verified regional programs, campus frameworks, research labs, and active climate projects.</p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -279,20 +245,25 @@ export default function InitiativesPage() {
           </button>
         </div>
 
-        {/* Region Filters + Search Bar Row */}
+        {/* Region Subpage Tabs + Search Bar Row */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 font-mono text-[11px] tracking-wider">
-            {["ALL REGIONS", "VANCOUVER / UBC", "TORONTO / GTA", "GLOBAL / REMOTE"].map((region) => (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 font-mono text-[11px] tracking-wider border-b lg:border-b-0 border-gray-200">
+            {[
+              { label: "ALL OPPORTUNITIES", key: "ALL" },
+              { label: "VANCOUVER & UBC", key: "VANCOUVER" },
+              { label: "TORONTO & GTA", key: "TORONTO" },
+              { label: "GLOBAL & REMOTE", key: "GLOBAL" },
+            ].map((tab) => (
               <button
-                key={region}
-                onClick={() => setActiveRegion(region)}
-                className={`px-3.5 py-1.5 uppercase transition-all whitespace-nowrap ${
-                  activeRegion === region
-                    ? "bg-[#0F2C23] text-white font-bold"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 uppercase transition-all whitespace-nowrap font-bold ${
+                  activeTab === tab.key
+                    ? "bg-[#0F2C23] text-white"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
                 }`}
               >
-                {region}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -300,19 +271,19 @@ export default function InitiativesPage() {
           <div className="w-full lg:w-80">
             <input
               type="text"
-              placeholder="Search initiatives, lead orgs, wards..."
+              placeholder="Search initiatives, research, wards..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3.5 py-1.5 bg-white border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-black font-mono"
+              className="w-full px-3.5 py-2 bg-white border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-black font-mono"
             />
           </div>
         </div>
 
-        {/* Initiatives List */}
+        {/* Initiatives Cards Container */}
         <div className="space-y-4">
           {filteredInitiatives.length === 0 ? (
             <div className="bg-white border border-gray-200 p-12 text-center text-xs font-mono text-gray-500">
-              NO INITIATIVES FOUND MATCHING YOUR FILTER CRITERIA.
+              NO VERIFIED INITIATIVES FOUND MATCHING YOUR SELECTION.
             </div>
           ) : (
             filteredInitiatives.map((item) => (
@@ -368,7 +339,7 @@ export default function InitiativesPage() {
         </div>
       </main>
 
-      {/* MODAL: START / PROPOSE AN INITIATIVE */}
+      {/* MODAL: PROPOSE AN INITIATIVE */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white border border-gray-300 w-full max-w-lg p-6 shadow-xl relative font-sans">
@@ -390,7 +361,7 @@ export default function InitiativesPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g., Point Grey Micro-Composting Cooperative"
+                  placeholder="e.g., Point Grey Community Micro-Composting"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
@@ -451,7 +422,7 @@ export default function InitiativesPage() {
                 <textarea
                   required
                   rows={3}
-                  placeholder="Outline the core objective, community goals, and sustainability targets..."
+                  placeholder="Outline the core objective, research goals, or volunteer opportunities..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
@@ -462,7 +433,7 @@ export default function InitiativesPage() {
                 <label className="block text-[11px] text-gray-500 uppercase mb-1">Impact Scope</label>
                 <input
                   type="text"
-                  placeholder="e.g., 50 households participating · 2 Tons Waste Diverted"
+                  placeholder="e.g., Neighborhood Composting · 100+ Volunteers"
                   value={formData.impactScope}
                   onChange={(e) => setFormData({ ...formData, impactScope: e.target.value })}
                   className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
