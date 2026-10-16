@@ -1,181 +1,518 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
 
-interface Initiative {
-  code: string;
-  category: string;
+export interface RealInitiative {
+  id: string;
   title: string;
-  description: string;
+  leadOrg: string;
+  category: string;
   status: string;
-  href: string;
-  regions: string[];
+  region: "VANCOUVER / UBC" | "TORONTO / GTA" | "GLOBAL / REMOTE";
+  locationTag: string;
+  description: string;
+  impactScope: string;
+  officialPortalUrl: string;
+  isUserSubmitted?: boolean;
 }
 
-const initiativesList: Initiative[] = [
+export const INITIAL_INITIATIVES: RealInitiative[] = [
+  // --- UBC & VANCOUVER FACULTIES / CAMPUS INITIATIVES ---
   {
-    code: "01",
-    category: "Institutional Challenge",
-    title: "UBC Sustainability Challenge",
-    description: "Participate in faculty-wide challenges to measure aggregate carbon savings and drive campus sustainability metrics collectively.",
-    status: "Active Program",
-    href: "/competition",
-    regions: ["Vancouver", "Global / Remote"],
+    id: "ubc-forestry-activism",
+    title: "UBC Faculty of Forestry Activism & News",
+    leadOrg: "UBC Faculty of Forestry",
+    category: "ECOSYSTEM STEWARDSHIP",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Student and faculty-led research updates, forest bioeconomy breakthroughs, wildfire coexistence studies, and conservation activism news.",
+    impactScope: "100+ Regional Plots Audited · Carbon Sink Monitoring",
+    officialPortalUrl: "https://forestry.ubc.ca/news/",
   },
   {
-    code: "02",
-    category: "Community Action",
-    title: "Broad Community Action & Regional Stewardship",
-    description: "Coordinate with regional partners and municipal groups across urban forestry, watershed health, and localized sustainability initiatives.",
-    status: "Ongoing",
-    href: "/initiatives/community-action", // Updated route path
-    regions: ["Vancouver", "Toronto"],
+    id: "ubc-land-food-systems",
+    title: "UBC Land and Food Systems (LFS) Sustainability",
+    leadOrg: "Faculty of Land and Food Systems",
+    category: "SUSTAINABLE AGRICULTURE",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Research and community programs advancing sustainable food systems, agroecology, nutritional security, and ecological stewardship.",
+    impactScope: "Agroecosystem Research · Global Food Security Labs",
+    officialPortalUrl: "https://www.landfood.ubc.ca/news/",
   },
   {
-    code: "03",
-    category: "Policy & Research",
-    title: "Green Transit & Drivetrain Transition",
-    description: "Evaluate lifecycle emissions, municipal charging infrastructure, and policy frameworks for heavy-duty and commuter transport networks.",
-    status: "Research Phase",
-    href: "/initiatives/transport-policy",
-    regions: ["Vancouver", "Toronto", "Global / Remote"],
+    id: "ubc-science-climate",
+    title: "UBC Faculty of Science: Climate & Environment",
+    leadOrg: "UBC Faculty of Science",
+    category: "CLIMATE SCIENCE",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Cutting-edge environmental research, biodiversity tracking, glacial ecosystem monitoring, and earth science breakthroughs.",
+    impactScope: "Biodiversity Tracking · Glacial & Marine Research",
+    officialPortalUrl: "https://science.ubc.ca/news",
+  },
+  {
+    id: "ubc-applied-science",
+    title: "UBC Applied Science: Clean Energy & Engineering",
+    leadOrg: "Faculty of Applied Science",
+    category: "GREEN INFRASTRUCTURE",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Pioneering green infrastructure, clean energy systems, sustainable mining technologies, and net-zero building engineering.",
+    impactScope: "Clean Energy Drivetrains · Net-Zero Infrastructure",
+    officialPortalUrl: "https://apsc.ubc.ca/",
+  },
+  {
+    id: "ubc-sauder-sustainability",
+    title: "UBC Sauder Centre for Social Innovation & Impact",
+    leadOrg: "Sauder School of Business",
+    category: "SUSTAINABLE ECONOMICS",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Business-driven climate solutions, social venture acceleration, circular economy financial modeling, and sustainability frameworks.",
+    impactScope: "Social Venture Incubation · ESG Finance Research",
+    officialPortalUrl: "https://www.sauder.ubc.ca/faculty-research/centres/centre-social-innovation-and-impact-investing",
+  },
+  {
+    id: "ubc-sustainability-hub",
+    title: "UBC Sustainability Hub & CAP 2030",
+    leadOrg: "UBC Sustainability Hub",
+    category: "CAMPUS DECARBONIZATION",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "UBC POINT GREY",
+    description: "Institutional net-zero roadmap targeting an 85% reduction in campus operational emissions and zero-waste residence operations by 2030.",
+    impactScope: "District Energy Systems · Scope 3 Emission Reduction",
+    officialPortalUrl: "https://sustain.ubc.ca/campus/climate-action/climate-action-plan",
+  },
+
+  // --- VANCOUVER MUNICIPAL WARDS & NEIGHBORHOODS ---
+  {
+    id: "van-kitsilano-community",
+    title: "Kitsilano Neighborhood Sustainable Action",
+    leadOrg: "City of Vancouver & Kitsilano Community Centre",
+    category: "MUNICIPAL DISTRICT",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "KITSILANO",
+    description: "Local coastal preservation, active transit corridor expansion along 4th Ave and Broadway, and community-led green space micro-gardening.",
+    impactScope: "Coastal Watershed Protection · Active Transit Lanes",
+    officialPortalUrl: "https://vancouver.ca/home-property-development/community-plans.aspx",
+  },
+  {
+    id: "van-mount-pleasant",
+    title: "Mount Pleasant Eco-District & Rainway Initiative",
+    leadOrg: "City of Vancouver Planning",
+    category: "GREEN INFRASTRUCTURE",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "MOUNT PLEASANT",
+    description: "Urban rainwater filtration networks (including the St. George Rainway), green building retrofits, and commercial district composting.",
+    impactScope: "Urban Stormwater Filtration · Commercial Composting",
+    officialPortalUrl: "https://www.shapeyourcity.ca/st-george-rainway",
+  },
+  {
+    id: "van-west-end-strathcona",
+    title: "West End & Strathcona Community Greening",
+    leadOrg: "City of Vancouver Community Services",
+    category: "COMMUNITY ACTION",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "WEST END / STRATHCONA",
+    description: "High-density urban canopy expansion, community orchard networks, and neighborhood climate preparedness planning.",
+    impactScope: "High-Density Canopy Expansion · Urban Orchards",
+    officialPortalUrl: "https://vancouver.ca/people-programs/local-area-planning.aspx",
+  },
+  {
+    id: "translink-climate-action-plan",
+    title: "TransLink Climate Action Plan & Fleet Electrification",
+    leadOrg: "TransLink BC",
+    category: "SUSTAINABLE MOBILITY",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "GREATER VANCOUVER",
+    description: "Regional transit decarbonization roadmap prioritizing electric battery bus deployment, SkyTrain expansion, and active travel integration.",
+    impactScope: "100% Zero-Emission Fleet Target · RapidBus Network",
+    officialPortalUrl: "https://www.translink.ca/about-us/about-translink/sustainability",
+  },
+
+  // --- TORONTO & GTA ---
+  {
+    id: "toronto-transform-to",
+    title: "City of Toronto TransformTO Net-Zero Strategy",
+    leadOrg: "City of Toronto Environment Division",
+    category: "DECARBONIZATION",
+    status: "ACTIVE PROGRAM",
+    region: "TORONTO / GTA",
+    locationTag: "TORONTO",
+    description: "City Council approved action plan targeting net-zero GHG emissions city-wide by 2040 through green building standards and fleet electrification.",
+    impactScope: "Net-Zero by 2040 · Toronto Green Standard Enforcement",
+    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/environmentally-friendly-city-initiatives/transformto/",
+  },
+  {
+    id: "toronto-ravine-strategy",
+    title: "City of Toronto Ravine Strategy",
+    leadOrg: "City of Toronto Parks & Recreation",
+    category: "ECOLOGICAL CONSERVATION",
+    status: "ACTIVE PROGRAM",
+    region: "TORONTO / GTA",
+    locationTag: "TORONTO RAVINES",
+    description: "Protection and ecological enhancement of Toronto's 11,000-hectare ravine system, preserving natural canopy and urban watershed resilience.",
+    impactScope: "11,000 Hectares Protected · Invasive Species Abatement",
+    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/trees/torontos-ravine-strategy/",
+  },
+  {
+    id: "trca-watershed-management",
+    title: "TRCA Watershed & Living City Conservation",
+    leadOrg: "Toronto and Region Conservation Authority",
+    category: "WATERSHED MANAGEMENT",
+    status: "ACTIVE PROGRAM",
+    region: "TORONTO / GTA",
+    locationTag: "GREATER TORONTO AREA",
+    description: "Targeted restoration of urban wetlands, flood remediation engineering, and drinking water safeguarding across Southern Ontario watersheds.",
+    impactScope: "9 Regional Watersheds · Wetland Restoration Projects",
+    officialPortalUrl: "https://trca.ca/conservation/watershed-management/",
+  },
+
+  // --- GLOBAL & REMOTE ---
+  {
+    id: "c40-cities-climate-network",
+    title: "C40 Cities Global Decarbonization Network",
+    leadOrg: "C40 Climate Leadership Group",
+    category: "GLOBAL POLICY",
+    status: "ACTIVE PROGRAM",
+    region: "GLOBAL / REMOTE",
+    locationTag: "INTERNATIONAL",
+    description: "Global coalition of mayors and urban leaders taking urgent action to confront climate change through peer-reviewed municipal targets.",
+    impactScope: "100+ World Megacities · Benchmarked Emissions Data",
+    officialPortalUrl: "https://www.c40.org",
+  },
+  {
+    id: "earthshot-prize",
+    title: "The Earthshot Prize Eco-Innovation Accelerator",
+    leadOrg: "The Royal Foundation",
+    category: "GLOBAL INNOVATION",
+    status: "ACTIVE PROGRAM",
+    region: "GLOBAL / REMOTE",
+    locationTag: "INTERNATIONAL",
+    description: "Global climate incentive awards scaling solutions for climate repair, ocean revival, clean air, and zero-waste systems.",
+    impactScope: "£50M Scaling Capital · 5 Environmental Pillars",
+    officialPortalUrl: "https://earthshotprize.org",
   },
 ];
 
 export default function InitiativesPage() {
-  const [selectedRegion, setSelectedRegion] = useState<string>("Vancouver");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [initiatives, setInitiatives] = useState<RealInitiative[]>(INITIAL_INITIATIVES);
+  const [activeRegion, setActiveRegion] = useState<string>("ALL REGIONS");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    leadOrg: "",
+    category: "COMMUNITY ACTION",
+    region: "VANCOUVER / UBC" as RealInitiative["region"],
+    locationTag: "",
+    description: "",
+    impactScope: "",
+    officialPortalUrl: "",
+  });
 
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
-      return;
-    }
+  const filteredInitiatives = useMemo(() => {
+    return initiatives.filter((item) => {
+      const matchesRegion =
+        activeRegion === "ALL REGIONS" || item.region === activeRegion;
 
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        // Approximate bounding check for Vancouver vs Toronto
-        if (latitude > 48.0 && latitude < 50.0 && longitude > -124.0 && longitude < -122.0) {
-          setSelectedRegion("Vancouver");
-        } else if (latitude > 43.0 && latitude < 44.5 && longitude > -80.0 && longitude < -79.0) {
-          setSelectedRegion("Toronto");
-        } else {
-          setSelectedRegion("Global / Remote");
-        }
-        setLoading(false);
-      },
-      () => {
-        alert("Unable to retrieve your location. Defaulting to Vancouver.");
-        setLoading(false);
-      }
-    );
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.leadOrg.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        item.locationTag.toLowerCase().includes(query);
+
+      return matchesRegion && matchesSearch;
+    });
+  }, [initiatives, activeRegion, searchQuery]);
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.leadOrg || !formData.description) return;
+
+    const newInitiative: RealInitiative = {
+      id: `custom-${Date.now()}`,
+      title: formData.title,
+      leadOrg: formData.leadOrg,
+      category: formData.category.toUpperCase(),
+      status: "PROPOSED INITIATIVE",
+      region: formData.region,
+      locationTag: formData.locationTag.toUpperCase() || formData.region.split(" ")[0],
+      description: formData.description,
+      impactScope: formData.impactScope || "Community Proposed Project",
+      officialPortalUrl: formData.officialPortalUrl.startsWith("http")
+        ? formData.officialPortalUrl
+        : `https://${formData.officialPortalUrl || "green-collective.vercel.app"}`,
+      isUserSubmitted: true,
+    };
+
+    setInitiatives([newInitiative, ...initiatives]);
+    setIsModalOpen(false);
+    setFormData({
+      title: "",
+      leadOrg: "",
+      category: "COMMUNITY ACTION",
+      region: "VANCOUVER / UBC",
+      locationTag: "",
+      description: "",
+      impactScope: "",
+      officialPortalUrl: "",
+    });
   };
 
-  const filteredInitiatives = initiativesList.filter((item) =>
-    item.regions.includes(selectedRegion)
-  );
-
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24">
-      {/* Editorial Page Header */}
-      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
-        <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
-          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d]">
-            Programs · Scale · Impact
-          </p>
-          <h1 className="max-w-4xl text-4xl font-medium tracking-[-0.04em] md:text-6xl text-[#102f26]">
-            Shared initiatives &amp; community programs
-          </h1>
-          <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Individual actions compound into measurable institutional progress when aligned through structured community programs.
-          </p>
-        </div>
-      </section>
-
-      {/* Main Initiatives Section */}
-      <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
-        {/* Location Curation Toolbar */}
-        <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] font-sans antialiased pb-20">
+      <main className="max-w-7xl mx-auto px-6 pt-8 pb-16">
+        {/* Header Action Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-200">
           <div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-              Contextual Curation
-            </span>
-            <p className="text-sm font-medium text-[#102f26]">
-              Showing programs for: <span className="underline font-mono uppercase text-xs">{selectedRegion}</span>
-            </p>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">Climate Initiatives Directory</h1>
+            <p className="text-xs font-mono text-gray-500 mt-1">Verified regional programs, campus frameworks, and active climate projects.</p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2.5 bg-[#0F2C23] hover:bg-black text-white font-mono text-xs font-bold tracking-wider uppercase transition self-start md:self-auto"
+          >
+            + Propose New Initiative
+          </button>
+        </div>
+
+        {/* Region Filters + Search Bar Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 font-mono text-[11px] tracking-wider">
+            {["ALL REGIONS", "VANCOUVER / UBC", "TORONTO / GTA", "GLOBAL / REMOTE"].map((region) => (
+              <button
+                key={region}
+                onClick={() => setActiveRegion(region)}
+                className={`px-3.5 py-1.5 uppercase transition-all whitespace-nowrap ${
+                  activeRegion === region
+                    ? "bg-[#0F2C23] text-white font-bold"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                {region}
+              </button>
+            ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleDetectLocation}
-              disabled={loading}
-              className="px-4 py-2 bg-[#102f26] text-white font-mono text-[10px] uppercase tracking-[0.16em] hover:bg-[#102f26]/90 transition disabled:opacity-50"
-            >
-              {loading ? "Locating..." : "Detect My Location"}
-            </button>
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#102f26]/20 font-mono text-xs text-[#102f26] focus:outline-none"
-            >
-              <option value="Vancouver">Vancouver, BC</option>
-              <option value="Toronto">Toronto, ON</option>
-              <option value="Global / Remote">Global / Remote</option>
-            </select>
+          <div className="w-full lg:w-80">
+            <input
+              type="text"
+              placeholder="Search initiatives, faculties, wards..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3.5 py-1.5 bg-white border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-black font-mono"
+            />
           </div>
         </div>
 
-        {/* Initiatives List Grid */}
-        <div className="border-t border-[#102f26]/15">
-          {filteredInitiatives.length > 0 ? (
+        {/* Initiatives List */}
+        <div className="space-y-4">
+          {filteredInitiatives.length === 0 ? (
+            <div className="bg-white border border-gray-200 p-12 text-center text-xs font-mono text-gray-500">
+              NO INITIATIVES FOUND MATCHING YOUR FILTER CRITERIA.
+            </div>
+          ) : (
             filteredInitiatives.map((item) => (
               <div
-                key={item.code}
-                className="group border-b border-[#102f26]/15 py-10 transition-colors hover:bg-[#f1f6f2]/40 px-4 -mx-4"
+                key={item.id}
+                className={`bg-white border p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition ${
+                  item.isUserSubmitted ? "border-emerald-500/50 bg-emerald-50/20" : "border-gray-200 hover:border-gray-300"
+                }`}
               >
-                <div className="grid gap-6 lg:grid-cols-[0.3fr_1.2fr_0.5fr] lg:items-center">
-                  <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block">
-                      Initiative / {item.code}
-                    </span>
-                    <span className="mt-1 inline-block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71847d]">
+                <div className="flex-1 max-w-4xl">
+                  <div className="flex items-center gap-2 font-mono text-[10px] tracking-widest text-gray-400 uppercase mb-2">
+                    <span>{item.category}</span>
+                    <span>•</span>
+                    <span className={item.isUserSubmitted ? "text-emerald-700 font-bold" : "text-gray-500"}>
                       {item.status}
                     </span>
+                    <span>•</span>
+                    <span className="text-gray-500">{item.locationTag}</span>
                   </div>
 
-                  <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#39705d] block mb-1">
-                      {item.category}
-                    </span>
-                    <h3 className="text-2xl font-medium tracking-tight text-[#102f26]">
+                  <h2 className="text-lg font-bold text-gray-900 mb-0.5">
+                    <Link href={`/initiatives/${item.id}`} className="hover:text-[#0F2C23] transition">
                       {item.title}
-                    </h3>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-[#526760]">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <div className="lg:text-right">
-                    <Link
-                      href={item.href}
-                      className="inline-flex items-center gap-2 border-b border-[#102f26] pb-1 font-mono text-xs uppercase tracking-[0.14em] transition-opacity hover:opacity-55"
-                    >
-                      View program →
                     </Link>
-                  </div>
+                  </h2>
+
+                  <p className="font-mono text-xs text-gray-500 mb-2">
+                    Lead: <span className="text-gray-700 font-semibold">{item.leadOrg}</span>
+                  </p>
+
+                  <p className="text-xs text-gray-600 leading-relaxed mb-3">
+                    {item.description}
+                  </p>
+
+                  <p className="text-[11px] font-mono text-gray-500">
+                    <strong className="text-gray-700 font-semibold">Impact Scope:</strong> {item.impactScope}
+                  </p>
+                </div>
+
+                <div className="shrink-0 flex items-center">
+                  <a
+                    href={item.officialPortalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full md:w-auto px-5 py-3 bg-[#0F2C23] hover:bg-black text-white text-[11px] font-mono tracking-widest uppercase font-bold transition text-center flex items-center justify-center gap-1.5"
+                  >
+                    VISIT OFFICIAL PORTAL ↗
+                  </a>
                 </div>
               </div>
             ))
-          ) : (
-            <div className="py-16 text-center text-[#526760] font-mono text-xs uppercase tracking-wider">
-              No active programs currently listed for this specific region.
-            </div>
           )}
         </div>
-      </section>
-    </main>
+      </main>
+
+      {/* MODAL: START / PROPOSE AN INITIATIVE */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-300 w-full max-w-lg p-6 shadow-xl relative font-sans">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-900">
+                Propose / Start an Initiative
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-400 hover:text-black font-mono text-xs"
+              >
+                ✕ CLOSE
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4 font-mono text-xs">
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">Initiative Title *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g., Point Grey Micro-Composting Cooperative"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] text-gray-500 uppercase mb-1">Lead Org / Group *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Student Collective"
+                    value={formData.leadOrg}
+                    onChange={(e) => setFormData({ ...formData, leadOrg: e.target.value })}
+                    className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-gray-500 uppercase mb-1">Region *</label>
+                  <select
+                    value={formData.region}
+                    onChange={(e) => setFormData({ ...formData, region: e.target.value as RealInitiative["region"] })}
+                    className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
+                  >
+                    <option value="VANCOUVER / UBC">VANCOUVER / UBC</option>
+                    <option value="TORONTO / GTA">TORONTO / GTA</option>
+                    <option value="GLOBAL / REMOTE">GLOBAL / REMOTE</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] text-gray-500 uppercase mb-1">Category</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., URBAN AGRICULTURE"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-gray-500 uppercase mb-1">Location Tag</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., KITSILANO"
+                    value={formData.locationTag}
+                    onChange={(e) => setFormData({ ...formData, locationTag: e.target.value })}
+                    className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">Description *</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Outline the core objective, community goals, and sustainability targets..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">Impact Scope</label>
+                <input
+                  type="text"
+                  placeholder="e.g., 50 households participating · 2 Tons Waste Diverted"
+                  value={formData.impactScope}
+                  onChange={(e) => setFormData({ ...formData, impactScope: e.target.value })}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">External Link / Web Portal</label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={formData.officialPortalUrl}
+                  onChange={(e) => setFormData({ ...formData, officialPortalUrl: e.target.value })}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 font-bold uppercase hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#0F2C23] text-white font-bold uppercase hover:bg-black transition"
+                >
+                  Submit Initiative
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
