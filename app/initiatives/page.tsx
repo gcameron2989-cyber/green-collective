@@ -28,7 +28,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     region: "VANCOUVER / UBC",
     locationTag: "UBC POINT GREY",
     description: "Student and faculty-led research updates, forest bioeconomy breakthroughs, wildfire coexistence studies, and conservation activism news.",
-    impactScope: "100+ Regional Plots Audited · Carbon Sink Monitoring",
+    impactScope: "Campus Research & Community Outreach",
     officialPortalUrl: "https://forestry.ubc.ca/news/",
   },
   {
