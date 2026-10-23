@@ -21,15 +21,15 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
   // --- VANCOUVER & UBC ---
   {
     id: "ubc-urban-forestry",
-    title: "UBC Urban Forestry & Canopy Stewardship",
+    title: "UBC Faculty of Forestry & Environmental Stewardship",
     leadOrg: "UBC Faculty of Forestry",
     category: "ECOSYSTEM STEWARDSHIP",
     status: "ACTIVE PROGRAM",
     region: "VANCOUVER / UBC",
     locationTag: "VANCOUVER / UBC",
-    description: "Long-term monitoring of forest health, wildfire fuel loads, and carbon sequestration across research forests and campus canopy plots.",
-    impactScope: "100+ Regional Plots Audited · Carbon Sink Monitoring",
-    officialPortalUrl: "https://forestry.ubc.ca",
+    description: "Keep up to date with groundbreaking research, initiatives, news and events.",
+    impactScope: " News · Events · Branchlines ",
+    officialPortalUrl: "https://forestry.ubc.ca/news/",
   },
   {
     id: "ubc-cap-2030",
