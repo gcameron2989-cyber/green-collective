@@ -19,6 +19,15 @@ interface EcoAction {
   icon?: string;
 }
 
+interface LoggedItem {
+  id: string;
+  action_id: string;
+  action_name: string;
+  points: number;
+  sector: string;
+  created_at: string;
+}
+
 function PilotContent() {
   const searchParams = useSearchParams();
   const cohortParam = searchParams?.get('cohort');
@@ -30,6 +39,7 @@ function PilotContent() {
   const [userScore, setUserScore] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [actionsList, setActionsList] = useState<EcoAction[]>([]);
+  const [todaysLogs, setTodaysLogs] = useState<LoggedItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [logging, setLogging] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,29 +66,6 @@ function PilotContent() {
 
     if (!error && data && data.length > 0) {
       setActionsList(data as EcoAction[]);
-    } else {
-      setActionsList([
-        { id: '1', title: 'Sustainable Transit Trip (Bus/Skytrain)', points: 150, category: 'Transit', icon: '🚌' },
-        { id: '2', title: 'Active Commute (Bike, Walk, or Roll)', points: 200, category: 'Transit', icon: '🚲' },
-        { id: '3', title: 'Carpooling with Classmates', points: 120, category: 'Transit', icon: '🚗' },
-        { id: '4', title: 'Work-from-Home / Remote Study Day', points: 90, category: 'Transit', icon: '🏠' },
-        { id: '5', title: 'Zero-Waste Reusable Mug or Container', points: 75, category: 'Waste', icon: '☕' },
-        { id: '6', title: 'Composting Organic Food Waste', points: 60, category: 'Waste', icon: '🍏' },
-        { id: '7', title: 'Thrifting or Buying Second-Hand Goods', points: 110, category: 'Waste', icon: '🛍️' },
-        { id: '8', title: 'Campus Litter Clean-Up Sweep', points: 180, category: 'Waste', icon: '🧹' },
-        { id: '9', title: 'Proper E-Waste Recycling Drop-Off', points: 150, category: 'Waste', icon: '🔋' },
-        { id: '10', title: 'Plant-Based Meal Choice', points: 100, category: 'Food', icon: '🥗' },
-        { id: '11', title: 'Locally Sourced / Farmers Market Meal', points: 130, category: 'Food', icon: '🥕' },
-        { id: '12', title: 'Zero Food Waste / Leftovers Rescue', points: 80, category: 'Food', icon: '🍲' },
-        { id: '13', title: 'Reusable Water Bottle Usage (All Day)', points: 50, category: 'Food', icon: '💧' },
-        { id: '14', title: 'Cold Water Laundry Wash / Line Dry', points: 80, category: 'Energy', icon: '🧺' },
-        { id: '15', title: 'Unplugging Phantom Load Electronics', points: 70, category: 'Energy', icon: '🔌' },
-        { id: '16', title: 'Natural Lighting Only (No Desk Lamps)', points: 60, category: 'Energy', icon: '☀️' },
-        { id: '17', title: 'Thermostat Adjustment (Lowering heat by 2°C)', points: 90, category: 'Energy', icon: '🌡️' },
-        { id: '18', title: 'Campus Eco-Event / Workshop Attendance', points: 200, category: 'Community', icon: '🌱' },
-        { id: '19', title: 'Sustainability Policy Brief Review', points: 250, category: 'Community', icon: '📄' },
-        { id: '20', title: 'Peer Climate Knowledge Sharing', points: 120, category: 'Community', icon: '💡' },
-      ]);
     }
   };
 
@@ -96,25 +83,41 @@ function PilotContent() {
     setIsRefreshing(false);
   };
 
+  const fetchUserData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || getOrCreateGuestId();
+
+    // Fetch Profile
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('full_name, total_points')
+      .eq('id', currentUserId)
+      .single();
+
+    if (profileData && profileData.full_name) {
+      setDisplayName(profileData.full_name);
+      setUserScore(profileData.total_points || 0);
+      setIsNameSet(true);
+    }
+
+    // Fetch Today's Logs for progress & undo capability
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const { data: logsData } = await supabase
+      .from('logged_actions')
+      .select('id, action_id, action_name, points, sector, created_at')
+      .eq('user_id', currentUserId)
+      .gte('created_at', startOfToday.toISOString())
+      .order('created_at', { ascending: false });
+
+    if (logsData) {
+      setTodaysLogs(logsData as LoggedItem[]);
+    }
+  };
+
   useEffect(() => {
-    const checkExistingProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id || getOrCreateGuestId();
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, total_points')
-        .eq('id', currentUserId)
-        .single();
-
-      if (!error && data && data.full_name) {
-        setDisplayName(data.full_name);
-        setUserScore(data.total_points || 0);
-        setIsNameSet(true);
-      }
-    };
-
-    checkExistingProfile();
+    fetchUserData();
     fetchActionsCatalog();
     fetchLeaderboard();
   }, [cohort]);
@@ -152,21 +155,8 @@ function PilotContent() {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    // Fetch actions logged by this user today for rate limiting
-    const { data: todayLogs, error: fetchError } = await supabase
-      .from('logged_actions')
-      .select('id, action_id, sector')
-      .eq('user_id', currentUserId)
-      .gte('created_at', startOfToday.toISOString());
-
-    if (fetchError) {
-      setStatusMessage({ text: `Error checking limits: ${fetchError.message}`, type: 'error' });
-      setLogging(false);
-      return;
-    }
-
     // Rule 1: Only once per specific action per 24 hours
-    const alreadyLoggedThisAction = todayLogs?.some(log => log.action_id === action.id);
+    const alreadyLoggedThisAction = todaysLogs.some(log => log.action_id === action.id);
     if (alreadyLoggedThisAction) {
       setStatusMessage({ 
         text: `⏳ Cooldown active: You've already logged "${action.title}" today!`, 
@@ -178,7 +168,7 @@ function PilotContent() {
 
     // Rule 2: Max 4 transit trips per day total
     if (action.category === 'Transit') {
-      const transitLogsCount = todayLogs?.filter(log => log.sector === 'Transit').length || 0;
+      const transitLogsCount = todaysLogs.filter(log => log.sector === 'Transit').length;
       if (transitLogsCount >= 4) {
         setStatusMessage({ 
           text: `🛑 Daily Limit Reached: You can only log a maximum of 4 transit trips per day.`, 
@@ -215,9 +205,55 @@ function PilotContent() {
       if (profileError) {
         setStatusMessage({ text: `Profile error: ${profileError.message}`, type: 'error' });
       } else {
-        setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}`, type: 'success' });
+        setStatusMessage({ text: `✓ Success! +${action.points} PTS for ${action.title}. (Misclicked? Use Undo below)`, type: 'success' });
+        await fetchUserData();
         await fetchLeaderboard();
       }
+    }
+
+    setLogging(false);
+  };
+
+  // Misclick Safety Net: Undo the most recent action logged today
+  const handleUndoLastAction = async () => {
+    if (todaysLogs.length === 0) return;
+    setLogging(true);
+    setStatusMessage(null);
+
+    const lastLog = todaysLogs[0]; // Most recent
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || getOrCreateGuestId();
+
+    // Delete from logged_actions
+    const { error: deleteError } = await supabase
+      .from('logged_actions')
+      .delete()
+      .eq('id', lastLog.id);
+
+    if (deleteError) {
+      setStatusMessage({ text: `Undo error: ${deleteError.message}`, type: 'error' });
+      setLogging(false);
+      return;
+    }
+
+    // Subtract points
+    const nextScore = Math.max(0, userScore - lastLog.points);
+    setUserScore(nextScore);
+
+    // Update profile score
+    const { error: profileError } = await supabase.from('profiles').upsert({
+      id: currentUserId,
+      full_name: displayName.trim() || 'Student',
+      cohort: cohort,
+      total_points: nextScore,
+    });
+
+    if (profileError) {
+      setStatusMessage({ text: `Profile update error: ${profileError.message}`, type: 'error' });
+    } else {
+      setStatusMessage({ text: `↩ Undone: Removed "${lastLog.action_name}" (-${lastLog.points} PTS)`, type: 'success' });
+      await fetchUserData();
+      await fetchLeaderboard();
     }
 
     setLogging(false);
@@ -277,71 +313,113 @@ function PilotContent() {
             </form>
           </section>
         ) : (
-          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-6">
-            <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
-              <div>
-                <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
-                  ⚡ Full Eco-Action Catalog ({displayName}) — <span className="text-[#102f26] font-bold">{userScore} PTS Total</span>
-                </h2>
-                <p className="text-[11px] text-[#526760] mt-0.5">Select an action below to log points instantly</p>
+          <div className="space-y-6">
+            {/* User Dashboard Header */}
+            <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
+                <div>
+                  <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
+                    ⚡ Welcome back, {displayName} — <span className="text-[#102f26] font-bold">{userScore} PTS Total</span>
+                  </h2>
+                  <p className="text-[11px] text-[#526760] mt-0.5">Your streak & progress update automatically daily</p>
+                </div>
+                <button
+                  onClick={() => setIsNameSet(false)}
+                  className="font-mono text-[10px] text-[#526760] hover:underline"
+                >
+                  Edit Name
+                </button>
               </div>
-              <button
-                onClick={() => setIsNameSet(false)}
-                className="font-mono text-[10px] text-[#526760] hover:underline"
-              >
-                Edit Name
-              </button>
-            </div>
 
-            {statusMessage && (
-              <div
-                className={`p-3 text-xs font-mono border ${
-                  statusMessage.type === 'success'
-                    ? 'bg-[#e2ede5] border-[#39705d]/30 text-[#39705d]'
-                    : 'bg-red-50 border-red-200 text-red-800'
-                }`}
-              >
-                {statusMessage.text}
-              </div>
-            )}
+              {/* Today's Progress & Undo Safety Net */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 border border-[#102f26]/10">
+                <div>
+                  <span className="font-mono text-[11px] text-[#39705d] uppercase tracking-wider font-bold">
+                    Today's Activity ({todaysLogs.length} actions logged)
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {todaysLogs.length === 0 ? (
+                      <span className="text-xs text-[#526760]">No actions logged yet today. Choose from below!</span>
+                    ) : (
+                      todaysLogs.map(log => (
+                        <span key={log.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#f1f6f2] text-[#102f26] font-mono text-[10px] border border-[#102f26]/10">
+                          {log.action_name} (+{log.points})
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
 
-            {categories.length > 1 && (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
+                {todaysLogs.length > 0 && (
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat || 'All')}
-                    className={`px-3 py-1 font-mono text-[11px] border transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-[#102f26] text-white border-[#102f26]'
-                        : 'bg-white text-[#526760] border-[#102f26]/20 hover:border-[#102f26]'
-                    }`}
+                    disabled={logging}
+                    onClick={handleUndoLastAction}
+                    className="whitespace-nowrap font-mono text-[11px] text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 hover:bg-red-100 transition-colors disabled:opacity-50"
                   >
-                    {cat}
+                    ↩ Undo Last Action
+                  </button>
+                )}
+              </div>
+
+              {statusMessage && (
+                <div
+                  className={`p-3 text-xs font-mono border ${
+                    statusMessage.type === 'success'
+                      ? 'bg-[#e2ede5] border-[#39705d]/30 text-[#39705d]'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}
+                >
+                  {statusMessage.text}
+                </div>
+              )}
+            </section>
+
+            {/* Action Catalog Grid */}
+            <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-6">
+              <div className="border-b border-[#102f26]/10 pb-3">
+                <h3 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
+                  Select an action to log points instantly
+                </h3>
+              </div>
+
+              {categories.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat || 'All')}
+                      className={`px-3 py-1 font-mono text-[11px] border transition-all ${
+                        selectedCategory === cat
+                          ? 'bg-[#102f26] text-white border-[#102f26]'
+                          : 'bg-white text-[#526760] border-[#102f26]/20 hover:border-[#102f26]'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {filteredActions.map((action) => (
+                  <button
+                    key={action.id}
+                    disabled={logging}
+                    onClick={() => handleLogAction(action)}
+                    className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="text-2xl mb-1">{action.icon || '🌱'}</div>
+                      <div className="text-xs font-semibold text-[#102f26]">{action.title}</div>
+                    </div>
+                    <div className="font-mono text-[10px] text-[#39705d] mt-3 font-bold">
+                      +{action.points} PTS
+                    </div>
                   </button>
                 ))}
               </div>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {filteredActions.map((action) => (
-                <button
-                  key={action.id}
-                  disabled={logging}
-                  onClick={() => handleLogAction(action)}
-                  className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="text-2xl mb-1">{action.icon || '🌱'}</div>
-                    <div className="text-xs font-semibold text-[#102f26]">{action.title}</div>
-                  </div>
-                  <div className="font-mono text-[10px] text-[#39705d] mt-3 font-bold">
-                    +{action.points} PTS
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
+            </section>
+          </div>
         )}
 
         <section className="space-y-4">
@@ -354,4 +432,50 @@ function PilotContent() {
               disabled={isRefreshing}
               className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] hover:underline disabled:opacity-50"
             >
-              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh
+              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh Standings'}
+            </button>
+          </div>
+
+          <div className="border border-[#102f26]/15 bg-white divide-y divide-[#102f26]/10">
+            {leaderboard.length === 0 ? (
+              <div className="p-8 text-center font-mono text-xs text-[#526760]">
+                No entries yet for BEST 301. Be the first to log an action above!
+              </div>
+            ) : (
+              leaderboard.map((student, index) => (
+                <div
+                  key={student.id || index}
+                  className="flex items-center justify-between p-4 hover:bg-[#f9f8f6] transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono text-xs text-[#39705d] font-bold w-6">
+                      #{index + 1}
+                    </span>
+                    <span className="text-sm font-medium text-[#102f26]">
+                      {student.full_name || 'Anonymous Student'}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-[#102f26]">
+                    {student.total_points || 0} <span className="text-[10px] text-[#526760] font-normal">PTS</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default function ClassPilotPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white text-[#102f26] flex items-center justify-center font-mono text-xs">
+        Loading BEST 301 Pilot...
+      </div>
+    }>
+      <PilotContent />
+    </Suspense>
+  );
+}
