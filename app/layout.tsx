@@ -67,13 +67,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased min-h-screen bg-[#0b1a13] text-[#e2ede8] flex flex-col justify-between relative selection:bg-emerald-500/30 selection:text-emerald-200">
-        {/* Ambient PNW Forest Glow */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-emerald-600/10 via-emerald-900/5 to-transparent blur-[140px]" />
-        </div>
-
+    <html lang="en">
+      <body className="antialiased min-h-screen bg-white text-neutral-900 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900">
+        
         {/* Enhanced Organization & WebSite Schema Markup for Entity SEO */}
         <script
           type="application/ld+json"
@@ -115,7 +111,7 @@ export default function RootLayout({
           }}
         />
 
-        <div className="relative z-10 flex flex-col min-h-screen justify-between w-full">
+        <div className="flex flex-col min-h-screen justify-between w-full">
           {/* Shared Global Header */}
           <Navbar />
 
