@@ -37,10 +37,11 @@ function PilotContent() {
 
   const supabase = createClient();
 
-  const getOrCreateGuestId = () => {
+const getOrCreateGuestId = () => {
     let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
     if (!guestId) {
-      guestId = 'guest-' + Math.random().toString(36).substring(2, 15);
+      // Use crypto.randomUUID() so it passes the database UUID type check
+      guestId = crypto.randomUUID();
       if (typeof window !== 'undefined') {
         localStorage.setItem('pilot_guest_id', guestId);
       }
