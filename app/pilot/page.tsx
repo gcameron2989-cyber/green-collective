@@ -37,10 +37,9 @@ function PilotContent() {
 
   const supabase = createClient();
 
-const getOrCreateGuestId = () => {
+  const getOrCreateGuestId = () => {
     let guestId = typeof window !== 'undefined' ? localStorage.getItem('pilot_guest_id') : null;
     if (!guestId) {
-      // Use crypto.randomUUID() so it passes the database UUID type check
       guestId = crypto.randomUUID();
       if (typeof window !== 'undefined') {
         localStorage.setItem('pilot_guest_id', guestId);
@@ -82,7 +81,26 @@ const getOrCreateGuestId = () => {
     setIsRefreshing(false);
   };
 
+  // Persistent session check on mount: fetches existing profile if user comes back
   useEffect(() => {
+    const checkExistingProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentUserId = user?.id || getOrCreateGuestId();
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, total_points')
+        .eq('id', currentUserId)
+        .single();
+
+      if (!error && data && data.full_name) {
+        setDisplayName(data.full_name);
+        setUserScore(data.total_points || 0);
+        setIsNameSet(true);
+      }
+    };
+
+    checkExistingProfile();
     fetchActionsCatalog();
     fetchLeaderboard();
   }, [cohort]);
