@@ -35,7 +35,9 @@ function PilotContent() {
   
   const [cohort] = useState(defaultCohort);
   const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
   const [isNameSet, setIsNameSet] = useState(false);
+  const [showEmailAuth, setShowEmailAuth] = useState(false);
   const [userScore, setUserScore] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [actionsList, setActionsList] = useState<EcoAction[]>([]);
@@ -140,6 +142,28 @@ function PilotContent() {
         setIsNameSet(true);
         await fetchLeaderboard();
       }
+    }
+  };
+
+  const handleSendMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusMessage(null);
+    if (!email) return;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: window.location.href,
+      },
+    });
+
+    if (error) {
+      setStatusMessage({ text: `Auth error: ${error.message}`, type: 'error' });
+    } else {
+      setStatusMessage({ 
+        text: `✓ Check your email (${email}) for your cross-device magic login link!`, 
+        type: 'success' 
+      });
     }
   };
 
@@ -317,13 +341,47 @@ function PilotContent() {
                   </h2>
                   <p className="text-[11px] text-[#526760] mt-0.5">Your streak & progress update automatically daily</p>
                 </div>
-                <button
-                  onClick={() => setIsNameSet(false)}
-                  className="font-mono text-[10px] text-[#526760] hover:underline"
-                >
-                  Edit Name
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowEmailAuth(!showEmailAuth)}
+                    className="font-mono text-[10px] text-[#2d6a4f] bg-[#e8f5e9] px-2.5 py-1 rounded border border-[#2d6a4f]/20 hover:bg-[#d8f3dc]"
+                  >
+                    {showEmailAuth ? 'Close Sync' : '🔗 Sync Across Devices'}
+                  </button>
+                  <button
+                    onClick={() => setIsNameSet(false)}
+                    className="font-mono text-[10px] text-[#526760] hover:underline"
+                  >
+                    Edit Name
+                  </button>
+                </div>
               </div>
+
+              {/* Cross-Device Sync Toggle Drawer */}
+              {showEmailAuth && (
+                <div className="bg-[#f7f5f0] p-4 border border-[#2d6a4f]/15 rounded-lg space-y-3">
+                  <div className="text-xs font-semibold text-[#1b4332]">Sync Account to Any Device</div>
+                  <p className="text-[11px] text-[#526760]">
+                    Enter your email to receive a secure login link. This links your points so you can switch between your phone, computer, and tablet seamlessly.
+                  </p>
+                  <form onSubmit={handleSendMagicLink} className="flex gap-2">
+                    <input
+                      type="email"
+                      placeholder="student@ubc.ca"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="flex-1 border border-[#2d6a4f]/20 bg-white px-3 py-2 text-xs text-[#1b4332] rounded-md focus:outline-none focus:border-[#2d6a4f]"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="bg-[#1b4332] px-4 py-2 font-mono text-[11px] uppercase text-white rounded-md hover:bg-[#2d6a4f] transition-all"
+                    >
+                      Send Link
+                    </button>
+                  </form>
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#f7f5f0] p-4 border border-[#2d6a4f]/10 rounded-lg">
                 <div>
