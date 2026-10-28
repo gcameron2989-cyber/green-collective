@@ -58,11 +58,26 @@ function PilotContent() {
       setActionsList(data as EcoAction[]);
     } else {
       setActionsList([
-        { id: '1', title: 'Sustainable Transit Trip', points: 150, category: 'Transit', icon: '🚲' },
-        { id: '2', title: 'Zero-Waste Mug / Container', points: 75, category: 'Waste', icon: '☕' },
-        { id: '3', title: 'Plant-Based Meal Choice', points: 100, category: 'Food', icon: '🥗' },
-        { id: '4', title: 'Cold Water Wash / Line Dry', points: 80, category: 'Energy', icon: '🧺' },
-        { id: '5', title: 'Campus Eco-Event Attendance', points: 200, category: 'Community', icon: '🌱' },
+        { id: '1', title: 'Sustainable Transit Trip (Bus/Skytrain)', points: 150, category: 'Transit', icon: '🚌' },
+        { id: '2', title: 'Active Commute (Bike, Walk, or Roll)', points: 200, category: 'Transit', icon: '🚲' },
+        { id: '3', title: 'Carpooling with Classmates', points: 120, category: 'Transit', icon: '🚗' },
+        { id: '4', title: 'Work-from-Home / Remote Study Day', points: 90, category: 'Transit', icon: '🏠' },
+        { id: '5', title: 'Zero-Waste Reusable Mug or Container', points: 75, category: 'Waste', icon: '☕' },
+        { id: '6', title: 'Composting Organic Food Waste', points: 60, category: 'Waste', icon: '🍏' },
+        { id: '7', title: 'Thrifting or Buying Second-Hand Goods', points: 110, category: 'Waste', icon: '🛍️' },
+        { id: '8', title: 'Campus Litter Clean-Up Sweep', points: 180, category: 'Waste', icon: '🧹' },
+        { id: '9', title: 'Proper E-Waste Recycling Drop-Off', points: 150, category: 'Waste', icon: '🔋' },
+        { id: '10', title: 'Plant-Based Meal Choice', points: 100, category: 'Food', icon: '🥗' },
+        { id: '11', title: 'Locally Sourced / Farmers Market Meal', points: 130, category: 'Food', icon: '🥕' },
+        { id: '12', title: 'Zero Food Waste / Leftovers Rescue', points: 80, category: 'Food', icon: '🍲' },
+        { id: '13', title: 'Reusable Water Bottle Usage (All Day)', points: 50, category: 'Food', icon: '💧' },
+        { id: '14', title: 'Cold Water Laundry Wash / Line Dry', points: 80, category: 'Energy', icon: '🧺' },
+        { id: '15', title: 'Unplugging Phantom Load Electronics', points: 70, category: 'Energy', icon: '🔌' },
+        { id: '16', title: 'Natural Lighting Only (No Desk Lamps)', points: 60, category: 'Energy', icon: '☀️' },
+        { id: '17', title: 'Thermostat Adjustment (Lowering heat by 2°C)', points: 90, category: 'Energy', icon: '🌡️' },
+        { id: '18', title: 'Campus Eco-Event / Workshop Attendance', points: 200, category: 'Community', icon: '🌱' },
+        { id: '19', title: 'Sustainability Policy Brief Review', points: 250, category: 'Community', icon: '📄' },
+        { id: '20', title: 'Peer Climate Knowledge Sharing', points: 120, category: 'Community', icon: '💡' },
       ]);
     }
   };
@@ -81,7 +96,6 @@ function PilotContent() {
     setIsRefreshing(false);
   };
 
-  // Persistent session check on mount: fetches existing profile if user comes back
   useEffect(() => {
     const checkExistingProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -134,6 +148,46 @@ function PilotContent() {
 
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id || getOrCreateGuestId();
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    // Fetch actions logged by this user today for rate limiting
+    const { data: todayLogs, error: fetchError } = await supabase
+      .from('logged_actions')
+      .select('id, action_id, sector')
+      .eq('user_id', currentUserId)
+      .gte('created_at', startOfToday.toISOString());
+
+    if (fetchError) {
+      setStatusMessage({ text: `Error checking limits: ${fetchError.message}`, type: 'error' });
+      setLogging(false);
+      return;
+    }
+
+    // Rule 1: Only once per specific action per 24 hours
+    const alreadyLoggedThisAction = todayLogs?.some(log => log.action_id === action.id);
+    if (alreadyLoggedThisAction) {
+      setStatusMessage({ 
+        text: `⏳ Cooldown active: You've already logged "${action.title}" today!`, 
+        type: 'error' 
+      });
+      setLogging(false);
+      return;
+    }
+
+    // Rule 2: Max 4 transit trips per day total
+    if (action.category === 'Transit') {
+      const transitLogsCount = todayLogs?.filter(log => log.sector === 'Transit').length || 0;
+      if (transitLogsCount >= 4) {
+        setStatusMessage({ 
+          text: `🛑 Daily Limit Reached: You can only log a maximum of 4 transit trips per day.`, 
+          type: 'error' 
+        });
+        setLogging(false);
+        return;
+      }
+    }
 
     const { error: logError } = await supabase.from('logged_actions').insert({
       user_id: currentUserId,
@@ -300,50 +354,4 @@ function PilotContent() {
               disabled={isRefreshing}
               className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] hover:underline disabled:opacity-50"
             >
-              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh Standings'}
-            </button>
-          </div>
-
-          <div className="border border-[#102f26]/15 bg-white divide-y divide-[#102f26]/10">
-            {leaderboard.length === 0 ? (
-              <div className="p-8 text-center font-mono text-xs text-[#526760]">
-                No entries yet for BEST 301. Be the first to log an action above!
-              </div>
-            ) : (
-              leaderboard.map((student, index) => (
-                <div
-                  key={student.id || index}
-                  className="flex items-center justify-between p-4 hover:bg-[#f9f8f6] transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-xs text-[#39705d] font-bold w-6">
-                      #{index + 1}
-                    </span>
-                    <span className="text-sm font-medium text-[#102f26]">
-                      {student.full_name || 'Anonymous Student'}
-                    </span>
-                  </div>
-                  <div className="font-mono text-xs font-bold text-[#102f26]">
-                    {student.total_points || 0} <span className="text-[10px] text-[#526760] font-normal">PTS</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-export default function ClassPilotPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white text-[#102f26] flex items-center justify-center font-mono text-xs">
-        Loading BEST 301 Pilot...
-      </div>
-    }>
-      <PilotContent />
-    </Suspense>
-  );
-}
+              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh
