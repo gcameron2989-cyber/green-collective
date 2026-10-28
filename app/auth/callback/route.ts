@@ -4,11 +4,16 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/reset-password";
+  
+  // Check if this auth flow came from a password reset or general login
+  const type = requestUrl.searchParams.get("type");
+  const defaultRedirect = type === "recovery" ? "/reset-password" : "/dashboard";
+  
+  const next = requestUrl.searchParams.get("next") ?? defaultRedirect;
 
   // Prevent Open Redirect attacks by enforcing relative local paths
   const isRelative = next.startsWith("/") && !next.startsWith("//");
-  const safeNext = isRelative ? next : "/reset-password";
+  const safeNext = isRelative ? next : defaultRedirect;
 
   // Construct origin safely handling reverse proxies (Vercel, Cloudflare, etc.)
   const host = request.headers.get("x-forwarded-host") || requestUrl.host;
@@ -27,6 +32,6 @@ export async function GET(request: Request) {
 
   // Redirect on failure or missing code
   return NextResponse.redirect(
-    `${origin}/login?error=Invalid+or+expired+reset+link`
+    `${origin}/login?error=Invalid+or+expired+auth+link`
   );
 }
