@@ -103,165 +103,180 @@ export default function UserProfilePage() {
   ]
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-10 space-y-8 font-sans bg-background text-foreground">
+    <div className="w-full max-w-6xl mx-auto px-6 py-12 space-y-10 font-sans text-neutral-900">
       
-      {/* Profile Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-emerald-900/10 pb-6">
-        <div className="space-y-1.5">
-          <span className="inline-flex items-center gap-2 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] bg-emerald-100 text-[#0f382c] rounded-full border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      {/* Top Banner & Action Trigger */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-neutral-200">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-md text-xs font-mono font-medium tracking-wide border border-emerald-200/60">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             UBC Sustainability Challenge
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-900">
             Personal Impact Hub
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Session Account: <span className="font-semibold text-foreground">{userEmail || 'UBC Participant'}</span>
+          <p className="text-sm font-mono text-neutral-500">
+            Authenticated Account: <span className="text-neutral-800 font-semibold">{userEmail || 'UBC Participant'}</span>
           </p>
         </div>
 
         <Link
           href="/competition/submit"
-          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0f382c] text-white text-xs font-bold hover:bg-emerald-900 transition shadow-sm"
+          className="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-[#0f382c] text-white font-mono text-xs font-semibold uppercase tracking-wider hover:bg-emerald-900 transition-all shadow-sm"
         >
           + Log Eco Action
         </Link>
       </div>
 
-      {/* UBC Challenge Progress Card */}
-      <div className="p-6 rounded-2xl border border-emerald-900/10 bg-card shadow-sm space-y-3">
-        <div className="flex justify-between items-center text-xs">
-          <span className="font-bold text-[#0f382c] uppercase tracking-wider">
-            UBC Challenge Goal: 150 Points
+      {/* Progress Bar Card */}
+      <div className="p-7 rounded-2xl bg-white border border-neutral-200/80 shadow-xs space-y-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-900 font-mono">
+              Faculty Challenge Target
+            </h3>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Individual benchmark: {totalPoints} / {challengeTarget} Points
+            </p>
+          </div>
+          <span className="font-mono text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+            {challengeProgress}% Completed
           </span>
-          <span className="font-extrabold text-emerald-800">{challengeProgress}% Complete</span>
         </div>
-        <div className="w-full h-3 bg-emerald-950/10 rounded-full overflow-hidden">
+        <div className="w-full h-2.5 bg-neutral-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+            className="h-full bg-emerald-600 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${challengeProgress}%` }}
           />
         </div>
-        <p className="text-[11px] text-muted-foreground">
-          Log actions daily during the campus competition to complete your individual target for your faculty.
-        </p>
       </div>
 
-      {/* Impact Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-emerald-900/10 bg-card shadow-sm space-y-1">
-          <span className="text-[11px] font-semibold text-muted-foreground">Total Points</span>
-          <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : totalPoints}</div>
-          <p className="text-[10px] text-emerald-700">Approved points</p>
+      {/* Metric Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200/80 shadow-xs space-y-2">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Total Points</span>
+          <div className="text-3xl font-extrabold tracking-tight text-neutral-900">
+            {loading ? '...' : totalPoints}
+          </div>
+          <p className="text-xs text-emerald-700 font-medium">Verified ledger credits</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-emerald-900/10 bg-card shadow-sm space-y-1">
-          <span className="text-[11px] font-semibold text-muted-foreground">Actions Logged</span>
-          <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : totalActionsLogged}</div>
-          <p className="text-[10px] text-emerald-700">Total activities</p>
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200/80 shadow-xs space-y-2">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Actions Logged</span>
+          <div className="text-3xl font-extrabold tracking-tight text-neutral-900">
+            {loading ? '...' : totalActionsLogged}
+          </div>
+          <p className="text-xs text-emerald-700 font-medium">Total submissions</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-emerald-900/10 bg-card shadow-sm space-y-1">
-          <span className="text-[11px] font-semibold text-muted-foreground">Est. CO₂ Avoided</span>
-          <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : `${co2OffsetKg} kg`}</div>
-          <p className="text-[10px] text-emerald-700">Carbon reduced</p>
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200/80 shadow-xs space-y-2">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Est. CO₂ Avoided</span>
+          <div className="text-3xl font-extrabold tracking-tight text-neutral-900">
+            {loading ? '...' : `${co2OffsetKg} kg`}
+          </div>
+          <p className="text-xs text-emerald-700 font-medium">Emissions offset</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-emerald-900/10 bg-card shadow-sm space-y-1">
-          <span className="text-[11px] font-semibold text-muted-foreground">Items Diverted</span>
-          <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : singleUseSaved}</div>
-          <p className="text-[10px] text-emerald-700">Zero-waste choices</p>
+        <div className="p-6 rounded-2xl bg-white border border-neutral-200/80 shadow-xs space-y-2">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Items Diverted</span>
+          <div className="text-3xl font-extrabold tracking-tight text-neutral-900">
+            {loading ? '...' : singleUseSaved}
+          </div>
+          <p className="text-xs text-emerald-700 font-medium">Zero-waste choices</p>
         </div>
       </div>
 
-      {/* Milestone Badges */}
-      <div className="space-y-3">
-        <h2 className="text-base font-bold text-foreground">Earned Badges & Milestones</h2>
+      {/* Badges Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-neutral-900">Milestones & Badges</h2>
+          <span className="text-xs font-mono text-neutral-400">
+            {badges.filter(b => b.unlocked).length} / {badges.length} Unlocked
+          </span>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {badges.map((badge, idx) => (
             <div
               key={idx}
-              className={`p-4 rounded-xl border text-center space-y-2 transition ${
+              className={`p-5 rounded-2xl border transition-all flex flex-col justify-between text-center space-y-3 ${
                 badge.unlocked
-                  ? 'border-emerald-300 bg-emerald-50/80 text-foreground shadow-sm'
-                  : 'border-emerald-900/10 bg-background/40 opacity-40 grayscale'
+                  ? 'bg-white border-emerald-200 shadow-xs'
+                  : 'bg-neutral-50 border-neutral-200 opacity-40 grayscale'
               }`}
             >
-              <div className="text-3xl">{badge.icon}</div>
-              <div>
-                <div className="text-xs font-bold">{badge.name}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">{badge.desc}</div>
+              <div className="text-4xl">{badge.icon}</div>
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-neutral-900">{badge.name}</div>
+                <div className="text-[11px] text-neutral-500 leading-snug">{badge.desc}</div>
               </div>
               <span
-                className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                  badge.unlocked ? 'bg-emerald-200 text-[#0f382c]' : 'bg-gray-200 text-gray-600'
+                className={`inline-block font-mono text-[10px] font-bold px-2.5 py-1 rounded-md mx-auto ${
+                  badge.unlocked ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-200 text-neutral-600'
                 }`}
               >
-                {badge.unlocked ? 'Unlocked' : 'Locked'}
+                {badge.unlocked ? 'UNLOCKED' : 'LOCKED'}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Individual Activity Stream */}
-      <div className="space-y-3 pb-8">
-        <h2 className="text-base font-bold text-foreground">Your Logged Activities</h2>
-        <div className="border border-emerald-900/10 rounded-2xl bg-card p-6 shadow-sm">
+      {/* Activity Log Stream */}
+      <div className="space-y-4 pb-12">
+        <h2 className="text-base font-bold text-neutral-900">Activity History</h2>
+        <div className="rounded-2xl bg-white border border-neutral-200/80 shadow-xs divide-y divide-neutral-100 overflow-hidden">
           {loading ? (
-            <div className="text-center py-8 text-xs text-muted-foreground animate-pulse">
-              Loading activity history...
+            <div className="text-center py-12 text-xs font-mono text-neutral-400 animate-pulse">
+              Querying ledger submissions...
             </div>
           ) : submissions.length === 0 ? (
-            <div className="text-center py-8 text-xs text-muted-foreground space-y-2">
-              <p>No eco-actions logged under your account yet.</p>
+            <div className="text-center py-12 text-xs text-neutral-500 space-y-3">
+              <p>No actions logged under your account yet.</p>
               <Link
                 href="/competition/submit"
-                className="inline-block text-xs font-bold text-emerald-800 underline hover:text-emerald-900"
+                className="inline-block font-mono text-xs font-bold text-emerald-700 underline hover:text-emerald-900"
               >
                 Log your first action for the challenge →
               </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {submissions.map((sub) => {
-                const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
-                const points = (actionDetails?.points || 0) * sub.quantity
+            submissions.map((sub) => {
+              const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
+              const points = (actionDetails?.points || 0) * sub.quantity
 
-                return (
-                  <div
-                    key={sub.id}
-                    className="p-3.5 rounded-xl border border-emerald-900/10 bg-background/60 flex items-center justify-between gap-4"
-                  >
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-foreground">
-                          {actionDetails?.title || 'Eco Action'}
-                        </span>
-                        <span
-                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                            sub.status === 'approved'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : sub.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {sub.status.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
-                      </p>
+              return (
+                <div
+                  key={sub.id}
+                  className="p-5 flex items-center justify-between gap-4 hover:bg-neutral-50/60 transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-neutral-900">
+                        {actionDetails?.title || 'Eco Action'}
+                      </span>
+                      <span
+                        className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                          sub.status === 'approved'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : sub.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {sub.status}
+                      </span>
                     </div>
-
-                    <div className="text-xs font-bold text-emerald-800 shrink-0">
-                      +{points} pts
-                    </div>
+                    <p className="text-xs font-mono text-neutral-400">
+                      Quantity: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
                   </div>
-                )
-              })}
-            </div>
+
+                  <div className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 shrink-0">
+                    +{points} pts
+                  </div>
+                </div>
+              )
+            })
           )}
         </div>
       </div>
