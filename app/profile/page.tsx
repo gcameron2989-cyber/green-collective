@@ -14,7 +14,6 @@ interface UserSubmission {
   eco_action_id: string
 }
 
-// Map eco_action_id to details since we are querying flat
 const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
   'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
   'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
@@ -41,20 +40,17 @@ export default function UserProfilePage() {
     const fetchUserProfile = async () => {
       setLoading(true)
 
-      // 1. Get current authenticated user
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
       if (!user) {
-        // If not logged in, redirect straight to login/home instead of showing empty data
         router.push('/')
         return
       }
 
       setUserEmail(user.email || 'UBC Participant')
 
-      // 2. Fetch submissions strictly tied to this user's UUID using flat select
       const { data: userSubmissions, error } = await supabase
         .from('submissions')
         .select('*')
@@ -72,11 +68,6 @@ export default function UserProfilePage() {
 
     fetchUserProfile()
   }, [router])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
 
   // Calculate Personal Aggregates
   const approvedSubmissions = submissions.filter((s) => s.status === 'approved')
@@ -114,25 +105,6 @@ export default function UserProfilePage() {
   return (
     <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
-
-      {/* Header */}
-      <header className="px-6 py-4 border-b border-emerald-900/10 backdrop-blur-md bg-background/80 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
-        <Link href="/" className="font-bold text-xl tracking-tight text-[#0f382c] flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          Green Collective
-        </Link>
-        <div className="flex gap-4 items-center text-xs font-semibold">
-          <Link href="/competition/submit" className="text-emerald-800 hover:underline">
-            + Log Action
-          </Link>
-          <Link href="/competition" className="text-emerald-800 hover:underline">
-            Leaderboard →
-          </Link>
-          <button onClick={handleSignOut} className="text-red-600 hover:underline">
-            Sign Out
-          </button>
-        </div>
-      </header>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         {/* Profile Header */}
