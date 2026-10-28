@@ -103,102 +103,106 @@ export default function UserProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#090d0b] text-[#f4f7f5] flex flex-col justify-between relative overflow-hidden font-sans">
+      {/* Revyl-style Ambient Glow Gradients */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[450px] bg-gradient-to-b from-emerald-500/10 via-emerald-900/5 to-transparent blur-[120px] pointer-events-none" />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10 space-y-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12 z-10 space-y-10">
+        
         {/* Profile Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-900/10 pb-6">
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-2 border border-emerald-200">
-              🌲 UBC Sustainability Challenge
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/10 pb-8">
+          <div className="space-y-2">
+            <span className="inline-flex items-center gap-2 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] bg-emerald-950/80 text-emerald-400 rounded-full border border-emerald-500/20 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              UBC Sustainability Challenge
             </span>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
               Personal Impact Hub
             </h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Account: <span className="font-semibold text-foreground">{userEmail || 'UBC Participant'}</span>
+            <p className="text-xs font-mono text-neutral-400">
+              Session Account: <span className="text-emerald-300">{userEmail || 'UBC Participant'}</span>
             </p>
           </div>
 
           <Link
             href="/competition/submit"
-            className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0f382c] text-white text-xs font-bold hover:bg-emerald-900 transition shadow-sm"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-emerald-500 text-neutral-950 font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
           >
             + Log Eco Action
           </Link>
         </div>
 
         {/* UBC Challenge Progress Card */}
-        <div className="p-6 rounded-2xl border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm space-y-3">
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-bold text-[#0f382c] uppercase tracking-wider">
+        <div className="p-6 rounded-2xl border border-white/10 bg-[#101915]/80 backdrop-blur-md shadow-2xl space-y-4 relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+          <div className="flex justify-between items-center font-mono text-xs">
+            <span className="text-neutral-300 uppercase tracking-wider">
               UBC Challenge Goal: 150 Points
             </span>
-            <span className="font-extrabold text-emerald-800">{challengeProgress}% Complete</span>
+            <span className="text-emerald-400 font-bold">{challengeProgress}% Complete</span>
           </div>
-          <div className="w-full h-3 bg-emerald-950/10 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-neutral-900 rounded-full overflow-hidden border border-white/5">
             <div
-              className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(16,185,129,0.5)]"
               style={{ width: `${challengeProgress}%` }}
             />
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-neutral-400 leading-relaxed">
             Log actions daily during the campus competition to complete your individual target for your faculty.
           </p>
         </div>
 
-        {/* Impact Cards */}
+        {/* Impact Cards (Revyl Dark Glass Stat Grid) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground">Total Points</span>
-            <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : totalPoints}</div>
-            <p className="text-[10px] text-emerald-700">Approved points</p>
+          <div className="p-5 rounded-xl border border-white/10 bg-[#101915]/60 backdrop-blur-md space-y-2 hover:border-emerald-500/30 transition-colors">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">Total Points</span>
+            <div className="text-3xl font-bold tracking-tight text-white">{loading ? '...' : totalPoints}</div>
+            <p className="font-mono text-[10px] text-emerald-400/80">Approved points</p>
           </div>
 
-          <div className="p-4 rounded-xl border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground">Actions Logged</span>
-            <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : totalActionsLogged}</div>
-            <p className="text-[10px] text-emerald-700">Total activities</p>
+          <div className="p-5 rounded-xl border border-white/10 bg-[#101915]/60 backdrop-blur-md space-y-2 hover:border-emerald-500/30 transition-colors">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">Actions Logged</span>
+            <div className="text-3xl font-bold tracking-tight text-white">{loading ? '...' : totalActionsLogged}</div>
+            <p className="font-mono text-[10px] text-emerald-400/80">Total activities</p>
           </div>
 
-          <div className="p-4 rounded-xl border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground">Est. CO₂ Avoided</span>
-            <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : `${co2OffsetKg} kg`}</div>
-            <p className="text-[10px] text-emerald-700">Carbon reduced</p>
+          <div className="p-5 rounded-xl border border-white/10 bg-[#101915]/60 backdrop-blur-md space-y-2 hover:border-emerald-500/30 transition-colors">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">Est. CO₂ Avoided</span>
+            <div className="text-3xl font-bold tracking-tight text-white">{loading ? '...' : `${co2OffsetKg} kg`}</div>
+            <p className="font-mono text-[10px] text-emerald-400/80">Carbon reduced</p>
           </div>
 
-          <div className="p-4 rounded-xl border border-emerald-900/10 bg-card/80 backdrop-blur shadow-sm space-y-1">
-            <span className="text-[11px] font-semibold text-muted-foreground">Items Diverted</span>
-            <div className="text-2xl font-extrabold text-[#0f382c]">{loading ? '...' : singleUseSaved}</div>
-            <p className="text-[10px] text-emerald-700">Zero-waste choices</p>
+          <div className="p-5 rounded-xl border border-white/10 bg-[#101915]/60 backdrop-blur-md space-y-2 hover:border-emerald-500/30 transition-colors">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">Items Diverted</span>
+            <div className="text-3xl font-bold tracking-tight text-white">{loading ? '...' : singleUseSaved}</div>
+            <p className="font-mono text-[10px] text-emerald-400/80">Zero-waste choices</p>
           </div>
         </div>
 
         {/* Milestone Badges */}
-        <div className="space-y-3">
-          <h2 className="text-base font-bold text-foreground">Earned Badges & Milestones</h2>
+        <div className="space-y-4">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-neutral-300">Earned Badges & Milestones</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {badges.map((badge, idx) => (
               <div
                 key={idx}
-                className={`p-4 rounded-xl border text-center space-y-2 transition ${
+                className={`p-5 rounded-xl border text-center space-y-3 transition-all ${
                   badge.unlocked
-                    ? 'border-emerald-300 bg-emerald-50/80 text-foreground shadow-sm'
-                    : 'border-emerald-900/10 bg-background/40 opacity-40 grayscale'
+                    ? 'border-emerald-500/30 bg-[#101915]/90 text-white shadow-lg shadow-emerald-950/20'
+                    : 'border-white/5 bg-[#0d1310]/40 opacity-40 grayscale'
                 }`}
               >
                 <div className="text-3xl">{badge.icon}</div>
-                <div>
+                <div className="space-y-1">
                   <div className="text-xs font-bold">{badge.name}</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">{badge.desc}</div>
+                  <div className="text-[10px] text-neutral-400">{badge.desc}</div>
                 </div>
                 <span
-                  className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                    badge.unlocked ? 'bg-emerald-200 text-[#0f382c]' : 'bg-gray-200 text-gray-600'
+                  className={`inline-block font-mono text-[9px] font-bold px-2.5 py-0.5 rounded-full ${
+                    badge.unlocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-500'
                   }`}
                 >
-                  {badge.unlocked ? 'Unlocked' : 'Locked'}
+                  {badge.unlocked ? 'UNLOCKED' : 'LOCKED'}
                 </span>
               </div>
             ))}
@@ -206,19 +210,19 @@ export default function UserProfilePage() {
         </div>
 
         {/* Individual Activity Stream */}
-        <div className="space-y-3">
-          <h2 className="text-base font-bold text-foreground">Your Logged Activities</h2>
-          <div className="border border-emerald-900/10 rounded-2xl bg-card/80 backdrop-blur p-6 shadow-sm">
+        <div className="space-y-4">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-neutral-300">Your Logged Activities</h2>
+          <div className="border border-white/10 rounded-2xl bg-[#101915]/80 backdrop-blur-md p-6 shadow-2xl">
             {loading ? (
-              <div className="text-center py-8 text-xs text-muted-foreground animate-pulse">
+              <div className="text-center py-12 font-mono text-xs text-neutral-500 animate-pulse">
                 Loading activity history...
               </div>
             ) : submissions.length === 0 ? (
-              <div className="text-center py-8 text-xs text-muted-foreground space-y-2">
+              <div className="text-center py-12 font-mono text-xs text-neutral-400 space-y-3">
                 <p>No eco-actions logged under your account yet.</p>
                 <Link
                   href="/competition/submit"
-                  className="inline-block text-xs font-bold text-emerald-800 underline hover:text-emerald-900"
+                  className="inline-block text-xs font-bold text-emerald-400 underline hover:text-emerald-300"
                 >
                   Log your first action for the challenge →
                 </Link>
@@ -232,31 +236,31 @@ export default function UserProfilePage() {
                   return (
                     <div
                       key={sub.id}
-                      className="p-3.5 rounded-xl border border-emerald-900/10 bg-background/60 flex items-center justify-between gap-4"
+                      className="p-4 rounded-xl border border-white/5 bg-[#0d1310]/60 flex items-center justify-between gap-4 hover:border-emerald-500/20 transition-colors"
                     >
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-foreground">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xs font-semibold text-white">
                             {actionDetails?.title || 'Eco Action'}
                           </span>
                           <span
-                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                            className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded-full ${
                               sub.status === 'approved'
-                                ? 'bg-emerald-100 text-emerald-800'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                 : sub.status === 'rejected'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-amber-100 text-amber-800'
+                                ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                             }`}
                           >
                             {sub.status.toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="font-mono text-[11px] text-neutral-400">
                           Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
                         </p>
                       </div>
 
-                      <div className="text-xs font-bold text-emerald-800 shrink-0">
+                      <div className="font-mono text-xs font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
                         +{points} pts
                       </div>
                     </div>
@@ -268,7 +272,7 @@ export default function UserProfilePage() {
         </div>
       </main>
 
-      <footer className="py-6 text-center text-xs text-muted-foreground border-t border-emerald-900/10 bg-background/50 backdrop-blur z-10">
+      <footer className="py-8 text-center font-mono text-[11px] text-neutral-500 border-t border-white/5 bg-[#070b09] z-10">
         © {new Date().getFullYear()} Green Collective. All rights reserved.
       </footer>
     </div>
