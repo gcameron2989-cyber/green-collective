@@ -153,7 +153,6 @@ function PilotContent() {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    // Rule 1: Only once per specific action per 24 hours
     const alreadyLoggedThisAction = todaysLogs.some(log => log.action_id === action.id);
     if (alreadyLoggedThisAction) {
       setStatusMessage({ 
@@ -164,7 +163,6 @@ function PilotContent() {
       return;
     }
 
-    // Rule 2: Max 4 transit trips per day total
     if (action.category === 'Transit') {
       const transitLogsCount = todaysLogs.filter(log => log.sector === 'Transit').length;
       if (transitLogsCount >= 4) {
@@ -260,23 +258,27 @@ function PilotContent() {
     : actionsList.filter(a => a.category === selectedCategory);
 
   return (
-    <main className="min-h-screen bg-white text-[#102f26] pb-24 font-sans">
-      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2] px-6 py-12 text-center">
-        <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d] font-semibold">
-          Live Campus Competition Pilot
-        </span>
-        <h1 className="mt-2 text-3xl font-medium tracking-tight md:text-5xl text-[#102f26]">
-          {cohort} Climate Challenge
-        </h1>
-        <p className="mt-3 text-sm text-[#526760] max-w-md mx-auto">
-          Log daily eco-actions, earn points for BEST 301, and watch real-time impact standings update live.
-        </p>
+    <main className="min-h-screen bg-[#f7f5f0] text-[#1b4332] pb-24 font-sans">
+      {/* Botanical Header */}
+      <section className="border-b border-[#1b4332]/10 bg-[#1b4332] text-[#f7f5f0] px-6 py-16 text-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div className="relative z-10 max-w-2xl mx-auto space-y-3">
+          <span className="inline-block px-3 py-1 rounded-full bg-[#2d6a4f]/50 font-mono text-[11px] uppercase tracking-[0.22em] text-[#a3b18a] border border-[#52b788]/20">
+            Live Campus Competition Pilot
+          </span>
+          <h1 className="text-3xl font-medium tracking-tight md:text-5xl text-white">
+            {cohort} Climate Challenge
+          </h1>
+          <p className="text-sm text-[#d8f3dc]/80 max-w-lg mx-auto leading-relaxed">
+            Log daily eco-actions, earn points for BEST 301, and watch real-time impact standings update live across your cohort.
+          </p>
+        </div>
       </section>
 
       <div className="mx-auto max-w-4xl px-6 py-10 space-y-10">
         {!isNameSet ? (
-          <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-4 text-center max-w-md mx-auto">
-            <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
+          <section className="border border-[#2d6a4f]/20 bg-white shadow-sm p-8 space-y-4 text-center max-w-md mx-auto rounded-xl">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-[#2d6a4f] font-semibold">
               Join The BEST 301 Pilot
             </h2>
             <p className="text-xs text-[#526760]">
@@ -284,7 +286,7 @@ function PilotContent() {
             </p>
 
             {statusMessage && (
-              <div className="p-3 text-xs font-mono border bg-red-50 border-red-200 text-red-800">
+              <div className="p-3 text-xs font-mono border bg-red-50 border-red-200 text-red-800 rounded-md">
                 {statusMessage.text}
               </div>
             )}
@@ -295,12 +297,12 @@ function PilotContent() {
                 placeholder="Display Name (e.g. Alex or Anonymous)"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="border border-[#102f26]/20 bg-white px-4 py-2.5 text-xs text-[#102f26] focus:outline-none focus:border-[#102f26]"
+                className="border border-[#2d6a4f]/20 bg-[#f7f5f0] px-4 py-3 text-xs text-[#1b4332] rounded-lg focus:outline-none focus:border-[#2d6a4f]"
                 required
               />
               <button
                 type="submit"
-                className="bg-[#102f26] px-6 py-2.5 font-mono text-xs uppercase tracking-wider text-white hover:bg-[#1a4438] transition-colors"
+                className="bg-[#1b4332] px-6 py-3 font-mono text-xs uppercase tracking-wider text-white rounded-lg hover:bg-[#2d6a4f] transition-all shadow-sm"
               >
                 Join Class →
               </button>
@@ -308,11 +310,11 @@ function PilotContent() {
           </section>
         ) : (
           <div className="space-y-6">
-            <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
+            <section className="border border-[#2d6a4f]/20 bg-white shadow-sm p-6 space-y-4 rounded-xl">
+              <div className="flex items-center justify-between border-b border-[#1b4332]/10 pb-4">
                 <div>
-                  <h2 className="font-mono text-xs uppercase tracking-wider text-[#39705d] font-semibold">
-                    ⚡ Welcome back, {displayName} — <span className="text-[#102f26] font-bold">{userScore} PTS Total</span>
+                  <h2 className="font-mono text-xs uppercase tracking-wider text-[#2d6a4f] font-semibold">
+                    ⚡ Welcome back, {displayName} — <span className="text-[#1b4332] font-bold">{userScore} PTS Total</span>
                   </h2>
                   <p className="text-[11px] text-[#526760] mt-0.5">Your streak & progress update automatically daily</p>
                 </div>
@@ -324,17 +326,17 @@ function PilotContent() {
                 </button>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 border border-[#102f26]/10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#f7f5f0] p-4 border border-[#2d6a4f]/10 rounded-lg">
                 <div>
-                  <span className="font-mono text-[11px] text-[#39705d] uppercase tracking-wider font-bold">
+                  <span className="font-mono text-[11px] text-[#2d6a4f] uppercase tracking-wider font-bold">
                     Today's Activity ({todaysLogs.length} actions logged)
                   </span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {todaysLogs.length === 0 ? (
                       <span className="text-xs text-[#526760]">No actions logged yet today. Choose from below!</span>
                     ) : (
                       todaysLogs.map(log => (
-                        <span key={log.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#f1f6f2] text-[#102f26] font-mono text-[10px] border border-[#102f26]/10">
+                        <span key={log.id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white text-[#1b4332] font-mono text-[10px] border border-[#2d6a4f]/15 rounded-md shadow-2xs">
                           {log.action_name} (+{log.points})
                         </span>
                       ))
@@ -346,7 +348,7 @@ function PilotContent() {
                   <button
                     disabled={logging}
                     onClick={handleUndoLastAction}
-                    className="whitespace-nowrap font-mono text-[11px] text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 hover:bg-red-100 transition-colors disabled:opacity-50"
+                    className="whitespace-nowrap font-mono text-[11px] text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50 shadow-2xs"
                   >
                     ↩ Undo Last Action
                   </button>
@@ -355,9 +357,9 @@ function PilotContent() {
 
               {statusMessage && (
                 <div
-                  className={`p-3 text-xs font-mono border ${
+                  className={`p-3 text-xs font-mono border rounded-md ${
                     statusMessage.type === 'success'
-                      ? 'bg-[#e2ede5] border-[#39705d]/30 text-[#39705d]'
+                      ? 'bg-[#e8f5e9] border-[#2d6a4f]/30 text-[#2d6a4f]'
                       : 'bg-red-50 border-red-200 text-red-800'
                   }`}
                 >
@@ -366,11 +368,12 @@ function PilotContent() {
               )}
             </section>
 
-            <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-6">
-              <div className="border-b border-[#102f26]/10 pb-3">
-                <h3 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
+            <section className="border border-[#2d6a4f]/20 bg-white shadow-sm p-8 space-y-6 rounded-xl">
+              <div className="border-b border-[#1b4332]/10 pb-3 flex items-center justify-between">
+                <h3 className="font-mono text-xs uppercase tracking-wider text-[#1b4332] font-semibold">
                   Select an action to log points instantly
                 </h3>
+                <span className="font-mono text-[10px] text-[#526760]">20 Action Catalog</span>
               </div>
 
               {categories.length > 1 && (
@@ -379,10 +382,10 @@ function PilotContent() {
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat || 'All')}
-                      className={`px-3 py-1 font-mono text-[11px] border transition-all ${
+                      className={`px-3.5 py-1.5 font-mono text-[11px] border rounded-lg transition-all shadow-2xs ${
                         selectedCategory === cat
-                          ? 'bg-[#102f26] text-white border-[#102f26]'
-                          : 'bg-white text-[#526760] border-[#102f26]/20 hover:border-[#102f26]'
+                          ? 'bg-[#1b4332] text-white border-[#1b4332]'
+                          : 'bg-[#f7f5f0] text-[#526760] border-[#2d6a4f]/20 hover:border-[#2d6a4f] hover:text-[#1b4332]'
                       }`}
                     >
                       {cat}
@@ -391,10 +394,56 @@ function PilotContent() {
                 </div>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {filteredActions.map((action) => (
                   <button
                     key={action.id}
                     disabled={logging}
                     onClick={() => handleLogAction(action)}
-                    className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50 flex flex-col justify-between"
+                    className="border border-[#2d6a4f]/20 bg-[#f7f5f0]/50 p-5 text-left hover:border-[#2d6a4f] hover:bg-white hover:-translate-y-0.5 transition-all duration-200 hover:shadow-md disabled:opacity-50 flex flex-col justify-between rounded-xl group"
+                  >
+                    <div>
+                      <div className="w-10 h-10 rounded-lg bg-[#e8f5e9] flex items-center justify-center text-xl mb-3 group-hover:scale-105 transition-transform">
+                        {action.icon || '🌱'}
+                      </div>
+                      <div className="text-xs font-semibold text-[#1b4332] leading-snug">
+                        {action.title}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#1b4332]/5">
+                      <span className="font-mono text-[10px] text-[#526760] uppercase">{action.category || 'General'}</span>
+                      <span className="font-mono text-xs text-[#2d6a4f] font-bold bg-[#e8f5e9] px-2 py-0.5 rounded">
+                        +{action.points} PTS
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between border-b border-[#1b4332]/10 pb-3">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-[#1b4332] font-semibold">
+              🏆 Live Standings — BEST 301
+            </h2>
+            <button
+              onClick={fetchLeaderboard}
+              disabled={isRefreshing}
+              className="font-mono text-[10px] uppercase tracking-wider text-[#2d6a4f] hover:underline disabled:opacity-50"
+            >
+              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh Standings'}
+            </button>
+          </div>
+
+          <div className="border border-[#2d6a4f]/20 bg-white shadow-sm rounded-xl divide-y divide-[#1b4332]/10 overflow-hidden">
+            {leaderboard.length === 0 ? (
+              <div className="p-8 text-center font-mono text-xs text-[#526760]">
+                No entries yet for BEST 301. Be the first to log an action above!
+              </div>
+            ) : (
+              leaderboard.map((student, index) => (
+                <div
+                  key={student.id || index}
+                  className="flex items-center justify-between p-4 hover:bg-[#f7f5f0] transition
