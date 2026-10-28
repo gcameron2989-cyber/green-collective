@@ -87,7 +87,6 @@ function PilotContent() {
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id || getOrCreateGuestId();
 
-    // Fetch Profile
     const { data: profileData } = await supabase
       .from('profiles')
       .select('full_name, total_points')
@@ -100,7 +99,6 @@ function PilotContent() {
       setIsNameSet(true);
     }
 
-    // Fetch Today's Logs for progress & undo capability
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
@@ -214,17 +212,15 @@ function PilotContent() {
     setLogging(false);
   };
 
-  // Misclick Safety Net: Undo the most recent action logged today
   const handleUndoLastAction = async () => {
     if (todaysLogs.length === 0) return;
     setLogging(true);
     setStatusMessage(null);
 
-    const lastLog = todaysLogs[0]; // Most recent
+    const lastLog = todaysLogs[0];
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id || getOrCreateGuestId();
 
-    // Delete from logged_actions
     const { error: deleteError } = await supabase
       .from('logged_actions')
       .delete()
@@ -236,11 +232,9 @@ function PilotContent() {
       return;
     }
 
-    // Subtract points
     const nextScore = Math.max(0, userScore - lastLog.points);
     setUserScore(nextScore);
 
-    // Update profile score
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: currentUserId,
       full_name: displayName.trim() || 'Student',
@@ -314,7 +308,6 @@ function PilotContent() {
           </section>
         ) : (
           <div className="space-y-6">
-            {/* User Dashboard Header */}
             <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-4">
                 <div>
@@ -331,7 +324,6 @@ function PilotContent() {
                 </button>
               </div>
 
-              {/* Today's Progress & Undo Safety Net */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 border border-[#102f26]/10">
                 <div>
                   <span className="font-mono text-[11px] text-[#39705d] uppercase tracking-wider font-bold">
@@ -374,7 +366,6 @@ function PilotContent() {
               )}
             </section>
 
-            {/* Action Catalog Grid */}
             <section className="border border-[#102f26]/15 bg-[#f9f8f6] p-8 space-y-6">
               <div className="border-b border-[#102f26]/10 pb-3">
                 <h3 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
@@ -407,75 +398,3 @@ function PilotContent() {
                     disabled={logging}
                     onClick={() => handleLogAction(action)}
                     className="border border-[#102f26]/20 bg-white p-4 text-left hover:border-[#102f26] transition-all hover:shadow-sm disabled:opacity-50 flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="text-2xl mb-1">{action.icon || '🌱'}</div>
-                      <div className="text-xs font-semibold text-[#102f26]">{action.title}</div>
-                    </div>
-                    <div className="font-mono text-[10px] text-[#39705d] mt-3 font-bold">
-                      +{action.points} PTS
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-
-        <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-[#102f26]/10 pb-3">
-            <h2 className="font-mono text-xs uppercase tracking-wider text-[#102f26] font-semibold">
-              🏆 Live Standings — BEST 301
-            </h2>
-            <button
-              onClick={fetchLeaderboard}
-              disabled={isRefreshing}
-              className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] hover:underline disabled:opacity-50"
-            >
-              {isRefreshing ? '⏳ Refreshing...' : '↻ Refresh Standings'}
-            </button>
-          </div>
-
-          <div className="border border-[#102f26]/15 bg-white divide-y divide-[#102f26]/10">
-            {leaderboard.length === 0 ? (
-              <div className="p-8 text-center font-mono text-xs text-[#526760]">
-                No entries yet for BEST 301. Be the first to log an action above!
-              </div>
-            ) : (
-              leaderboard.map((student, index) => (
-                <div
-                  key={student.id || index}
-                  className="flex items-center justify-between p-4 hover:bg-[#f9f8f6] transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-xs text-[#39705d] font-bold w-6">
-                      #{index + 1}
-                    </span>
-                    <span className="text-sm font-medium text-[#102f26]">
-                      {student.full_name || 'Anonymous Student'}
-                    </span>
-                  </div>
-                  <div className="font-mono text-xs font-bold text-[#102f26]">
-                    {student.total_points || 0} <span className="text-[10px] text-[#526760] font-normal">PTS</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-export default function ClassPilotPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white text-[#102f26] flex items-center justify-center font-mono text-xs">
-        Loading BEST 301 Pilot...
-      </div>
-    }>
-      <PilotContent />
-    </Suspense>
-  );
-}
