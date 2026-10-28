@@ -259,7 +259,6 @@ function PilotContent() {
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] text-[#1b4332] pb-24 font-sans">
-      {/* Botanical Header */}
       <section className="border-b border-[#1b4332]/10 bg-[#1b4332] text-[#f7f5f0] px-6 py-16 text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
         <div className="relative z-10 max-w-2xl mx-auto space-y-3">
@@ -444,6 +443,36 @@ function PilotContent() {
               </div>
             ) : (
               leaderboard.map((student, index) => (
-                <div
-                  key={student.id || index}
-                  className="flex items-center justify-between p-4 hover:bg-[#f7f5f0] transition
+                <div key={student.id || index} className="flex items-center justify-between p-4 hover:bg-[#f7f5f0] transition-colors">
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono text-xs text-[#2d6a4f] font-bold w-6">
+                      #{index + 1}
+                    </span>
+                    <span className="text-sm font-medium text-[#1b4332]">
+                      {student.full_name || 'Anonymous Student'}
+                    </span>
+                  </div>
+                  <div className="font-mono text-xs font-bold text-[#1b4332]">
+                    {student.total_points || 0} <span className="text-[10px] text-[#526760] font-normal">PTS</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+export default function ClassPilotPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f7f5f0] text-[#1b4332] flex items-center justify-center font-mono text-xs">
+        Loading BEST 301 Pilot...
+      </div>
+    }>
+      <PilotContent />
+    </Suspense>
+  );
+}
