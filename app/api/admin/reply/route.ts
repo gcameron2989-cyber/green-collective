@@ -1,26 +1,34 @@
-import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { NextResponse } from 'next/server'
+import { Resend } from 'resend'
+import { createClient } from '@supabase/supabase-js'
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const { toEmail, name, message } = await request.json();
+    const { to, message, inquiryId } = await req.json()
 
-    if (!toEmail || !message) {
-      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
-    }
+    // Send email using Resend
+    const data = await resend.emails.send({
+      from: 'Green Collective <support@greencollective.ca>',
+      to: [to],
+      subject: 'Regarding your inquiry to Green Collective',
+      text: message,
+    })
 
-    await resend.emails.send({
-      from: 'Green Collective Support <support@greencollective.ca>',
-      to: [toEmail],
-      subject: 'Re: Your inquiry to Green Collective',
-      text: `Hi ${name},\n\n${message}\n\nBest regards,\nGreen Collective Support Team\nsupport@greencollective.ca`,
-    });
+    // Update status in Supabase table
+    await supabaseAdmin
+      .from('contact_inquiries')
+      .update({ status: 'replied' })
+      .eq('id', inquiryId)
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, data })
   } catch (error) {
-    console.error('Resend reply error:', error);
-    return NextResponse.json({ success: false, error: 'Failed to send email' }, { status: 500 });
+    console.error('Error sending email:', error)
+    return NextResponse.json({ error: 'Failed to send reply' }, { status: 500 })
   }
 }
