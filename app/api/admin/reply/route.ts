@@ -16,9 +16,9 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Send the email using Resend's verified testing domain
+    // Send using your verified root domain
     const emailData = await resend.emails.send({
-      from: 'Green Collective <onboarding@resend.dev>',
+      from: 'Green Collective <noreply@greencollective.ca>',
       to: [to],
       subject: 'Regarding your inquiry to Green Collective',
       text: message,
