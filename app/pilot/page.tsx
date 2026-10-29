@@ -99,6 +99,18 @@ function PilotContent() {
       setDisplayName(profileData.full_name);
       setUserScore(profileData.total_points || 0);
       setIsNameSet(true);
+    } else if (user && user.email) {
+      // Auto-bypass join screen if logged in via Auth but missing profile row
+      const defaultName = user.email.split('@')[0];
+      setDisplayName(defaultName);
+      setIsNameSet(true);
+      
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: defaultName,
+        cohort: cohort,
+        total_points: 0,
+      });
     }
 
     const startOfToday = new Date();
