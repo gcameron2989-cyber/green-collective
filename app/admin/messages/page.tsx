@@ -53,7 +53,7 @@ export default function AdminMessagesPage() {
 
     setSending(true)
     try {
-      // 1. Update status in Supabase
+      // 1. Update status to 'replied' in Supabase
       const { error: dbError } = await supabase
         .from('contact_inquiries')
         .update({ status: 'replied' })
@@ -61,31 +61,23 @@ export default function AdminMessagesPage() {
 
       if (dbError) throw dbError
 
-      // 2. Dispatch email directly via Resend HTTP API (No backend SDK required!)
-      // Ensure RESEND_API_KEY is available or configured, or use your preferred email endpoint
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Note: For full security in production, you can route this through a lightweight serverless function, 
-          // or store your public key if using a client-side mail provider like EmailJS.
-        },
-        body: JSON.stringify({
-          from: 'Green Collective <support@greencollective.ca>',
-          to: [selectedInquiry.email],
-          subject: 'Regarding your inquiry to Green Collective',
-          text: replyText,
-        }),
-      })
+      // 2. Open email client pre-populated with user's address and your draft response
+      const mailtoUrl = `mailto:${selectedInquiry.email}?subject=Regarding your inquiry to Green Collective&body=${encodeURIComponent(replyText)}`
 
-      // Update local state UI
-      setInquiries(inquiries.map(item => item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item))
+      // Update local UI state
+      setInquiries(
+        inquiries.map((item) =>
+          item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item
+        )
+      )
       setReplyText('')
       setSelectedInquiry(null)
-      alert('Reply sent successfully to ' + selectedInquiry.email + '!')
+
+      window.location.href = mailtoUrl
+      alert('Inquiry successfully marked as replied!')
     } catch (err) {
       console.error(err)
-      alert('Error sending reply email.')
+      alert('Error updating inquiry status.')
     } finally {
       setSending(false)
     }
@@ -98,16 +90,22 @@ export default function AdminMessagesPage() {
           Admin Console
         </span>
         <h1 className="text-3xl font-extrabold mt-2">Platform Inquiries Inbox</h1>
-        <p className="text-xs text-neutral-500 font-mono mt-1">Manage and respond to user messages from contact_inquiries</p>
+        <p className="text-xs text-neutral-500 font-mono mt-1">
+          Manage and respond to user messages from contact_inquiries
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Inquiries List Sidebar */}
         <div className="md:col-span-1 rounded-2xl bg-neutral-50 p-4 border border-neutral-200 space-y-3 max-h-[600px] overflow-y-auto">
           {loading ? (
-            <div className="text-center py-10 text-xs font-mono text-neutral-400 animate-pulse">Loading inquiries...</div>
+            <div className="text-center py-10 text-xs font-mono text-neutral-400 animate-pulse">
+              Loading inquiries...
+            </div>
           ) : inquiries.length === 0 ? (
-            <div className="text-center py-10 text-xs text-neutral-500">No contact inquiries found.</div>
+            <div className="text-center py-10 text-xs text-neutral-500">
+              No contact inquiries found.
+            </div>
           ) : (
             inquiries.map((item) => (
               <div
@@ -120,10 +118,16 @@ export default function AdminMessagesPage() {
                 }`}
               >
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-bold text-neutral-900 truncate max-w-[120px]">{item.name}</span>
-                  <span className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
-                    item.status === 'replied' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
+                  <span className="text-xs font-bold text-neutral-900 truncate max-w-[120px]">
+                    {item.name}
+                  </span>
+                  <span
+                    className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                      item.status === 'replied'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
                     {item.status}
                   </span>
                 </div>
@@ -153,8 +157,12 @@ export default function AdminMessagesPage() {
               </div>
 
               <div className="bg-white p-4 rounded-xl border border-neutral-200 flex-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block mb-1">Message Content</span>
-                <p className="text-sm text-neutral-800 whitespace-pre-wrap">{selectedInquiry.message}</p>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 block mb-1">
+                  Message Content
+                </span>
+                <p className="text-sm text-neutral-800 whitespace-pre-wrap">
+                  {selectedInquiry.message}
+                </p>
               </div>
 
               {/* Reply Form */}
@@ -176,7 +184,7 @@ export default function AdminMessagesPage() {
                     disabled={sending}
                     className="px-5 py-2.5 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition disabled:opacity-50"
                   >
-                    {sending ? 'Sending...' : 'Send & Mark Replied ↗'}
+                    {sending ? 'Processing...' : 'Send & Mark Replied ↗'}
                   </button>
                 </div>
               </form>
