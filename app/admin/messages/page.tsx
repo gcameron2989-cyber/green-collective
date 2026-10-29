@@ -53,7 +53,7 @@ export default function AdminMessagesPage() {
 
     setSending(true)
     try {
-      // Send through our secure Resend API route
+      // Call the backend API route to dispatch via Resend and update Supabase
       const res = await fetch('/api/admin/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,10 +64,10 @@ export default function AdminMessagesPage() {
         }),
       })
 
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.error || 'Failed to send')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to send email')
 
-      // Update local state UI
+      // Update local UI state
       setInquiries(
         inquiries.map((item) =>
           item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item
@@ -75,10 +75,10 @@ export default function AdminMessagesPage() {
       )
       setReplyText('')
       setSelectedInquiry(null)
-      alert('Reply emailed successfully to ' + selectedInquiry.email + '!')
-    } catch (err) {
+      alert('Email successfully sent to ' + selectedInquiry.email + '!')
+    } catch (err: any) {
       console.error(err)
-      alert('Error sending email. Check your Resend API key in Vercel settings.')
+      alert('Error sending email: ' + (err.message || err))
     } finally {
       setSending(false)
     }
@@ -185,7 +185,7 @@ export default function AdminMessagesPage() {
                     disabled={sending}
                     className="px-5 py-2.5 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition disabled:opacity-50"
                   >
-                    {sending ? 'Sending Email...' : 'Send & Mark Replied ↗'}
+                    {sending ? 'Sending...' : 'Send & Mark Replied ↗'}
                   </button>
                 </div>
               </form>
