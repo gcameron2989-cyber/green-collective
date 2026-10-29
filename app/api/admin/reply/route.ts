@@ -6,17 +6,21 @@ export async function POST(req: Request) {
   try {
     const { to, message, inquiryId } = await req.json()
 
-    if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: 'RESEND_API_KEY is missing in environment variables' }, { status: 500 })
+    const apiKey = process.env.RESEND_API_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!apiKey || !supabaseUrl || !serviceKey) {
+      return NextResponse.json(
+        { error: 'Missing environment variables (RESEND_API_KEY, SUPABASE_URL, or SERVICE_ROLE_KEY)' },
+        { status: 500 }
+      )
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const resend = new Resend(apiKey)
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey)
 
-    // Send using your verified root domain
+    // Send the email using your verified domain
     const emailData = await resend.emails.send({
       from: 'Green Collective <noreply@greencollective.ca>',
       to: [to],
