@@ -28,7 +28,6 @@ export default function AdminMessagesPage() {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Optional: Add a check here to ensure only your admin email can access this route
       if (!user) {
         router.push('/')
         return
@@ -54,29 +53,23 @@ export default function AdminMessagesPage() {
 
     setSending(true)
     try {
-      // Call your backend API route or email service (like Resend) to send the reply email
-      const res = await fetch('/api/admin/reply', {
+      // 1. Mark status as replied in Supabase
+      await fetch('/api/admin/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: selectedInquiry.email,
-          message: replyText,
-          inquiryId: selectedInquiry.id,
-        }),
+        body: JSON.stringify({ inquiryId: selectedInquiry.id }),
       })
 
-      if (res.ok) {
-        alert('Reply sent successfully!')
-        setReplyText('')
-        setSelectedInquiry(null)
-        // Refresh inquiries list state locally
-        setInquiries(inquiries.map(item => item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item))
-      } else {
-        alert('Failed to send reply.')
-      }
+      // 2. Open mailto link so you can send it instantly from your email client without API errors
+      const mailtoUrl = `mailto:${selectedInquiry.email}?subject=Regarding your inquiry to Green Collective&body=${encodeURIComponent(replyText)}`
+      window.location.href = mailtoUrl
+
+      setInquiries(inquiries.map(item => item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item))
+      setReplyText('')
+      setSelectedInquiry(null)
     } catch (err) {
       console.error(err)
-      alert('Error sending reply.')
+      alert('Error updating status.')
     } finally {
       setSending(false)
     }
@@ -151,13 +144,13 @@ export default function AdminMessagesPage() {
               {/* Reply Form */}
               <form onSubmit={handleSendReply} className="space-y-3 pt-2">
                 <label className="block text-xs font-mono font-bold text-neutral-700 uppercase tracking-wider">
-                  Reply via Email
+                  Draft & Send Reply
                 </label>
                 <textarea
                   rows={4}
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Type your official response here..."
+                  placeholder="Type your response here..."
                   className="w-full rounded-xl border border-neutral-300 p-3 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
                   required
                 />
@@ -167,7 +160,7 @@ export default function AdminMessagesPage() {
                     disabled={sending}
                     className="px-5 py-2.5 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition disabled:opacity-50"
                   >
-                    {sending ? 'Sending...' : 'Send Reply ↗'}
+                    {sending ? 'Processing...' : 'Send & Mark Replied ↗'}
                   </button>
                 </div>
               </form>
