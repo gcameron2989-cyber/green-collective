@@ -53,18 +53,21 @@ export default function AdminMessagesPage() {
 
     setSending(true)
     try {
-      // 1. Update status to 'replied' in Supabase
-      const { error: dbError } = await supabase
-        .from('contact_inquiries')
-        .update({ status: 'replied' })
-        .eq('id', selectedInquiry.id)
+      // Send through our secure Resend API route
+      const res = await fetch('/api/admin/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selectedInquiry.email,
+          message: replyText,
+          inquiryId: selectedInquiry.id,
+        }),
+      })
 
-      if (dbError) throw dbError
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Failed to send')
 
-      // 2. Open email client pre-populated with user's address and your draft response
-      const mailtoUrl = `mailto:${selectedInquiry.email}?subject=Regarding your inquiry to Green Collective&body=${encodeURIComponent(replyText)}`
-
-      // Update local UI state
+      // Update local state UI
       setInquiries(
         inquiries.map((item) =>
           item.id === selectedInquiry.id ? { ...item, status: 'replied' } : item
@@ -72,12 +75,10 @@ export default function AdminMessagesPage() {
       )
       setReplyText('')
       setSelectedInquiry(null)
-
-      window.location.href = mailtoUrl
-      alert('Inquiry successfully marked as replied!')
+      alert('Reply emailed successfully to ' + selectedInquiry.email + '!')
     } catch (err) {
       console.error(err)
-      alert('Error updating inquiry status.')
+      alert('Error sending email. Check your Resend API key in Vercel settings.')
     } finally {
       setSending(false)
     }
@@ -184,7 +185,7 @@ export default function AdminMessagesPage() {
                     disabled={sending}
                     className="px-5 py-2.5 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition disabled:opacity-50"
                   >
-                    {sending ? 'Processing...' : 'Send & Mark Replied ↗'}
+                    {sending ? 'Sending Email...' : 'Send & Mark Replied ↗'}
                   </button>
                 </div>
               </form>
