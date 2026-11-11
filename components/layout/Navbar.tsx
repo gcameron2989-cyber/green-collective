@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -44,14 +43,16 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path;
 
-const navItems = [
-    { href: '/habits', label: 'Actions' },
+  // Updated href to route directly to our dual-attribution submission portal
+  const navItems = [
+    { href: '/competition/submit', label: 'Actions' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/research', label: 'Research Hub' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
   ];
+
   return (
     <header className="border-b border-neutral-200 bg-white sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
