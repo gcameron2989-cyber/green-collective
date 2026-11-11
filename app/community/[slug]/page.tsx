@@ -1,15 +1,31 @@
 import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
+const ECO_ACTIONS_MAP: Record<string, { pointsPerUnit: number }> = {
+  'transit-commute': { pointsPerUnit: 1 },
+  'active-commute': { pointsPerUnit: 10 },
+  'carpool-trip': { pointsPerUnit: 3 },
+  'stairs-instead-elevator': { pointsPerUnit: 3 },
+  'home-meal': { pointsPerUnit: 30 },
+  'home-beverage': { pointsPerUnit: 25 },
+  'reusable-container-buy': { pointsPerUnit: 15 },
+  'refillable-water': { pointsPerUnit: 10 },
+  'plant-based-meal': { pointsPerUnit: 20 },
+  'waste-sorting': { pointsPerUnit: 10 },
+  'thrift-borrow-gear': { pointsPerUnit: 30 },
+  'campus-cleanup': { pointsPerUnit: 50 },
+  'ubc-forestry-field': { pointsPerUnit: 50 },
+}
+
 export default async function CommunityHubPage({ params }: PageProps) {
   const { slug } = await params
-  // Format slug back into a readable title (e.g., "kitsilano" -> "Kitsilano")
+  
+  // Reconstruct readable community name from slug (e.g., "kitsilano" -> "Kitsilano")
   const communityName = decodeURIComponent(slug)
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -17,7 +33,7 @@ export default async function CommunityHubPage({ params }: PageProps) {
 
   const supabase = await createClient()
 
-  // 1. Fetch all profiles belonging to this community
+  // 1. Fetch profiles belonging to this community
   const { data: members } = await supabase
     .from('profiles')
     .select('id, display_name, avatar_emoji, is_best_301')
@@ -25,7 +41,7 @@ export default async function CommunityHubPage({ params }: PageProps) {
 
   const memberIds = members?.map(m => m.id) || []
 
-  // 2. Fetch submissions made by members of this community
+  // 2. Fetch approved submissions for these members
   let communitySubmissions: any[] = []
   if (memberIds.length > 0) {
     const { data: subs } = await supabase
@@ -38,19 +54,12 @@ export default async function CommunityHubPage({ params }: PageProps) {
     if (subs) communitySubmissions = subs
   }
 
-  // 3. Compute Hub Metrics
+  // 3. Compute Metrics
   const totalMembers = members?.length || 0
   const totalActions = communitySubmissions.length
-  // Proportional points map matching our action list
-  const pointsMap: Record<string, number> = {
-    'transit-commute': 1, 'active-commute': 10, 'carpool-trip': 3,
-    'stairs-instead-elevator': 3, 'home-meal': 30, 'home-beverage': 25,
-    'reusable-container-buy': 15, 'refillable-water': 10, 'plant-based-meal': 20,
-    'waste-sorting': 10, 'thrift-borrow-gear': 30, 'campus-cleanup': 50, 'ubc-forestry-field': 50
-  }
-
+  
   const totalPoints = communitySubmissions.reduce((sum, s) => {
-    const rate = pointsMap[s.eco_action_id] || 20;
+    const rate = ECO_ACTIONS_MAP[s.eco_action_id]?.pointsPerUnit || 20;
     return sum + (rate * s.quantity);
   }, 0);
 
@@ -70,10 +79,10 @@ export default async function CommunityHubPage({ params }: PageProps) {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-[#102f26] mb-3">
-            {communityName}
+            📍 {communityName}
           </h1>
           <p className="text-sm text-[#526760] font-mono">
-            Localized bioeconomy tracking and collective community action network.
+            Localized bioeconomy tracking and collective neighborhood action network.
           </p>
         </div>
       </section>
@@ -82,26 +91,26 @@ export default async function CommunityHubPage({ params }: PageProps) {
         
         {/* Hub Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#102f26]/15 p-5">
+          <div className="bg-white border border-[#102f26]/15 p-5 shadow-2xs">
             <p className="font-mono text-[10px] text-[#39705d] uppercase tracking-wider mb-1">Active Members</p>
             <p className="text-3xl font-bold text-[#102f26]">{totalMembers}</p>
           </div>
-          <div className="bg-white border border-[#102f26]/15 p-5">
-            <p className="font-mono text-[10px] text-[#39705d] uppercase tracking-wider mb-1">Total Impact Score</p>
+          <div className="bg-white border border-[#102f26]/15 p-5 shadow-2xs">
+            <p className="font-mono text-[10px] text-[#39705d] uppercase tracking-wider mb-1">Impact Score</p>
             <p className="text-3xl font-bold text-[#102f26]">{totalPoints}</p>
           </div>
-          <div className="bg-white border border-[#102f26]/15 p-5">
+          <div className="bg-white border border-[#102f26]/15 p-5 shadow-2xs">
             <p className="font-mono text-[10px] text-[#39705d] uppercase tracking-wider mb-1">Verified Actions</p>
             <p className="text-3xl font-bold text-[#102f26]">{totalActions}</p>
           </div>
-          <div className="bg-white border border-[#102f26]/15 p-5">
+          <div className="bg-white border border-[#102f26]/15 p-5 shadow-2xs">
             <p className="font-mono text-[10px] text-[#39705d] uppercase tracking-wider mb-1">Est. CO₂ Offset</p>
             <p className="text-3xl font-bold text-[#39705d]">{totalCO2Kg} kg</p>
           </div>
         </div>
 
         {/* Member Roster Preview */}
-        <div className="bg-white border border-[#102f26]/15 p-6">
+        <div className="bg-white border border-[#102f26]/15 p-6 shadow-2xs">
           <h2 className="font-mono text-xs uppercase tracking-widest text-[#39705d] font-bold mb-4 pb-2 border-b border-[#102f26]/10">
             Hub Contributors ({totalMembers})
           </h2>
@@ -124,7 +133,7 @@ export default async function CommunityHubPage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Community Activity Feed (Strava Vibe) */}
+        {/* Community Activity Feed */}
         <div>
           <h2 className="font-mono text-xs uppercase tracking-widest text-[#39705d] font-bold mb-4 pb-2 border-b border-[#102f26]/10">
             {communityName} Activity Stream
@@ -138,11 +147,11 @@ export default async function CommunityHubPage({ params }: PageProps) {
             ) : (
               communitySubmissions.map((sub) => {
                 const member = members?.find(m => m.id === sub.user_id)
-                const rate = pointsMap[sub.eco_action_id] || 20
+                const rate = ECO_ACTIONS_MAP[sub.eco_action_id]?.pointsPerUnit || 20
                 const earned = rate * sub.quantity
 
                 return (
-                  <div key={sub.id} className="bg-white border border-[#102f26]/15 p-5 flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+                  <div key={sub.id} className="bg-white border border-[#102f26]/15 p-5 flex flex-col md:flex-row justify-between gap-4 items-start md:items-center shadow-2xs">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{member?.avatar_emoji || '🌲'}</span>
