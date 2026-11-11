@@ -4,7 +4,6 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-// Synchronized with the Proportional Scoring Matrix
 const ECO_ACTIONS_MAP: Record<string, { title: string; pointsPerUnit: number; category: string; unit: string }> = {
   'transit-commute': { category: 'Mobility & Energy', title: 'Public Transit (Bus/Train/SkyTrain)', unit: 'mins', pointsPerUnit: 1 },
   'active-commute': { category: 'Mobility & Energy', title: 'Active Commute (Walk/Bike)', unit: 'km', pointsPerUnit: 10 },
@@ -37,7 +36,7 @@ interface Submission {
 
 export default function LeaderboardPage() {
   const [tab, setTab] = useState<"ubc" | "community" | "best301">("ubc");
-  const [profiles, setProfiles] =<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +65,6 @@ export default function LeaderboardPage() {
   }, [supabase]);
 
   const rankings = useMemo(() => {
-    // 1. Process Individual Stats with Proportional Math
     const userStats = profiles.map((p) => {
       const userSubs = submissions.filter((s) => s.user_id === p.id);
       const points = userSubs.reduce(
@@ -74,14 +72,13 @@ export default function LeaderboardPage() {
         0
       );
       const actionsCount = userSubs.reduce((sum, s) => sum + s.quantity, 0);
-      const co2Saved = actionsCount * 0.6; // Aligning with Profile math
+      const co2Saved = actionsCount * 0.6;
 
       return { ...p, points, actionsCount, co2Saved };
     }).filter((u) => u.points > 0);
 
     const sortedIndividuals = [...userStats].sort((a, b) => b.points - a.points);
 
-    // 2. Process Community Stats
     const communityMap: Record<string, { community: string; points: number; members: number; actions: number; co2: number }> = {};
     
     userStats.forEach((u) => {
