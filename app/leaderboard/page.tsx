@@ -4,19 +4,21 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-// Aligning with the Profile page scoring
-const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
-  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home', points: 30 },
-  'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
-  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug', points: 15 },
-  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle', points: 20 },
-  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining', points: 20 },
-  'sustainable-commute': { category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
-  'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
-  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator', points: 10 },
-  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost & Recycling', points: 10 },
-  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear', points: 30 },
-  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up', points: 50 },
+// Synchronized with the Proportional Scoring Matrix
+const ECO_ACTIONS_MAP: Record<string, { title: string; pointsPerUnit: number; category: string; unit: string }> = {
+  'transit-commute': { category: 'Mobility & Energy', title: 'Public Transit (Bus/Train/SkyTrain)', unit: 'mins', pointsPerUnit: 1 },
+  'active-commute': { category: 'Mobility & Energy', title: 'Active Commute (Walk/Bike)', unit: 'km', pointsPerUnit: 10 },
+  'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpool', unit: 'km', pointsPerUnit: 3 },
+  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator', unit: 'floors', pointsPerUnit: 3 },
+  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home', unit: 'meals', pointsPerUnit: 30 },
+  'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea in Reusable Mug', unit: 'drinks', pointsPerUnit: 25 },
+  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container for Takeout/Dining', unit: 'items', pointsPerUnit: 15 },
+  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Station vs. Bottled Water', unit: 'refills', pointsPerUnit: 10 },
+  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose Plant-Based Dining Option', unit: 'meals', pointsPerUnit: 20 },
+  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost & Recyclables at Hub', unit: 'sorts', pointsPerUnit: 10 },
+  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed / Thrifted Academic Textbooks or Gear', unit: 'items', pointsPerUnit: 30 },
+  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Community/Faculty Cleanup', unit: 'hours', pointsPerUnit: 50 },
+  'ubc-forestry-field': { category: 'UBC Stewardship', title: 'Participated in Campus Tree Care/Field Audit', unit: 'hours', pointsPerUnit: 50 },
 };
 
 interface Profile {
@@ -35,7 +37,7 @@ interface Submission {
 
 export default function LeaderboardPage() {
   const [tab, setTab] = useState<"ubc" | "community" | "best301">("ubc");
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] =<Profile[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,18 +66,18 @@ export default function LeaderboardPage() {
   }, [supabase]);
 
   const rankings = useMemo(() => {
-    // 1. Process Individual Stats
+    // 1. Process Individual Stats with Proportional Math
     const userStats = profiles.map((p) => {
       const userSubs = submissions.filter((s) => s.user_id === p.id);
       const points = userSubs.reduce(
-        (sum, s) => sum + (ECO_ACTIONS_MAP[s.eco_action_id]?.points || 0) * s.quantity,
+        (sum, s) => sum + (ECO_ACTIONS_MAP[s.eco_action_id]?.pointsPerUnit || 20) * s.quantity,
         0
       );
       const actionsCount = userSubs.reduce((sum, s) => sum + s.quantity, 0);
-      const co2Saved = actionsCount * 0.6; // Aligning with Profile page math
+      const co2Saved = actionsCount * 0.6; // Aligning with Profile math
 
       return { ...p, points, actionsCount, co2Saved };
-    }).filter((u) => u.points > 0); // Hide inactive users
+    }).filter((u) => u.points > 0);
 
     const sortedIndividuals = [...userStats].sort((a, b) => b.points - a.points);
 
@@ -83,7 +85,7 @@ export default function LeaderboardPage() {
     const communityMap: Record<string, { community: string; points: number; members: number; actions: number; co2: number }> = {};
     
     userStats.forEach((u) => {
-      const comm = u.community || "Vancouver";
+      const comm = u.community || "UBC Campus";
       if (!communityMap[comm]) {
         communityMap[comm] = { community: comm, points: 0, members: 0, actions: 0, co2: 0 };
       }
@@ -176,7 +178,7 @@ export default function LeaderboardPage() {
                 <thead>
                   <tr className="border-b border-emerald-900/10 text-emerald-900">
                     <th className="py-3 px-4 font-bold">Rank</th>
-                    <th className="py-3 px-4 font-bold">Neighborhood</th>
+                    <th className="py-3 px-4 font-bold">Neighborhood / Municipality</th>
                     <th className="py-3 px-4 font-bold text-center">Active Members</th>
                     <th className="py-3 px-4 font-bold text-center">Total Actions</th>
                     <th className="py-3 px-4 font-bold text-right">Impact Score</th>
@@ -189,7 +191,12 @@ export default function LeaderboardPage() {
                         {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-foreground">
-                        {comm.community}
+                        <Link 
+                          href={`/community/${encodeURIComponent(comm.community.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`}
+                          className="hover:text-emerald-700 hover:underline flex items-center gap-1.5"
+                        >
+                          📍 {comm.community} →
+                        </Link>
                       </td>
                       <td className="py-3.5 px-4 text-center font-medium text-muted-foreground">
                         {comm.members}
