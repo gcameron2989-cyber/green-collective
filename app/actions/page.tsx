@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
 
-type Sector = "public" | "campus";
-type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
-
 interface ActionCatalogItem {
   id: string;
   title: string;
@@ -112,15 +109,34 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
   },
 ];
 
-const VANCOUVER_NEIGHBOURHOODS = [
-  "Kitsilano",
+const METRO_VAN_COMMUNITIES = [
+  "UBC Campus",
+  "University Endowment Lands (UEL)",
   "Point Grey",
-  "Mount Pleasant",
-  "Fairview / South Granville",
-  "Downtown / West End",
-  "Commercial Drive",
+  "Kitsilano",
   "Dunbar-Southlands",
   "Kerrisdale",
+  "Arbutus Ridge",
+  "Shaughnessy",
+  "Oakridge",
+  "Marpole",
+  "Fairview",
+  "South Cambie",
+  "West End",
+  "Yaletown",
+  "Coal Harbour",
+  "Gastown",
+  "Mount Pleasant",
+  "Strathcona",
+  "Grandview-Woodland (Commercial Dr)",
+  "Hastings-Sunrise",
+  "Burnaby",
+  "Richmond",
+  "Surrey",
+  "North Vancouver",
+  "West Vancouver",
+  "New Westminster",
+  "Coquitlam",
 ];
 
 const UBC_FACULTIES = [
@@ -142,16 +158,12 @@ export default function ActionsPage() {
   const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  // Batch selection cart state: { [actionId]: quantity }
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // Form attribution states
-  const [sector, setSector] = useState<Sector>("public");
-  const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
-  const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
-  const [customAffiliation, setCustomAffiliation] = useState("");
+  // Dual attribution states: users select BOTH faculty and community simultaneously
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
+  const [community, setCommunity] = useState(METRO_VAN_COMMUNITIES[0]);
 
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -175,27 +187,8 @@ export default function ActionsPage() {
       }
     }
     loadActions();
-
-    // Check for pending batch submission after auth redirect
-    const pending = localStorage.getItem("pending_batch_action_submit");
-    if (pending) {
-      try {
-        const parsed = JSON.parse(pending);
-        if (parsed.cart) setCart(parsed.cart);
-        if (parsed.sector) setSector(parsed.sector);
-        if (parsed.publicAffiliationType) setPublicAffiliationType(parsed.publicAffiliationType);
-        if (parsed.neighbourhood) setNeighbourhood(parsed.neighbourhood);
-        if (parsed.customAffiliation) setCustomAffiliation(parsed.customAffiliation);
-        if (parsed.faculty) setFaculty(parsed.faculty);
-        setIsReviewOpen(true);
-      } catch (err) {
-        console.error("Failed to parse pending batch:", err);
-      }
-      localStorage.removeItem("pending_batch_action_submit");
-    }
   }, []);
 
-  // Cart operations
   const setActionQuantity = (actionId: string, qty: number) => {
     setCart((prev) => {
       const next = { ...prev };
@@ -210,8 +203,7 @@ export default function ActionsPage() {
 
   const clearCart = () => setCart({});
 
-  // Calculations
-  const selectedEntries = Object.entries(cart); // [actionId, qty]
+  const selectedEntries = Object.entries(cart);
   const totalSelectedCount = selectedEntries.reduce((acc, [_, qty]) => acc + qty, 0);
 
   const selectedItemsDetails = selectedEntries
@@ -227,28 +219,11 @@ export default function ActionsPage() {
   const filteredActions =
     selectedCategory === "All" ? actionsList : actionsList.filter((a) => a.category === selectedCategory);
 
-  const getAffiliationName = (): string => {
-    if (sector === "campus") return faculty;
-    if (publicAffiliationType === "neighbourhood") return neighbourhood;
-    return customAffiliation.trim() || "Local Community";
-  };
-
   const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItemsDetails.length === 0) return;
 
-    const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
-
     if (!user) {
-      const pendingData = {
-        cart,
-        sector,
-        publicAffiliationType,
-        neighbourhood,
-        customAffiliation,
-        faculty,
-      };
-      localStorage.setItem("pending_batch_action_submit", JSON.stringify(pendingData));
       router.push(`/login?redirectTo=${encodeURIComponent("/actions")}`);
       return;
     }
@@ -257,29 +232,36 @@ export default function ActionsPage() {
     setStatusMsg(null);
 
     try {
-      const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => ({
         actionId: item.id,
         quantity: item.selectedQty,
       }));
 
+      // Log actions crediting both faculty and community
       await logBatchUserActions({
         items: itemsToSubmit,
-        sector,
-        affiliationType: finalAffiliationType,
-        affiliationName: finalAffiliationName,
+        sector: "campus",
+        affiliationType: "faculty",
+        affiliationName: faculty,
       });
+
+      // Also update user profile with dual attribution
+      await supabase
+        .from('profiles')
+        .update({ community: community, faculty_id: faculty })
+        .eq('id', user.id);
 
       setStatusMsg({
         type: "success",
-        text: `Logged ${itemsToSubmit.length} actions! Credited to ${finalAffiliationName}.`,
+        text: `Logged ${itemsToSubmit.length} actions! Credited to ${faculty} & ${community}.`,
       });
 
       setTimeout(() => {
         clearCart();
         setIsReviewOpen(false);
         setStatusMsg(null);
-      }, 1800);
+        router.push("/competition");
+      }, 1500);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
     } finally {
@@ -289,18 +271,16 @@ export default function ActionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative">
-      {/* Hero Banner */}
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
-            Action Network
+            Action Network · Dual Attribution Ledger
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight">Log Verified Impact</h1>
           <p className="text-xs text-[#526760] max-w-xl mt-1">
-            Select one or multiple actions below to log them together and route impact points to your community or faculty.
+            Select actions below to log them together. Your impact points will simultaneously contribute to your UBC Faculty and your Metro Vancouver neighborhood.
           </p>
 
-          {/* Category Filters */}
           <div className="flex flex-wrap gap-2 mt-6">
             {CATEGORIES.map((cat) => (
               <button
@@ -319,7 +299,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Action Directory Grid */}
       <section className="max-w-7xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredActions.map((action) => {
@@ -349,13 +328,11 @@ export default function ActionsPage() {
                     ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
                   </span>
 
-                  {/* Quantity Selection Control */}
                   {isSelected ? (
                     <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
                       <button
                         onClick={() => setActionQuantity(action.id, currentQty - 1)}
                         className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
-                        title="Decrease"
                       >
                         -
                       </button>
@@ -365,7 +342,6 @@ export default function ActionsPage() {
                       <button
                         onClick={() => setActionQuantity(action.id, currentQty + 1)}
                         className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
-                        title="Increase"
                       >
                         +
                       </button>
@@ -385,7 +361,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Floating Multi-Select Batch Bar */}
       {totalSelectedCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#102f26] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center justify-between gap-6 border border-emerald-500/20 max-w-2xl w-[92%] backdrop-blur">
           <div className="flex items-center gap-3">
@@ -416,7 +391,6 @@ export default function ActionsPage() {
         </div>
       )}
 
-      {/* Batch Review & Attribution Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -446,7 +420,6 @@ export default function ActionsPage() {
             )}
 
             <form onSubmit={handleBatchSubmit} className="space-y-5">
-              {/* Itemized List */}
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
                   1. Actions to record:
@@ -476,7 +449,6 @@ export default function ActionsPage() {
                           type="button"
                           onClick={() => setActionQuantity(item.id, 0)}
                           className="text-red-500 hover:text-red-700 font-bold px-1"
-                          title="Remove item"
                         >
                           ✕
                         </button>
@@ -486,91 +458,14 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              {/* Attribution Selector */}
-              <div>
-                <label className="block text-xs font-bold mb-1.5 text-[#102f26]">
-                  2. Sector Attribution:
+              {/* Dual Attribution Selectors */}
+              <div className="p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
+                <label className="block text-xs font-bold text-[#102f26]">
+                  2. Dual Leaderboard Attribution (Faculty & Neighborhood):
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSector("public")}
-                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition ${
-                      sector === "public"
-                        ? "bg-[#102f26] text-white border-[#102f26]"
-                        : "bg-gray-50 text-[#526760] border-gray-200"
-                    }`}
-                  >
-                    Local Public / Community
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSector("campus")}
-                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition ${
-                      sector === "campus"
-                        ? "bg-[#102f26] text-white border-[#102f26]"
-                        : "bg-gray-50 text-[#526760] border-gray-200"
-                    }`}
-                  >
-                    Campus / Student
-                  </button>
-                </div>
-              </div>
 
-              {sector === "public" ? (
-                <div className="p-3.5 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
-                  <label className="block text-xs font-bold text-[#102f26]">
-                    3. Choose Community Attribution:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(["neighbourhood", "association", "company", "other"] as PublicAffiliationType[]).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setPublicAffiliationType(type)}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg capitalize border ${
-                          publicAffiliationType === type
-                            ? "bg-[#39705d] text-white border-[#39705d]"
-                            : "bg-white text-[#526760] border-gray-200"
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-
-                  {publicAffiliationType === "neighbourhood" ? (
-                    <div>
-                      <select
-                        value={neighbourhood}
-                        onChange={(e) => setNeighbourhood(e.target.value)}
-                        className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
-                      >
-                        {VANCOUVER_NEIGHBOURHOODS.map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="text"
-                        required
-                        placeholder={`e.g., Local ${publicAffiliationType} name`}
-                        value={customAffiliation}
-                        onChange={(e) => setCustomAffiliation(e.target.value)}
-                        className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white"
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="p-3.5 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-2">
-                  <label className="block text-xs font-bold text-[#102f26]">
-                    3. Select Faculty / Student Unit:
-                  </label>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#526760] mb-1">UBC Faculty *</label>
                   <select
                     value={faculty}
                     onChange={(e) => setFaculty(e.target.value)}
@@ -583,9 +478,23 @@ export default function ActionsPage() {
                     ))}
                   </select>
                 </div>
-              )}
 
-              {/* Total Summary Box */}
+                <div>
+                  <label className="block text-[11px] font-mono text-[#526760] mb-1">Metro Vancouver Community / Neighborhood *</label>
+                  <select
+                    value={community}
+                    onChange={(e) => setCommunity(e.target.value)}
+                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
+                  >
+                    {METRO_VAN_COMMUNITIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
                 <div>
                   <span className="font-bold text-[#102f26]">Total Impact Generated:</span>
@@ -595,12 +504,6 @@ export default function ActionsPage() {
                 </div>
                 <div className="text-[#102f26] font-black text-sm">+{totalPoints} pts</div>
               </div>
-
-              {!user && (
-                <p className="text-[11px] text-[#39705d] bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
-                  ℹ You are signed out. Submitting will save your selections, prompt sign-in, and automatically log the batch when you return.
-                </p>
-              )}
 
               <div className="flex gap-2 pt-1">
                 <button
@@ -615,7 +518,7 @@ export default function ActionsPage() {
                   disabled={submitting || selectedItemsDetails.length === 0}
                   className="w-1/2 py-2.5 bg-[#102f26] text-white rounded-full text-xs font-semibold hover:bg-[#39705d] transition disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : user ? "Confirm & Log All" : "Sign In & Log →"}
+                  {submitting ? "Processing..." : "Confirm & Log All →"}
                 </button>
               </div>
             </form>
