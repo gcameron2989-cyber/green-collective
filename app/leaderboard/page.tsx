@@ -1,27 +1,42 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-interface UserRank {
-  user_id: string;
-  institution: string;
-  total_co2_saved: number;
-  total_actions: number;
+// Aligning with the Profile page scoring
+const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
+  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home', points: 30 },
+  'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
+  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug', points: 15 },
+  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle', points: 20 },
+  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining', points: 20 },
+  'sustainable-commute': { category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
+  'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
+  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator', points: 10 },
+  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost & Recycling', points: 10 },
+  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear', points: 30 },
+  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up', points: 50 },
+};
+
+interface Profile {
+  id: string;
+  display_name: string;
+  community: string;
+  is_best_301: boolean;
+  avatar_emoji: string;
 }
 
-interface OrgRank {
-  institution: string;
-  member_count: number;
-  total_co2_saved: number;
-  total_actions: number;
+interface Submission {
+  user_id: string;
+  eco_action_id: string;
+  quantity: number;
 }
 
 export default function LeaderboardPage() {
-  const [tab, setTab] = useState<"orgs" | "users">("orgs");
-  const [orgRanks, setOrgRanks] = useState<OrgRank[]>([]);
-  const [userRanks, setUserRanks] = useState<UserRank[]>([]);
+  const [tab, setTab] = useState<"ubc" | "community" | "best301">("ubc");
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
@@ -30,27 +45,65 @@ export default function LeaderboardPage() {
     const fetchLeaderboards = async () => {
       setLoading(true);
 
-      const { data: orgData } = await supabase
-        .from("organization_leaderboard")
-        .select("*")
-        .order("total_co2_saved", { ascending: false });
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, display_name, community, is_best_301, avatar_emoji");
 
-      const { data: userData } = await supabase
-        .from("user_leaderboard")
-        .select("*")
-        .order("total_co2_saved", { ascending: false })
-        .limit(50);
+      const { data: subData } = await supabase
+        .from("submissions")
+        .select("user_id, eco_action_id, quantity")
+        .eq("status", "approved");
 
-      if (orgData) setOrgRanks(orgData);
-      if (userData) setUserRanks(userData);
+      if (profileData) setProfiles(profileData);
+      if (subData) setSubmissions(subData);
+      
       setLoading(false);
     };
 
     fetchLeaderboards();
-  }, []);
+  }, [supabase]);
+
+  const rankings = useMemo(() => {
+    // 1. Process Individual Stats
+    const userStats = profiles.map((p) => {
+      const userSubs = submissions.filter((s) => s.user_id === p.id);
+      const points = userSubs.reduce(
+        (sum, s) => sum + (ECO_ACTIONS_MAP[s.eco_action_id]?.points || 0) * s.quantity,
+        0
+      );
+      const actionsCount = userSubs.reduce((sum, s) => sum + s.quantity, 0);
+      const co2Saved = actionsCount * 0.6; // Aligning with Profile page math
+
+      return { ...p, points, actionsCount, co2Saved };
+    }).filter((u) => u.points > 0); // Hide inactive users
+
+    const sortedIndividuals = [...userStats].sort((a, b) => b.points - a.points);
+
+    // 2. Process Community Stats
+    const communityMap: Record<string, { community: string; points: number; members: number; actions: number; co2: number }> = {};
+    
+    userStats.forEach((u) => {
+      const comm = u.community || "Vancouver";
+      if (!communityMap[comm]) {
+        communityMap[comm] = { community: comm, points: 0, members: 0, actions: 0, co2: 0 };
+      }
+      communityMap[comm].points += u.points;
+      communityMap[comm].members += 1;
+      communityMap[comm].actions += u.actionsCount;
+      communityMap[comm].co2 += u.co2Saved;
+    });
+
+    const sortedCommunities = Object.values(communityMap).sort((a, b) => b.points - a.points);
+
+    return {
+      ubc: sortedIndividuals,
+      best301: sortedIndividuals.filter((u) => u.is_best_301),
+      community: sortedCommunities,
+    };
+  }, [profiles, submissions]);
 
   return (
-    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-emerald-950/5 text-foreground flex flex-col justify-between relative overflow-hidden font-sans">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
@@ -60,8 +113,8 @@ export default function LeaderboardPage() {
           Green Collective
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-xs font-semibold px-3 py-1.5 bg-emerald-100 text-[#0f382c] rounded-full hover:bg-emerald-200 transition">
-            Dashboard
+          <Link href="/profile" className="text-xs font-semibold px-3 py-1.5 bg-emerald-100 text-[#0f382c] rounded-full hover:bg-emerald-200 transition">
+            My Profile
           </Link>
         </div>
       </header>
@@ -69,76 +122,92 @@ export default function LeaderboardPage() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10 z-10 space-y-8">
         <div className="text-center max-w-xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full border border-emerald-200">
-            🏆 Community Impact
+            🏆 Pilot Impact Leaderboard
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Global Sustainability Rankings</h1>
           <p className="text-xs text-muted-foreground">
-            Tracking collective verified carbon reduction across institutions and members worldwide.
+            Tracking collective verified carbon reduction and bioeconomy impact across UBC and Metro Vancouver.
           </p>
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex justify-center border-b border-emerald-900/10 pb-4 gap-4">
+        <div className="flex justify-center border-b border-emerald-900/10 pb-4 gap-3 flex-wrap">
           <button
-            onClick={() => setTab("orgs")}
-            className={`px-4 py-2 text-xs font-bold rounded-full transition ${
-              tab === "orgs"
+            onClick={() => setTab("ubc")}
+            className={`px-5 py-2 text-xs font-bold rounded-full transition uppercase tracking-wider ${
+              tab === "ubc"
                 ? "bg-[#0f382c] text-white shadow-md"
                 : "bg-background border border-emerald-900/10 text-muted-foreground hover:bg-emerald-100/50"
             }`}
           >
-            🏢 Top Organizations
+            🌍 Global (UBC)
           </button>
           <button
-            onClick={() => setTab("users")}
-            className={`px-4 py-2 text-xs font-bold rounded-full transition ${
-              tab === "users"
+            onClick={() => setTab("community")}
+            className={`px-5 py-2 text-xs font-bold rounded-full transition uppercase tracking-wider ${
+              tab === "community"
                 ? "bg-[#0f382c] text-white shadow-md"
                 : "bg-background border border-emerald-900/10 text-muted-foreground hover:bg-emerald-100/50"
             }`}
           >
-            🌱 Individual Contributors
+            🏘️ Metro Communities
+          </button>
+          <button
+            onClick={() => setTab("best301")}
+            className={`px-5 py-2 text-xs font-bold rounded-full transition uppercase tracking-wider ${
+              tab === "best301"
+                ? "bg-[#0f382c] text-white shadow-md"
+                : "bg-background border border-emerald-900/10 text-muted-foreground hover:bg-emerald-100/50"
+            }`}
+          >
+            🌲 BEST 301 Cohort
           </button>
         </div>
 
         {/* Rankings Table */}
         <div className="border border-emerald-900/10 rounded-2xl bg-card/90 backdrop-blur p-6 shadow-xl">
           {loading ? (
-            <div className="py-12 text-center text-xs text-muted-foreground font-semibold">
-              Calculating rankings...
+            <div className="py-12 text-center text-xs text-muted-foreground font-semibold animate-pulse">
+              Syncing live rankings...
             </div>
-          ) : tab === "orgs" ? (
+          ) : tab === "community" ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-emerald-900/10 text-emerald-900">
                     <th className="py-3 px-4 font-bold">Rank</th>
-                    <th className="py-3 px-4 font-bold">Organization</th>
+                    <th className="py-3 px-4 font-bold">Neighborhood</th>
                     <th className="py-3 px-4 font-bold text-center">Active Members</th>
                     <th className="py-3 px-4 font-bold text-center">Total Actions</th>
-                    <th className="py-3 px-4 font-bold text-right">CO₂ Offset</th>
+                    <th className="py-3 px-4 font-bold text-right">Impact Score</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-emerald-900/5">
-                  {orgRanks.map((org, index) => (
-                    <tr key={org.institution} className="hover:bg-emerald-50/50 transition">
+                  {rankings.community.map((comm, index) => (
+                    <tr key={comm.community} className="hover:bg-emerald-50/50 transition">
                       <td className="py-3.5 px-4 font-extrabold text-[#0f382c]">
                         {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-foreground">
-                        {org.institution || "Independent Members"}
+                        {comm.community}
                       </td>
                       <td className="py-3.5 px-4 text-center font-medium text-muted-foreground">
-                        {org.member_count}
+                        {comm.members}
                       </td>
                       <td className="py-3.5 px-4 text-center font-medium text-muted-foreground">
-                        {org.total_actions}
+                        {comm.actions}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-extrabold text-emerald-800">
-                        {Number(org.total_co2_saved).toFixed(1)} kg
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="font-extrabold text-[#0f382c]">{comm.points} PTS</div>
+                        <div className="text-[9px] font-mono text-emerald-700/70 uppercase tracking-widest">{comm.co2.toFixed(1)} KG CO₂</div>
                       </td>
                     </tr>
                   ))}
+                  {rankings.community.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">No community data available.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -148,32 +217,48 @@ export default function LeaderboardPage() {
                 <thead>
                   <tr className="border-b border-emerald-900/10 text-emerald-900">
                     <th className="py-3 px-4 font-bold">Rank</th>
-                    <th className="py-3 px-4 font-bold">Member ID</th>
-                    <th className="py-3 px-4 font-bold">Organization</th>
-                    <th className="py-3 px-4 font-bold text-center">Actions Logged</th>
-                    <th className="py-3 px-4 font-bold text-right">CO₂ Offset</th>
+                    <th className="py-3 px-4 font-bold">Participant</th>
+                    <th className="py-3 px-4 font-bold">Community</th>
+                    <th className="py-3 px-4 font-bold text-center">Actions</th>
+                    <th className="py-3 px-4 font-bold text-right">Impact Score</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-emerald-900/5">
-                  {userRanks.map((user, index) => (
-                    <tr key={user.user_id} className="hover:bg-emerald-50/50 transition">
+                  {rankings[tab].map((user, index) => (
+                    <tr key={user.id} className="hover:bg-emerald-50/50 transition">
                       <td className="py-3.5 px-4 font-extrabold text-[#0f382c]">
                         {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
-                        Member #{user.user_id.substring(0, 6)}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-sm">
+                            {user.avatar_emoji}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-foreground">{user.display_name || "Eco Warrior"}</p>
+                            {user.is_best_301 && (
+                              <p className="text-[9px] font-mono text-emerald-700 uppercase tracking-widest">BEST 301</p>
+                            )}
+                          </div>
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-foreground">
-                        {user.institution || "Independent"}
+                      <td className="py-3.5 px-4 font-medium text-muted-foreground">
+                        {user.community}
                       </td>
                       <td className="py-3.5 px-4 text-center font-medium text-muted-foreground">
-                        {user.total_actions}
+                        {user.actionsCount}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-extrabold text-emerald-800">
-                        {Number(user.total_co2_saved).toFixed(1)} kg
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="font-extrabold text-[#0f382c]">{user.points} PTS</div>
+                        <div className="text-[9px] font-mono text-emerald-700/70 uppercase tracking-widest">{user.co2Saved.toFixed(1)} KG CO₂</div>
                       </td>
                     </tr>
                   ))}
+                  {rankings[tab].length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">No active participants found for this filter.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
