@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
+import { logBatchUserActions, BatchActionItem } from "@/actions/user-actions";
 
 interface ActionCatalogItem {
   id: string;
@@ -161,7 +161,7 @@ export default function ActionsPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // Dual attribution states: users select BOTH faculty and community simultaneously
+  // Dual attribution states
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
   const [community, setCommunity] = useState(METRO_VAN_COMMUNITIES[0]);
 
@@ -169,7 +169,20 @@ export default function ActionsPage() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        supabase
+          .from("profiles")
+          .select("community, faculty_id")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile?.community) setCommunity(profile.community);
+            if (profile?.faculty_id) setFaculty(profile.faculty_id);
+          });
+      }
+    });
 
     async function loadActions() {
       const { data, error } = await supabase.from("actions").select("*");
@@ -187,7 +200,7 @@ export default function ActionsPage() {
       }
     }
     loadActions();
-  }, []);
+  }, [supabase]);
 
   const setActionQuantity = (actionId: string, qty: number) => {
     setCart((prev) => {
@@ -237,7 +250,7 @@ export default function ActionsPage() {
         quantity: item.selectedQty,
       }));
 
-      // Log actions crediting both faculty and community
+      // Log actions crediting faculty
       await logBatchUserActions({
         items: itemsToSubmit,
         sector: "campus",
@@ -245,7 +258,7 @@ export default function ActionsPage() {
         affiliationName: faculty,
       });
 
-      // Also update user profile with dual attribution
+      // Update user profile with dual attribution
       await supabase
         .from('profiles')
         .update({ community: community, faculty_id: faculty })
@@ -458,7 +471,7 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              {/* Dual Attribution Selectors */}
+              {/* Dual Attribution Selectors (Both active simultaneously) */}
               <div className="p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
                 <label className="block text-xs font-bold text-[#102f26]">
                   2. Dual Leaderboard Attribution (Faculty & Neighborhood):
