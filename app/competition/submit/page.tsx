@@ -10,30 +10,29 @@ interface Faculty {
   name: string
 }
 
-const LOCAL_HUBS = [
-  { id: 'kitsilano', name: 'Kitsilano Community Hub (Vancouver West)' },
-  { id: 'point-grey', name: 'Point Grey & Campus Perimeter' },
-  { id: 'mount-pleasant', name: 'Mount Pleasant Eco-Network (Vancouver East)' },
-  { id: 'downtown', name: 'Downtown Core Collective' },
-  { id: 'grandview', name: 'Grandview-Woodland' },
+const METRO_VAN_COMMUNITIES = [
+  // Campus & Endowment Lands
+  "UBC Campus", "University Endowment Lands (UEL)",
+  // Vancouver West Side
+  "Point Grey", "Kitsilano", "Dunbar-Southlands", "Kerrisdale", "Arbutus Ridge", "Shaughnessy", "Oakridge", "Marpole", "Fairview", "South Cambie",
+  // Vancouver Downtown
+  "West End", "Yaletown", "Coal Harbour", "Gastown", "Crosstown", "Downtown Core",
+  // Vancouver East Side
+  "Mount Pleasant", "Strathcona", "Grandview-Woodland (Commercial Dr)", "Hastings-Sunrise", "Kensington-Cedar Cottage", "Riley Park", "Renfrew-Collingwood", "Killarney", "Victoria-Fraserview", "Sunset",
+  // Surrounding Municipalities
+  "Burnaby", "Richmond", "Surrey", "North Vancouver", "West Vancouver", "New Westminster", "Coquitlam", "Port Coquitlam", "Port Moody", "Delta", "Langley"
 ]
 
-// Merged with Proportional Math (pointsPerUnit, unit)
 const ECO_ACTIONS_LIST = [
-  // Mobility & Energy (Proportional)
   { id: 'transit-commute', category: 'Mobility & Energy', title: 'Public Transit (Bus/Train/SkyTrain)', unit: 'mins', pointsPerUnit: 1 }, 
   { id: 'active-commute', category: 'Mobility & Energy', title: 'Active Commute (Walk/Bike)', unit: 'km', pointsPerUnit: 10 }, 
   { id: 'carpool-trip', category: 'Mobility & Energy', title: 'Shared Ride / Carpool', unit: 'km', pointsPerUnit: 3 },
   { id: 'stairs-instead-elevator', category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator', unit: 'floors', pointsPerUnit: 3 },
-  
-  // Zero Waste & Dining (Itemized)
   { id: 'home-meal', category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home', unit: 'meals', pointsPerUnit: 30 },
   { id: 'home-beverage', category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea in Reusable Mug', unit: 'drinks', pointsPerUnit: 25 },
   { id: 'reusable-container-buy', category: 'Zero Waste & Dining', title: 'Used Reusable Container for Takeout/Dining', unit: 'items', pointsPerUnit: 15 },
   { id: 'refillable-water', category: 'Zero Waste & Dining', title: 'Used Refillable Water Station vs. Bottled Water', unit: 'refills', pointsPerUnit: 10 },
-  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining', unit: 'meals', pointsPerUnit: 20 },
-  
-  // Circular Economy & Resource Conservation
+  { id: 'plant-based-meal', category: 'Zero Waste & Dining', title: 'Chose Plant-Based Dining Option', unit: 'meals', pointsPerUnit: 20 },
   { id: 'waste-sorting', category: 'Circular Economy', title: 'Properly Sorted Compost & Recyclables at Hub', unit: 'sorts', pointsPerUnit: 10 },
   { id: 'thrift-borrow-gear', category: 'Circular Economy', title: 'Borrowed / Thrifted Academic Textbooks or Gear', unit: 'items', pointsPerUnit: 30 },
   { id: 'campus-cleanup', category: 'Circular Economy', title: 'Participated in Community/Faculty Cleanup', unit: 'hours', pointsPerUnit: 50 },
@@ -44,10 +43,10 @@ function SubmitFormContent() {
   const [affiliationType, setAffiliationType] = useState<'institutional' | 'local'>('institutional')
   const [faculties, setFaculties] = useState<Faculty[]>([])
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
-  const [selectedLocalHub, setSelectedLocalHub] = useState<string>('')
+  const [selectedCommunity, setSelectedCommunity] = useState<string>('')
   
   const [selectedAction, setSelectedAction] = useState<string>('')
-  const [metricValue, setMetricValue] = useState<number>(1) // Replaces pure 'quantity' for dynamic units
+  const [metricValue, setMetricValue] = useState<number>(1)
   const [reflectionNote, setReflectionNote] = useState<string>('')
   const [file, setFile] = useState<File | null>(null)
 
@@ -76,7 +75,6 @@ function SubmitFormContent() {
     fetchFaculties()
   }, [supabase, searchParams])
 
-  // Smart defaults based on unit
   const handleActionChange = (newId: string) => {
     setSelectedAction(newId);
     const action = ECO_ACTIONS_LIST.find(a => a.id === newId);
@@ -92,8 +90,8 @@ function SubmitFormContent() {
       setMessage({ type: 'error', text: 'Please select your institutional faculty.' })
       return
     }
-    if (affiliationType === 'local' && !selectedLocalHub) {
-      setMessage({ type: 'error', text: 'Please select your local community hub.' })
+    if (affiliationType === 'local' && !selectedCommunity) {
+      setMessage({ type: 'error', text: 'Please select your Metro Vancouver community.' })
       return
     }
     if (!selectedAction) {
@@ -114,7 +112,6 @@ function SubmitFormContent() {
 
       let photoUrl = null
 
-      // Retained your exact storage upload logic
       if (file) {
         const fileExt = file.name.split('.').pop()
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`
@@ -133,7 +130,13 @@ function SubmitFormContent() {
         photoUrl = urlData.publicUrl
       }
 
-      // Injects the new dynamic quantity and reflection note
+      if (affiliationType === 'local' && selectedCommunity) {
+        await supabase
+          .from('profiles')
+          .update({ community: selectedCommunity })
+          .eq('id', user.id)
+      }
+
       const { error: insertError } = await supabase.from('submissions').insert({
         faculty_id: affiliationType === 'institutional' ? selectedFaculty : null,
         eco_action_id: selectedAction,
@@ -152,7 +155,7 @@ function SubmitFormContent() {
       router.refresh()
       
       setTimeout(() => {
-        window.location.href = '/competition' // Can be updated to /profile depending on routing preference
+        window.location.href = '/competition'
       }, 1500)
     } catch (err: any) {
       console.error('Full Submission Error Details:', err)
@@ -186,7 +189,7 @@ function SubmitFormContent() {
             Log Your Sustainable Action
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Record proportional metrics (time, distance) and attribute them toward your university faculty or local neighborhood hub.
+            Record proportional metrics and attribute them toward your UBC faculty or Metro Vancouver neighborhood.
           </p>
         </div>
       </section>
@@ -206,7 +209,6 @@ function SubmitFormContent() {
 
         <form onSubmit={handleSubmit} className="border border-[#102f26]/15 bg-white p-6 md:p-8 space-y-8 shadow-sm">
           
-          {/* Association Toggle (Unchanged) */}
           <div className="space-y-3 pb-6 border-b border-[#102f26]/10">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
               1. Leaderboard Attribution Tier
@@ -232,7 +234,7 @@ function SubmitFormContent() {
                     : 'bg-[#f9f8f6] border border-[#102f26]/20 text-[#102f26] hover:bg-[#f1f6f2]'
                 }`}
               >
-                Local (Vancouver Hub)
+                Local (Metro Vancouver)
               </button>
             </div>
             
@@ -251,21 +253,20 @@ function SubmitFormContent() {
                 </select>
               ) : (
                 <select
-                  value={selectedLocalHub}
-                  onChange={(e) => setSelectedLocalHub(e.target.value)}
+                  value={selectedCommunity}
+                  onChange={(e) => setSelectedCommunity(e.target.value)}
                   required={affiliationType === 'local'}
                   className="w-full px-4 py-3 border border-[#102f26]/20 bg-[#f9f8f6] text-xs text-[#102f26] font-medium focus:outline-none focus:border-[#102f26]"
                 >
-                  <option value="">-- Choose Local Hub --</option>
-                  {LOCAL_HUBS.map((hub) => (
-                    <option key={hub.id} value={hub.id}>{hub.name}</option>
+                  <option value="">-- Choose Neighborhood / Municipality --</option>
+                  {METRO_VAN_COMMUNITIES.map((c) => (
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               )}
             </div>
           </div>
 
-          {/* Action Selection */}
           <div className="space-y-3">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
               2. Select Eco-Action Category
@@ -290,7 +291,6 @@ function SubmitFormContent() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Dynamic Metric Input */}
             <div className="space-y-2">
               <label className="flex justify-between block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
                 <span>3. Enter {activeActionDetails?.unit || 'Quantity'}</span>
@@ -312,7 +312,6 @@ function SubmitFormContent() {
               </div>
             </div>
 
-            {/* Live Impact Yield */}
             <div className="space-y-2">
               <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
                 Calculated Impact Yield
@@ -324,7 +323,6 @@ function SubmitFormContent() {
             </div>
           </div>
 
-          {/* New: Reflection Notes */}
           <div className="space-y-2">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
               4. Field Notes / Reflection (Optional)
@@ -338,7 +336,6 @@ function SubmitFormContent() {
             />
           </div>
 
-          {/* Proof Upload (Unchanged) */}
           <div className="space-y-2 pb-4">
             <label className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d]">
               5. Attach Proof (Optional Image)
@@ -350,3 +347,24 @@ function SubmitFormContent() {
               className="w-full text-xs text-[#526760] file:mr-4 file:py-2.5 file:px-4 file:border-0 file:font-mono file:text-[10px] file:uppercase file:tracking-[0.14em] file:bg-[#102f26] file:text-white hover:file:bg-[#102f26]/90 cursor-pointer transition"
             />
           </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-[#102f26] text-white font-mono text-xs uppercase tracking-[0.18em] hover:bg-[#102f26]/90 transition disabled:opacity-50 shadow-sm"
+          >
+            {loading ? 'Submitting to Ledger...' : 'Submit Action to Ledger →'}
+          </button>
+        </form>
+      </section>
+    </main>
+  )
+}
+
+export default function SubmitActionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center font-mono text-xs uppercase text-[#102f26]">Loading Submission Portal...</div>}>
+      <SubmitFormContent />
+    </Suspense>
+  )
+}
