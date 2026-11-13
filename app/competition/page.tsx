@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { ACTION_REGISTRY } from '@/lib/actions';
 
 interface LeaderboardEntry {
   rank: number;
@@ -42,32 +43,34 @@ export default function CompetitionPage() {
         // 2. Fetch Logged Actions
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
-          .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity');
+          .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity, action_id');
 
         if (logError) throw logError;
 
         // --- Process Institutional (UBC Faculty) Standings ---
-        const facultyMap: { [key: string]: { name: string; points: number; users: Set<string> } } = {};
+        const facultyMap: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {};
         faculties?.forEach((f) => {
-          facultyMap[f.name] = { name: f.name, points: 0, users: new Set() };
+          facultyMap[f.name] = { name: f.name, carbon: 0, users: new Set() };
         });
 
         // --- Process Local (Vancouver Neighborhood) Standings ---
-        const neighborhoodMap: { [key: string]: { name: string; points: number; users: Set<string> } } = {};
+        const neighborhoodMap: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {};
         VANCOUVER_NEIGHBOURHOODS.forEach((n) => {
-          neighborhoodMap[n] = { name: n, points: 0, users: new Set() };
+          neighborhoodMap[n] = { name: n, carbon: 0, users: new Set() };
         });
 
         loggedActions?.forEach((act) => {
-          const qty = act.quantity || 1;
-          const pts = Number(act.points_earned ?? act.points ?? 25) * qty;
+          const qty = Number(act.quantity || 1);
+          const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
+          const baseImpact = Number(registryMatch?.impactValue ?? 0.5);
+          const carbonOffset = baseImpact * qty;
 
           // Check if it belongs to faculty
           const matchedFaculty = Object.keys(facultyMap).find((facName) =>
             act.affiliation_name?.includes(facName) || act.notes?.includes(facName)
           );
           if (matchedFaculty && (act.sector === 'campus' || !act.sector)) {
-            facultyMap[matchedFaculty].points += pts;
+            facultyMap[matchedFaculty].carbon += carbonOffset;
             if (act.user_id) facultyMap[matchedFaculty].users.add(act.user_id);
           }
 
@@ -76,7 +79,7 @@ export default function CompetitionPage() {
             act.affiliation_name?.includes(nName) || act.notes?.includes(nName)
           );
           if (matchedNeighborhood && (act.sector === 'community' || act.sector === 'public' || !act.sector)) {
-            neighborhoodMap[matchedNeighborhood].points += pts;
+            neighborhoodMap[matchedNeighborhood].carbon += carbonOffset;
             if (act.user_id) neighborhoodMap[matchedNeighborhood].users.add(act.user_id);
           }
         });
@@ -87,7 +90,7 @@ export default function CompetitionPage() {
             name: f.name,
             category: 'UBC Faculty',
             participants: f.users.size,
-            carbonOffsetKg: Math.round(f.points * 0.4), // Standardized factor
+            carbonOffsetKg: Math.round(f.carbon * 10) / 10,
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
@@ -98,7 +101,7 @@ export default function CompetitionPage() {
             name: n.name,
             category: 'Vancouver Hub',
             participants: n.users.size,
-            carbonOffsetKg: Math.round(n.points * 0.4), // Standardized factor
+            carbonOffsetKg: Math.round(n.carbon * 10) / 10,
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
