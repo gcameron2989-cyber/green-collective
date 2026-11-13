@@ -89,6 +89,7 @@ export default function LogActionPage() {
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
   const [facultySearch, setFacultySearch] = useState("");
   const [isFacultyDropdownOpen, setIsFacultyDropdownOpen] = useState(false);
+  const [isBest301, setIsBest301] = useState<boolean>(false);
 
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -193,7 +194,7 @@ export default function LogActionPage() {
             points: item.points,
             quantity: item.selectedQty,
             distanceKm: isDistanceBased ? dist : undefined,
-            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isBest301 && faculty === "Faculty of Forestry" ? " | BEST 301" : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
           };
         });
 
@@ -287,7 +288,6 @@ export default function LogActionPage() {
               const isSelected = currentQty > 0;
               const isTransport = TRANSPORT_IDS.includes(action.id);
               
-              // Calculate real-time dynamic impact for the card preview
               let cardImpact = Number(action.impactValue ?? 0);
               if (isTransport) {
                 const dist = Number(commuteDistances[action.id] ?? 0);
@@ -455,29 +455,29 @@ export default function LogActionPage() {
               </label>
             </div>
 
-            {/* Faculty Selector */}
+            {/* Faculty Selector & BEST 301 Sub-toggle */}
             {isUbcStudent && (
-              <div className="relative pt-1">
-                <label className="block font-mono uppercase text-[11px] text-[#39705d] mb-1.5 font-bold">
-                  Faculty / School (UBC Vancouver)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Type to filter faculties..."
-                  value={facultySearch}
-                  onFocus={() => setIsFacultyDropdownOpen(true)}
-                  onChange={(e) => {
-                    setFacultySearch(e.target.value);
-                    setIsFacultyDropdownOpen(true);
-                  }}
-                  className="w-full p-2.5 text-xs rounded-xl border border-emerald-200 bg-emerald-50/30 font-medium mb-1"
-                />
-                <div className="text-[10px] text-gray-500 mb-1">Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span></div>
-                
-                {isFacultyDropdownOpen && (
-                  <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
-                    {filteredFaculties.length > 0 ? (
-                      filteredFaculties.map((f) => (
+              <div className="relative pt-1 space-y-3">
+                <div>
+                  <label className="block font-mono uppercase text-[11px] text-[#39705d] mb-1.5 font-bold">
+                    Faculty / School (UBC Vancouver)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Type to filter faculties..."
+                    value={facultySearch}
+                    onFocus={() => setIsFacultyDropdownOpen(true)}
+                    onChange={(e) => {
+                      setFacultySearch(e.target.value);
+                      setIsFacultyDropdownOpen(true);
+                    }}
+                    className="w-full p-2.5 text-xs rounded-xl border border-emerald-200 bg-emerald-50/30 font-medium mb-1"
+                  />
+                  <div className="text-[10px] text-gray-500 mb-1">Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span></div>
+                  
+                  {isFacultyDropdownOpen && (
+                    <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
+                      {filteredFaculties.map((f) => (
                         <button
                           type="button"
                           key={f}
@@ -493,10 +493,23 @@ export default function LogActionPage() {
                         >
                           {f}
                         </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs text-gray-400">No matching faculty found</div>
-                    )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* BEST 301 Sub-toggle (Appears only when Faculty of Forestry is selected) */}
+                {faculty === "Faculty of Forestry" && (
+                  <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200/80">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <span className="font-mono uppercase text-[10px] font-bold text-emerald-900">Are you in BEST 301?</span>
+                      <input
+                        type="checkbox"
+                        checked={isBest301}
+                        onChange={(e) => setIsBest301(e.target.checked)}
+                        className="w-4 h-4 accent-emerald-700 rounded cursor-pointer"
+                      />
+                    </label>
                   </div>
                 )}
               </div>
