@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -72,16 +72,9 @@ const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY"
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
 export default function LogActionPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f9f8f6] animate-pulse" />}>
-      <LogActionContent />
-    </Suspense>
-  );
-}
-
-function LogActionContent() {
   const router = useRouter();
   
+  const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -110,6 +103,7 @@ function LogActionContent() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
@@ -146,7 +140,6 @@ function LogActionContent() {
 
   const clearCart = () => setCart({});
 
-  // GUARDED MEMO: Safely handles missing or undefined registry items to prevent Error #441
   const selectedItemsDetails = useMemo(() => {
     return Object.entries(cart)
       .map(([id, qty]) => {
@@ -247,8 +240,12 @@ function LogActionContent() {
     }
   };
 
+  if (!isMounted) {
+    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative">
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center">
           <div>
@@ -260,7 +257,7 @@ function LogActionContent() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -534,7 +531,7 @@ function LogActionContent() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions Summary:
+                  Selected Actions &amp; Scaling:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
@@ -549,20 +546,25 @@ function LogActionContent() {
                           <div>
                             <div className="font-bold text-[#102f26]">{item.title}</div>
                             <div className="text-[10px] text-[#526760]">
-                              Qty: {item.selectedQty} • +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => setActionQuantity(item.id, 0)}
-                            className="text-red-500 hover:text-red-700 font-bold px-2 py-1 text-xs"
-                          >
-                            Remove
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold px-2 py-1 bg-white border border-gray-200 rounded-lg">
+                              Qty: {item.selectedQty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setActionQuantity(item.id, 0)}
+                              className="text-red-500 hover:text-red-700 font-bold px-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
 
-                        {/* Transport Distance Input Handled Safely Outside Mapped Inline Throttling */}
+                        {/* Transport Distance Input Handled Safely with Uncontrolled Default Value */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
