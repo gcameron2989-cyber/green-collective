@@ -1,394 +1,579 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { logBatchUserActions, AffiliationType } from '@/actions/user-actions';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
 
-type CommunityTrack = 'public' | 'campus';
-type PublicAffiliationType = 'neighbourhood' | 'association' | 'company' | 'other';
+type Sector = "public" | "campus";
+type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
 
-interface ActionOption {
+interface ActionCatalogItem {
   id: string;
   title: string;
-  category: string;
+  category: "Mobility" | "Circular Economy" | "Food & Agriculture" | "Energy & Water" | "Ecosystem Stewardship";
   points: number;
   co2SavedKg: number;
   unitLabel: string;
   description: string;
 }
 
-const ACTION_CATALOG: ActionOption[] = [
+const DEFAULT_ACTIONS: ActionCatalogItem[] = [
   {
-    id: 'transit-commute',
-    title: 'Transit or Active Bike Commute',
-    category: 'Sustainable Mobility',
+    id: "transit-commute",
+    title: "Transit or Active Bike Commute",
+    category: "Mobility",
     points: 25,
     co2SavedKg: 2.1,
-    unitLabel: 'trips',
-    description: 'Replaced single-occupancy vehicle driving with transit, cycling, or walking.',
+    unitLabel: "trips",
+    description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
   },
   {
-    id: 'reusable-container',
-    title: 'Zero Single-Use Container',
-    category: 'Circular Economy',
+    id: "reusable-container",
+    title: "Zero Single-Use Container",
+    category: "Circular Economy",
     points: 30,
     co2SavedKg: 0.5,
-    unitLabel: 'containers',
-    description: 'Used a reusable cup, mug, or food container at local businesses or dining halls.',
+    unitLabel: "containers",
+    description: "Used a reusable cup, mug, or food container at local businesses or dining halls.",
   },
   {
-    id: 'tree-care',
-    title: 'Urban Tree & Ecosystem Stewardship',
-    category: 'Ecosystem Stewardship',
+    id: "tree-care",
+    title: "Urban Tree & Ecosystem Stewardship",
+    category: "Ecosystem Stewardship",
     points: 50,
     co2SavedKg: 3.5,
-    unitLabel: 'sessions',
-    description: 'Participated in canopy care, invasive species removal, or community garden maintenance.',
+    unitLabel: "sessions",
+    description: "Participated in canopy care, invasive species removal, or community garden maintenance.",
   },
   {
-    id: 'plant-based-meal',
-    title: 'Plant-Based Meal Choice',
-    category: 'Food & Agriculture',
+    id: "plant-based-meal",
+    title: "Plant-Based Meal Choice",
+    category: "Food & Agriculture",
     points: 20,
     co2SavedKg: 1.4,
-    unitLabel: 'meals',
-    description: 'Chose a fully plant-based meal over animal-intensive protein options.',
+    unitLabel: "meals",
+    description: "Chose a fully plant-based meal over animal-intensive protein options.",
   },
   {
-    id: 'food-waste-compost',
-    title: 'Organic Waste Diversion & Composting',
-    category: 'Food & Agriculture',
+    id: "food-waste-compost",
+    title: "Organic Waste Diversion & Composting",
+    category: "Food & Agriculture",
     points: 15,
     co2SavedKg: 0.4,
-    unitLabel: 'days',
-    description: 'Diverted 100% of household food scraps to municipal green bins or home compost.',
+    unitLabel: "days",
+    description: "Diverted 100% of household food scraps to municipal green bins or home compost.",
   },
   {
-    id: 'cold-water-laundry',
-    title: 'Cold Water Wash & Line Dry',
-    category: 'Energy & Water',
+    id: "cold-water-laundry",
+    title: "Cold Water Wash & Line Dry",
+    category: "Energy & Water",
     points: 15,
     co2SavedKg: 0.9,
-    unitLabel: 'loads',
-    description: 'Washed laundry in cold water and air-dried garments instead of using a heated dryer.',
+    unitLabel: "loads",
+    description: "Washed laundry in cold water and air-dried garments instead of using a heated dryer.",
   },
   {
-    id: 'energy-conservation',
-    title: 'Home & Office Energy Reduction',
-    category: 'Energy & Water',
+    id: "energy-conservation",
+    title: "Home & Office Energy Reduction",
+    category: "Energy & Water",
     points: 20,
     co2SavedKg: 1.2,
-    unitLabel: 'days',
-    description: 'Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.',
+    unitLabel: "days",
+    description: "Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.",
   },
   {
-    id: 'repair-upcycle',
-    title: 'Repair, Upcycle, or Thrift Goods',
-    category: 'Circular Economy',
+    id: "repair-upcycle",
+    title: "Repair, Upcycle, or Thrift Goods",
+    category: "Circular Economy",
     points: 40,
     co2SavedKg: 2.5,
-    unitLabel: 'items',
-    description: 'Repaired clothing, electronics, or furniture instead of purchasing new items.',
+    unitLabel: "items",
+    description: "Repaired clothing, electronics, or furniture instead of purchasing new items.",
+  },
+  {
+    id: "ev-charging-shared",
+    title: "Shared EV / Carpool Trip",
+    category: "Mobility",
+    points: 35,
+    co2SavedKg: 3.0,
+    unitLabel: "trips",
+    description: "Shared an electric vehicle ride or organized carpooling for commutes.",
+  },
+  {
+    id: "community-clean-up",
+    title: "Shoreline / Park Clean-Up",
+    category: "Ecosystem Stewardship",
+    points: 60,
+    co2SavedKg: 4.0,
+    unitLabel: "events",
+    description: "Collected and properly sorted litter from public parks, beaches, or campus grounds.",
   },
 ];
 
 const VANCOUVER_NEIGHBOURHOODS = [
-  'Kitsilano',
-  'Point Grey / West Point Grey',
-  'Mount Pleasant',
-  'Fairview / South Granville',
-  'Downtown / West End',
-  'Commercial Drive / Grandview-Woodland',
-  'Dunbar-Southlands',
-  'Kerrisdale',
+  "Kitsilano",
+  "Point Grey",
+  "Mount Pleasant",
+  "Fairview / South Granville",
+  "Downtown / West End",
+  "Commercial Drive",
+  "Dunbar-Southlands",
+  "Kerrisdale",
 ];
 
 const UBC_FACULTIES = [
-  'Faculty of Forestry',
-  'Faculty of Science',
-  'Faculty of Applied Science / Engineering',
-  'Sauder School of Business',
-  'Faculty of Arts',
-  'Faculty of Land and Food Systems',
+  "Faculty of Forestry",
+  "Faculty of Science",
+  "Faculty of Applied Science",
+  "Sauder School of Business",
+  "Faculty of Arts",
+  "Faculty of Land and Food Systems",
 ];
+
+const CATEGORIES = ["All", "Mobility", "Circular Economy", "Food & Agriculture", "Energy & Water", "Ecosystem Stewardship"];
 
 export default function LogActionPage() {
   const router = useRouter();
-  const [track, setTrack] = useState<CommunityTrack>('campus');
-  
-  // Public sub-affiliation state
-  const [affiliationType, setAffiliationType] = useState<PublicAffiliationType>('neighbourhood');
-  const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
-  const [customEntityName, setCustomEntityName] = useState('');
+  const supabase = createClient();
 
-  // Campus sub-affiliation state
+  const [isMounted, setIsMounted] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({ "transit-commute": 5 });
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  // Dual Attribution State
+  const [sector, setSector] = useState<Sector>("public");
+  const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
+  const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
+  const [customAffiliation, setCustomAffiliation] = useState("");
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
 
-  // Action logging state
-  const [selectedActionId, setSelectedActionId] = useState(ACTION_CATALOG[0].id);
-  const [quantity, setQuantity] = useState(1);
-  const [distanceKm, setDistanceKm] = useState(5);
-  const [notes, setNotes] = useState('');
-  
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const currentAction = ACTION_CATALOG.find((a) => a.id === selectedActionId) || ACTION_CATALOG[0];
+  useEffect(() => {
+    setIsMounted(true);
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
-  // Dynamic calculation for commute distance vs static items
-  let calculatedPoints = currentAction.points * quantity;
-  let calculatedCO2 = currentAction.co2SavedKg * quantity;
+    async function loadActions() {
+      const { data, error } = await supabase.from("actions").select("*");
+      if (!error && data && data.length > 0) {
+        const mapped: ActionCatalogItem[] = data.map((item: any) => ({
+          id: item.id || item.slug,
+          title: item.title,
+          category: item.category || "Circular Economy",
+          points: item.points || 25,
+          co2SavedKg: item.co2_saved_kg || item.co2SavedKg || 1.0,
+          unitLabel: item.unit_label || item.unitLabel || "times",
+          description: item.description || "",
+        }));
+        setActionsList(mapped);
+      }
+    }
+    loadActions();
+  }, []);
 
-  if (selectedActionId === 'transit-commute') {
-    calculatedPoints = Math.round((15 + distanceKm * 1.8) * quantity);
-    calculatedCO2 = Number((distanceKm * 0.22 * quantity).toFixed(2));
-  }
-
-  const getResolvedAffiliationName = () => {
-    const primary = track === 'campus' ? faculty : neighbourhood;
-    return `${primary} [Neighborhood: ${neighbourhood} | Faculty: ${faculty}]`;
+  const setActionQuantity = (actionId: string, qty: number) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      if (qty <= 0) {
+        delete next[actionId];
+      } else {
+        next[actionId] = qty;
+      }
+      return next;
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const clearCart = () => setCart({});
+
+  const selectedEntries = Object.entries(cart);
+  const totalSelectedCount = selectedEntries.reduce((acc, [_, qty]) => acc + qty, 0);
+
+  const selectedItemsDetails = selectedEntries
+    .map(([id, qty]) => {
+      const detail = actionsList.find((a) => a.id === id);
+      if (!detail) return null;
+
+      let calculatedCo2 = detail.co2SavedKg;
+      let calculatedPoints = detail.points;
+
+      // Non-linear carbon accounting for commute distance
+      if (id === "transit-commute") {
+        const dist = commuteDistances[id] || 5;
+        calculatedCo2 = Number((dist * 0.22 + Math.log(dist + 1) * 0.5).toFixed(2));
+        calculatedPoints = Math.round(15 + dist * 1.8 + Math.sqrt(dist) * 2);
+      }
+
+      return {
+        ...detail,
+        points: calculatedPoints,
+        co2SavedKg: calculatedCo2,
+        selectedQty: qty,
+      };
+    })
+    .filter(Boolean) as (ActionCatalogItem & { selectedQty: number })[];
+
+  const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
+  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
+
+  const filteredActions =
+    selectedCategory === "All" ? actionsList : actionsList.filter((a) => a.category === selectedCategory);
+
+  const getAffiliationName = (): string => {
+    const primaryHub = sector === "campus" ? faculty : (publicAffiliationType === "neighbourhood" ? neighbourhood : customAffiliation.trim() || "Local Community");
+    return `${primaryHub} [Neighborhood: ${neighbourhood} | Faculty: ${faculty}]`;
+  };
+
+  const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedItemsDetails.length === 0) return;
+
+    const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
+
+    if (!user) {
+      router.push(`/login?redirectTo=${encodeURIComponent("/log-action")}`);
+      return;
+    }
+
     setSubmitting(true);
-    setErrorMsg('');
+    setStatusMsg(null);
 
     try {
-      const finalAffiliationType: AffiliationType = track === 'campus' ? 'faculty' : affiliationType;
-      const affiliationName = getResolvedAffiliationName();
-
-      await logBatchUserActions({
-        items: [
-          {
-            actionId: currentAction.id,
-            actionTitle: currentAction.title,
-            points: calculatedPoints,
-            quantity: quantity,
-            distanceKm: selectedActionId === 'transit-commute' ? distanceKm : undefined,
-            notes: `${notes} | Neighborhood: ${neighbourhood} | Faculty: ${faculty}`,
-          },
-        ],
-        sector: track,
-        affiliationType: finalAffiliationType,
-        affiliationName: affiliationName,
+      const finalAffiliationName = getAffiliationName();
+      const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
+        const isCommute = item.id === "transit-commute";
+        const dist = commuteDistances[item.id] || 5;
+        return {
+          actionId: item.id,
+          quantity: item.selectedQty,
+          distanceKm: isCommute ? dist : undefined,
+          notes: `Neighborhood: ${neighbourhood} | Faculty: ${faculty}${isCommute ? ` | Commute Distance: ${dist} km` : ""}`,
+        };
       });
 
-      setIsSubmitted(true);
+      await logBatchUserActions({
+        items: itemsToSubmit,
+        sector,
+        affiliationType: finalAffiliationType,
+        affiliationName: finalAffiliationName,
+      });
+
+      setStatusMsg({
+        type: "success",
+        text: `Logged ${itemsToSubmit.length} actions! Credited to ${neighbourhood} & ${faculty}.`,
+      });
+
+      setTimeout(() => {
+        clearCart();
+        setIsReviewOpen(false);
+        setStatusMsg(null);
+        router.push("/competition");
+      }, 1500);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit action.');
+      setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (!isMounted) {
+    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
+  }
+
   return (
-    <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
-        <div className="mx-auto max-w-4xl px-6 py-12 md:px-10 lg:px-12">
-          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#39705d] mb-2">
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
+      <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
             Green Collective · Ledger Submission
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight">Log Verified Impact</h1>
+          <p className="text-xs text-[#526760] max-w-xl mt-1">
+            Select multiple sustainable actions below to batch log them with precise commute metrics and dual community-faculty attribution.
           </p>
-          <h1 className="text-3xl font-medium tracking-[-0.03em] md:text-4xl text-[#102f26]">
-            Log Environmental Action
-          </h1>
-          <p className="mt-2 text-sm text-[#526760]">
-            Record verified sustainability actions with precise commute metrics and dual community-faculty attribution.
-          </p>
+
+          <div className="flex flex-wrap gap-2 mt-6">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
+                  selectedCategory === cat
+                    ? "bg-[#102f26] text-white"
+                    : "bg-white text-[#526760] border border-[#102f26]/10 hover:border-[#102f26]/30"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-6 py-10 md:px-10 lg:px-12">
-        {isSubmitted ? (
-          <div className="p-8 border border-[#102f26]/20 bg-white shadow-sm space-y-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#102f26] text-white font-mono text-xs">✓</span>
-              <div>
-                <h2 className="text-xl font-medium text-[#102f26]">Action Logged to Ledger</h2>
-                <p className="font-mono text-xs text-[#39705d]">Verification ID: GC-{Math.floor(100000 + Math.random() * 900000)}</p>
-              </div>
-            </div>
+      <section className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredActions.map((action) => {
+            const currentQty = cart[action.id] || 0;
+            const isSelected = currentQty > 0;
 
-            <div className="p-6 bg-[#f1f6f2] border border-[#102f26]/10 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-              <div>
-                <span className="text-[#71847d] uppercase tracking-wider block mb-1">Attributed Entity</span>
-                <span className="font-medium text-[#102f26] text-sm">{getResolvedAffiliationName()}</span>
-              </div>
-              <div>
-                <span className="text-[#71847d] uppercase tracking-wider block mb-1">Impact Credited</span>
-                <span className="font-medium text-[#102f26] text-sm">+{calculatedPoints} pts</span>
-              </div>
-              <div>
-                <span className="text-[#71847d] uppercase tracking-wider block mb-1">Estimated Offset</span>
-                <span className="font-medium text-[#102f26] text-sm">{calculatedCO2} kg CO₂e</span>
-              </div>
-            </div>
+            return (
+              <div
+                key={action.id}
+                className={`bg-white border rounded-2xl p-6 shadow-sm flex flex-col justify-between transition-all ${
+                  isSelected ? "border-[#39705d] ring-2 ring-[#39705d]/10 bg-[#fbfdfb]" : "border-[#102f26]/10 hover:border-[#102f26]/30"
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded font-semibold">
+                      {action.category}
+                    </span>
+                    <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
+                  </div>
+                  <h2 className="text-base font-bold mb-2">{action.title}</h2>
+                  <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
+                </div>
 
-            <div className="flex gap-4 pt-2">
-              <button
-                onClick={() => { setIsSubmitted(false); setNotes(''); }}
-                className="px-5 py-2.5 bg-[#102f26] text-white font-mono text-xs uppercase tracking-wider hover:bg-[#39705d] transition"
-              >
-                Log Another Action
-              </button>
-              <Link
-                href={`[competition](https://www.greencollective.ca/)`}
-                className="px-5 py-2.5 bg-white border border-[#102f26]/20 text-[#102f26] font-mono text-xs uppercase tracking-wider hover:bg-[#f1f6f2] transition"
-              >
-                View Leaderboard →
-              </Link>
+                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[11px] text-gray-500 font-medium">
+                    ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
+                  </span>
+
+                  {isSelected ? (
+                    <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
+                      <button
+                        onClick={() => setActionQuantity(action.id, currentQty - 1)}
+                        className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
+                      >
+                        -
+                      </button>
+                      <span className="text-xs font-extrabold text-[#102f26] min-w-[18px] text-center">
+                        {currentQty}
+                      </span>
+                      <button
+                        onClick={() => setActionQuantity(action.id, currentQty + 1)}
+                        className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setActionQuantity(action.id, 1)}
+                      className="px-4 py-1.5 border border-[#102f26] text-[#102f26] text-xs font-bold rounded-full hover:bg-[#102f26] hover:text-white transition"
+                    >
+                      + Select
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {totalSelectedCount > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#102f26] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center justify-between gap-6 border border-emerald-500/20 max-w-2xl w-[92%] backdrop-blur">
+          <div className="flex items-center gap-3">
+            <span className="bg-[#39705d] text-white text-xs font-extrabold px-2.5 py-1 rounded-full">
+              {selectedItemsDetails.length} {selectedItemsDetails.length === 1 ? "Action" : "Actions"}
+            </span>
+            <div className="text-xs">
+              <span className="font-bold text-emerald-300">+{totalPoints} pts</span>
+              <span className="text-gray-300 mx-1.5">•</span>
+              <span className="text-gray-300">~{totalCO2.toFixed(1)} kg CO₂e</span>
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 border border-[#102f26]/15 shadow-sm">
-            {errorMsg && <div className="p-3 bg-red-50 text-red-700 text-xs font-mono">{errorMsg}</div>}
 
-            {/* STEP 1: Track Selection */}
-            <div>
-              <label className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#39705d] block mb-3">
-                1. Select Primary Sector / Context
-              </label>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setTrack('campus')}
-                  className={`p-4 text-left border transition ${track === 'campus' ? 'border-[#102f26] bg-[#f1f6f2] ring-1 ring-[#102f26]' : 'border-gray-200 bg-white'}`}
-                >
-                  <span className="font-mono text-xs font-bold block text-[#102f26]">Campus / UBC</span>
-                  <span className="text-xs text-[#526760] mt-1 block">UBC students &amp; faculty units.</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTrack('public')}
-                  className={`p-4 text-left border transition ${track === 'public' ? 'border-[#102f26] bg-[#f1f6f2] ring-1 ring-[#102f26]' : 'border-gray-200 bg-white'}`}
-                >
-                  <span className="font-mono text-xs font-bold block text-[#102f26]">General Public</span>
-                  <span className="text-xs text-[#526760] mt-1 block">Vancouver neighborhood hubs.</span>
-                </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearCart}
+              className="text-xs text-gray-400 hover:text-white underline underline-offset-2"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => setIsReviewOpen(true)}
+              className="px-5 py-2 bg-emerald-400 text-[#102f26] text-xs font-black rounded-full hover:bg-emerald-300 transition shadow"
+            >
+              Review & Log ({totalSelectedCount}) →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isReviewOpen && (
+        <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-[#102f26]/10 pb-3 mb-4">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-[#39705d]">Batch Review</span>
+                <h3 className="text-lg font-bold">Log {selectedItemsDetails.length} Selected Actions</h3>
+              </div>
+              <button
+                onClick={() => setIsReviewOpen(false)}
+                className="text-gray-400 hover:text-black font-mono text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {statusMsg && (
+              <div
+                className={`p-3 rounded-xl text-xs font-medium mb-4 text-center ${
+                  statusMsg.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+              >
+                {statusMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleBatchSubmit} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold mb-2 text-[#102f26]">
+                  1. Actions & Commute Scaling:
+                </label>
+                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                  {selectedItemsDetails.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-[#102f26]">{item.title}</div>
+                          <div className="text-[10px] text-[#526760]">
+                            +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.selectedQty}
+                            onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
+                            className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setActionQuantity(item.id, 0)}
+                            className="text-red-500 hover:text-red-700 font-bold px-1"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      {item.id === "transit-commute" && (
+                        <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
+                          <span className="text-[11px] text-gray-600 font-medium">Commute Distance (km):</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={commuteDistances[item.id] || 5}
+                            onChange={(e) =>
+                              setCommuteDistances({
+                                ...commuteDistances,
+                                [item.id]: Math.max(1, Number(e.target.value)),
+                              })
+                            }
+                            className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Dual Attribution Dropdowns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-[#f1f6f2] border border-[#102f26]/10 rounded-xl">
+              {/* Dual Attribution: Neighborhood & Faculty Selection */}
+              <div className="space-y-3 p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10">
+                <label className="block text-xs font-bold text-[#102f26]">
+                  2. Dual Community & Institutional Attribution:
+                </label>
+
                 <div>
-                  <label className="block text-xs font-mono uppercase text-[#102f26] mb-1">Vancouver Neighborhood:</label>
+                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
+                    Vancouver Neighborhood Hub:
+                  </label>
                   <select
                     value={neighbourhood}
                     onChange={(e) => setNeighbourhood(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 bg-white font-medium"
+                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
                   >
-                    {VANCOUVER_NEIGHBOURHOODS.map(n => <option key={n} value={n}>{n}</option>)}
+                    {VANCOUVER_NEIGHBOURHOODS.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-[#102f26] mb-1">UBC Faculty Unit:</label>
+                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
+                    UBC Faculty / Campus Unit:
+                  </label>
                   <select
                     value={faculty}
                     onChange={(e) => setFaculty(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 bg-white font-medium"
+                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
                   >
-                    {UBC_FACULTIES.map(f => <option key={f} value={f}>{f}</option>)}
+                    {UBC_FACULTIES.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
-            </div>
 
-            {/* STEP 2: Action Selection */}
-            <div>
-              <label className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#39705d] block mb-3">
-                2. Select Verified Action
-              </label>
-
-              <div className="space-y-3 mb-6">
-                {ACTION_CATALOG.map((item) => (
-                  <label
-                    key={item.id}
-                    className={`flex items-start justify-between p-4 border cursor-pointer transition ${
-                      selectedActionId === item.id ? 'border-[#102f26] bg-[#f1f6f2]' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="radio"
-                        name="actionSelect"
-                        value={item.id}
-                        checked={selectedActionId === item.id}
-                        onChange={() => setSelectedActionId(item.id)}
-                        className="mt-1 text-[#102f26]"
-                      />
-                      <div>
-                        <span className="font-medium text-sm text-[#102f26] block">{item.title}</span>
-                        <span className="text-xs text-[#526760]">{item.description}</span>
-                      </div>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-[#102f26] bg-white border border-gray-200 px-2 py-1 shrink-0">
-                      +{item.points} pts
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              {selectedActionId === 'transit-commute' && (
-                <div className="p-4 bg-gray-50 border border-gray-200 space-y-3 mb-4">
-                  <label className="block text-xs font-mono uppercase">Commute Distance (km):</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={distanceKm}
-                    onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="w-full p-2 text-xs border border-gray-300 bg-white"
-                  />
-                  <div className="text-[11px] text-emerald-700 font-mono">
-                    Dynamic calculation: ~{calculatedCO2} kg CO₂e offset for {distanceKm} km.
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
+                <div>
+                  <span className="font-bold text-[#102f26]">Total Impact Generated:</span>
+                  <div className="text-[11px] text-[#39705d]">
+                    ~{totalCO2.toFixed(1)} kg CO₂ emissions avoided
                   </div>
                 </div>
+                <div className="text-[#102f26] font-black text-sm">+{totalPoints} pts</div>
+              </div>
+
+              {!user && (
+                <p className="text-[11px] text-[#39705d] bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
+                  ℹ You are signed out. Submitting will save your selections, prompt sign-in, and automatically log the batch when you return.
+                </p>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-mono uppercase text-[#102f26] mb-1">Quantity:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-full p-2.5 text-xs border border-gray-300 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono uppercase text-[#102f26] mb-1">Notes (Optional):</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 99 B-Line or reusable mug"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full p-2.5 text-xs border border-gray-300 bg-white"
-                  />
-                </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewOpen(false)}
+                  className="w-1/2 py-2.5 border border-gray-300 rounded-full text-xs font-semibold"
+                >
+                  Back to Grid
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting || selectedItemsDetails.length === 0}
+                  className="w-1/2 py-2.5 bg-[#102f26] text-white rounded-full text-xs font-semibold hover:bg-[#39705d] transition disabled:opacity-50"
+                >
+                  {submitting ? "Processing..." : user ? "Confirm & Log All" : "Sign In & Log →"}
+                </button>
               </div>
-            </div>
-
-            <div className="pt-6 border-t border-[#102f26]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="font-mono text-xs">
-                <span className="text-[#71847d] uppercase tracking-wider block">Total Impact:</span>
-                <span className="font-bold text-[#102f26] text-sm">+{calculatedPoints} pts · {calculatedCO2} kg CO₂e</span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full sm:w-auto px-8 py-3 bg-[#102f26] text-white font-mono text-xs uppercase tracking-widest hover:bg-[#39705d] transition shadow-sm"
-              >
-                {submitting ? 'Submitting...' : 'Submit Action to Ledger →'}
-              </button>
-            </div>
-          </form>
-        )}
-      </section>
-    </main>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
