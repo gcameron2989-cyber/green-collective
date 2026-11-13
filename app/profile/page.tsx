@@ -40,9 +40,16 @@ function ProfileContent() {
         return
       }
 
-      // Check for profile metadata / custom username or fallback to email handle
+      // 1. Try fetching from public profiles table first
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single()
+
       const emailHandle = user.email ? user.email.split('@')[0] : 'UBC Participant'
-      const savedUsername = user.user_metadata?.username || emailHandle
+      const savedUsername = profileData?.username || user.user_metadata?.username || emailHandle
+      
       setDisplayName(savedUsername)
       setCustomUsername(savedUsername)
 
@@ -65,9 +72,18 @@ function ProfileContent() {
     e.preventDefault()
     if (!customUsername.trim()) return
 
-    const { error } = await supabase.auth.updateUser({
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // 1. Update Auth user metadata
+    await supabase.auth.updateUser({
       data: { username: customUsername.trim() }
     })
+
+    // 2. Upsert into public profiles table for leaderboard visibility
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, username: customUsername.trim(), updated_at: new Date().toISOString() })
 
     if (!error) {
       setDisplayName(customUsername.trim())
@@ -88,10 +104,9 @@ function ProfileContent() {
     
     let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
 
-    // Check if it's a transport action with distance stored in notes
     if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(s.action_id)) {
       const distMatch = s.notes?.match(/Distance:\s*([\d.]+)\s*km/)
-      const dist = distMatch ? parseFloat(distMatch[1]) : 5 // default fallback
+      const dist = distMatch ? parseFloat(distMatch[1]) : 5
 
       if (s.action_id === "active-transit") baseImpact = dist * 0.25
       else if (s.action_id === "public-transit") baseImpact = dist * 0.18
