@@ -12,24 +12,33 @@ interface UserSubmission {
   status: 'pending' | 'approved' | 'rejected'
   faculty_id: string
   eco_action_id: string
+  reflection_note?: string
+}
+
+interface UserProfile {
+  display_name: string
+  community: string
+  is_best_301: boolean
+  avatar_emoji: string
 }
 
 const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
-  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
+  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home', points: 30 },
   'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
-  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug for Retail Purchase', points: 15 },
-  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
-  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining Option', points: 20 },
+  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug', points: 15 },
+  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle', points: 20 },
+  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining', points: 20 },
   'sustainable-commute': { category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
   'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
-  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator (3+ Floors)', points: 10 },
-  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost, Recyclables & Soft Plastics', points: 10 },
-  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear or Clothes', points: 30 },
-  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up / Eco Event', points: 50 },
+  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator', points: 10 },
+  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost & Recycling', points: 10 },
+  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear', points: 30 },
+  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up', points: 50 },
 }
 
 export default function UserProfilePage() {
   const [submissions, setSubmissions] = useState<UserSubmission[]>([])
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
@@ -37,7 +46,7 @@ export default function UserProfilePage() {
   const router = useRouter()
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserData = async () => {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
 
@@ -47,6 +56,16 @@ export default function UserProfilePage() {
       }
 
       setUserEmail(user.email || 'UBC Participant')
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name, community, is_best_301, avatar_emoji')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData) {
+        setProfile(profileData as UserProfile)
+      }
 
       const { data: userSubmissions, error } = await supabase
         .from('submissions')
@@ -60,8 +79,8 @@ export default function UserProfilePage() {
       setLoading(false)
     }
 
-    fetchUserProfile()
-  }, [router])
+    fetchUserData()
+  }, [router, supabase])
 
   const approvedSubmissions = submissions.filter((s) => s.status === 'approved')
   const totalPoints = approvedSubmissions.reduce(
@@ -73,152 +92,149 @@ export default function UserProfilePage() {
   const transitCount = approvedSubmissions.filter((s) => ECO_ACTIONS_MAP[s.eco_action_id]?.category === 'Mobility & Energy').reduce((sum, s) => sum + s.quantity, 0)
 
   const co2OffsetKg = (totalActionsLogged * 0.6).toFixed(1)
-  const singleUseSaved = zeroWasteCount * 1
   const challengeTarget = 150
   const challengeProgress = Math.min(Math.round((totalPoints / challengeTarget) * 100), 100)
+  const uniqueDays = new Set(approvedSubmissions.map(s => new Date(s.created_at).toDateString())).size
 
   const badges = [
-    { name: 'First Step', desc: 'Log 1 eco-action', unlocked: totalActionsLogged >= 1, icon: '🌱' },
-    { name: 'Zero Waste Hero', desc: '5+ zero-waste choices', unlocked: zeroWasteCount >= 5, icon: '♻️' },
-    { name: 'Commuter Pro', desc: '5+ green commutes', unlocked: transitCount >= 5, icon: '🚲' },
-    { name: 'UBC Challenge Finisher', desc: 'Earn 150+ challenge pts', unlocked: totalPoints >= 150, icon: '🏆' },
+    { name: 'FIRST STEP', desc: 'Log 1 eco-action', unlocked: totalActionsLogged >= 1 },
+    { name: 'ZERO WASTE', desc: '5+ zero-waste choices', unlocked: zeroWasteCount >= 5 },
+    { name: 'COMMUTER', desc: '5+ green commutes', unlocked: transitCount >= 5 },
+    { name: 'FINISHER', desc: 'Earn 150+ challenge pts', unlocked: totalPoints >= 150 },
   ]
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6 py-12 space-y-10 font-sans bg-white text-neutral-900">
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6">
-        <div className="space-y-2">
-          <span className="inline-flex items-center gap-2 px-3 py-1 font-mono text-[11px] uppercase tracking-wider bg-emerald-50 text-emerald-800 rounded-full font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            UBC Sustainability Challenge
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900">
-            Personal Impact Hub
-          </h1>
-          <p className="text-xs font-mono text-neutral-500">
-            Account: <span className="font-semibold text-neutral-800">{userEmail || 'UBC Participant'}</span>
-          </p>
-        </div>
-
-        <Link
-          href="/competition/submit"
-          className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition shadow-sm"
-        >
-          + Log Eco Action
-        </Link>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="p-7 rounded-2xl bg-neutral-50 space-y-3">
-        <div className="flex justify-between items-center text-xs font-mono">
-          <span className="font-bold text-neutral-900 uppercase tracking-wider">
-            Faculty Challenge Target (150 Pts Goal)
-          </span>
-          <span className="font-extrabold text-emerald-700">{challengeProgress}% Complete</span>
-        </div>
-        <div className="w-full h-3 bg-neutral-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-            style={{ width: `${challengeProgress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Total Points</span>
-          <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : totalPoints}</div>
-          <p className="text-[11px] text-emerald-700 font-medium">Verified credits</p>
-        </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Actions Logged</span>
-          <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : totalActionsLogged}</div>
-          <p className="text-[11px] text-emerald-700 font-medium">Total submissions</p>
-        </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Est. CO₂ Avoided</span>
-          <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : `${co2OffsetKg} kg`}</div>
-          <p className="text-[11px] text-emerald-700 font-medium">Emissions offset</p>
-        </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Items Diverted</span>
-          <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : singleUseSaved}</div>
-          <p className="text-[11px] text-emerald-700 font-medium">Zero-waste choices</p>
-        </div>
-      </div>
-
-      {/* Badges */}
-      <div className="space-y-4">
-        <h2 className="text-base font-bold text-neutral-900">Milestones & Badges</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {badges.map((badge, idx) => (
-            <div
-              key={idx}
-              className={`p-5 rounded-2xl text-center space-y-3 transition ${
-                badge.unlocked ? 'bg-neutral-50 text-neutral-900' : 'bg-neutral-100/50 opacity-40 grayscale'
-              }`}
-            >
-              <div className="text-3xl">{badge.icon}</div>
-              <div className="space-y-1">
-                <div className="text-xs font-bold text-neutral-900">{badge.name}</div>
-                <div className="text-[11px] text-neutral-500 leading-snug">{badge.desc}</div>
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111827] font-sans antialiased pb-20">
+      <main className="max-w-5xl mx-auto px-6 pt-12 pb-16">
+        
+        {/* Editorial Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 pb-6 border-b border-gray-200">
+          <div className="flex items-end gap-6">
+            <div className="w-16 h-16 bg-gray-100 border border-gray-300 flex items-center justify-center text-2xl shadow-sm">
+              {profile?.avatar_emoji || "🌲"}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-1">
+                {profile?.display_name || userEmail?.split('@')[0] || "Participant Profile"}
+              </h1>
+              <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-gray-500">
+                <span>{profile?.community || "Vancouver"}</span>
+                {profile?.is_best_301 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-[#0F2C23] font-bold">BEST 301 COHORT</span>
+                  </>
+                )}
               </div>
-              <span className={`inline-block font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md ${badge.unlocked ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-200 text-neutral-600'}`}>
-                {badge.unlocked ? 'UNLOCKED' : 'LOCKED'}
-              </span>
             </div>
-          ))}
+          </div>
+          <Link 
+            href="/competition/submit" 
+            className="px-5 py-2.5 bg-[#0F2C23] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-black transition self-start md:self-auto"
+          >
+            + LOG ACTION
+          </Link>
         </div>
-      </div>
 
-      {/* Activity Stream */}
-      <div className="space-y-4 pb-12">
-        <h2 className="text-base font-bold text-neutral-900">Activity History</h2>
-        <div className="rounded-2xl bg-neutral-50 p-6 space-y-3">
-          {loading ? (
-            <div className="text-center py-12 text-xs font-mono text-neutral-400 animate-pulse">
-              Loading activity history...
+        {/* Professional Metrics Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white border border-gray-200 p-5">
+            <p className="font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-2">Impact Score</p>
+            <p className="text-3xl font-bold text-[#0F2C23]">{loading ? '-' : totalPoints}</p>
+          </div>
+          <div className="bg-white border border-gray-200 p-5">
+            <p className="font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-2">KG CO₂ Avoided</p>
+            <p className="text-3xl font-bold text-gray-900">{loading ? '-' : co2OffsetKg}</p>
+          </div>
+          <div className="bg-white border border-gray-200 p-5">
+            <p className="font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-2">Active Streak</p>
+            <p className="text-3xl font-bold text-gray-900">{loading ? '-' : uniqueDays}</p>
+          </div>
+          <div className="bg-white border border-gray-200 p-5">
+            <p className="font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-2">Faculty Target</p>
+            <div className="flex items-end gap-2 mb-1">
+              <p className="text-3xl font-bold text-gray-900">{challengeProgress}%</p>
             </div>
-          ) : submissions.length === 0 ? (
-            <div className="text-center py-12 text-xs text-neutral-500 space-y-2">
-              <p>No eco-actions logged under your account yet.</p>
-              <Link href="/competition/submit" className="font-mono text-xs font-bold text-emerald-700 underline">
-                Log your first action →
-              </Link>
+            <div className="w-full h-1 bg-gray-100 mt-2">
+              <div className="h-full bg-[#0F2C23] transition-all" style={{ width: `${challengeProgress}%` }} />
             </div>
-          ) : (
-            submissions.map((sub) => {
-              const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
-              const points = (actionDetails?.points || 0) * sub.quantity
+          </div>
+        </div>
 
-              return (
-                <div key={sub.id} className="p-4 rounded-xl bg-white flex items-center justify-between gap-4 shadow-2xs">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-bold text-neutral-900">
-                        {actionDetails?.title || 'Eco Action'}
-                      </span>
-                      <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                        {sub.status}
-                      </span>
-                    </div>
-                    <p className="font-mono text-[11px] text-neutral-500">
-                      Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="font-mono text-xs font-bold text-emerald-800 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-lg">
-                    +{points} pts
-                  </div>
+        {/* Badges - Minimalist Grid */}
+        <div className="mb-10">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-gray-900 mb-4">Milestones</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {badges.map((badge, idx) => (
+              <div key={idx} className={`border p-4 transition ${badge.unlocked ? 'bg-white border-gray-300' : 'bg-gray-50 border-gray-200 opacity-60'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <span className={`font-mono text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider ${badge.unlocked ? 'bg-[#0F2C23] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    {badge.unlocked ? 'UNLOCKED' : 'LOCKED'}
+                  </span>
                 </div>
-              )
-            })
-          )}
+                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">{badge.name}</h3>
+                <p className="text-[11px] text-gray-500 mt-1">{badge.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
+        {/* Activity Log - Audit Trail Style */}
+        <div>
+          <h2 className="text-xs font-mono font-bold uppercase tracking-widest text-gray-900 mb-4">Pilot Activity Log</h2>
+          <div className="bg-white border border-gray-200">
+            {loading ? (
+              <div className="p-8 text-center text-xs font-mono text-gray-400">Loading audit log...</div>
+            ) : submissions.length === 0 ? (
+              <div className="p-12 text-center border-b border-gray-200 last:border-0">
+                <p className="text-sm text-gray-500 mb-2">No verified actions recorded.</p>
+                <Link href="/competition/submit" className="font-mono text-xs font-bold text-[#0F2C23] hover:underline uppercase tracking-wide">
+                  Initialize Pilot Log →
+                </Link>
+              </div>
+            ) : (
+              submissions.map((sub, idx) => {
+                const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
+                const points = (actionDetails?.points || 0) * sub.quantity
+
+                return (
+                  <div key={sub.id} className="p-5 border-b border-gray-200 last:border-0 hover:bg-gray-50 transition flex flex-col md:flex-row gap-4 justify-between md:items-center">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className={`font-mono text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider ${
+                          sub.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {sub.status}
+                        </span>
+                        <span className="font-mono text-[10px] text-gray-400">
+                          {new Date(sub.created_at).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-sm text-gray-900">{actionDetails?.title || 'System Action'}</h3>
+                      {sub.reflection_note && (
+                        <p className="text-xs text-gray-600 mt-2 border-l-2 border-gray-200 pl-3 italic">
+                          "{sub.reflection_note}"
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-6 md:text-right shrink-0">
+                      <div>
+                        <p className="text-[9px] font-mono text-gray-400 uppercase tracking-wider mb-0.5">Qty</p>
+                        <p className="text-xs font-medium text-gray-900">{sub.quantity}x</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-mono text-gray-400 uppercase tracking-wider mb-0.5">Earned</p>
+                        <p className="text-xs font-bold text-[#0F2C23]">+{points} PTS</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
