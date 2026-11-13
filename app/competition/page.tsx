@@ -11,7 +11,6 @@ interface LeaderboardEntry {
   category: string;
   participants: number;
   carbonOffsetKg: number;
-  contributorHandles?: string[];
 }
 
 const VANCOUVER_NEIGHBOURHOODS = [
@@ -42,7 +41,7 @@ export default function CompetitionPage() {
         // 1. Fetch Faculties
         const { data: faculties } = await supabase.from('faculties').select('id, name');
 
-        // 2. Fetch Logged Actions along with user profiles if possible, or parse user_id
+        // 2. Fetch Logged Actions
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
           .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity, action_id');
@@ -61,8 +60,13 @@ export default function CompetitionPage() {
           neighborhoodMap[n] = { name: n, carbon: 0, users: new Set() };
         });
 
-        // --- Process BEST 301 Cohort Standings with Individual User Handles ---
+        // --- Process BEST 301 Cohort Standings ---
         const best301UserMap: { [userId: string]: { carbon: number; handle: string } } = {};
+
+        // Try to check current authenticated user metadata as a priority handle
+        const { data: { user } } = await supabase.auth.getUser();
+        const currentUserId = user?.id;
+        const currentUserHandle = user?.user_metadata?.username || (user?.email ? user.email.split('@')[0] : null);
 
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
@@ -92,10 +96,14 @@ export default function CompetitionPage() {
           if (act.notes?.includes("BEST 301")) {
             if (act.user_id) {
               if (!best301UserMap[act.user_id]) {
-                // Fallback handle based on user_id substring or generic participant label
+                // Use user's actual handle if it's the current user, otherwise fallback
+                const handle = (act.user_id === currentUserId && currentUserHandle) 
+                  ? currentUserHandle 
+                  : `User_${act.user_id.slice(0, 6)}`;
+
                 best301UserMap[act.user_id] = {
                   carbon: 0,
-                  handle: `Participant_${act.user_id.slice(0, 6)}`,
+                  handle: handle,
                 };
               }
               best301UserMap[act.user_id].carbon += carbonOffset;
@@ -125,7 +133,6 @@ export default function CompetitionPage() {
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
-        // Map individual users participating in BEST 301 into leaderboard rows
         const computedBest301: LeaderboardEntry[] = Object.entries(best301UserMap)
           .map(([userId, data]) => ({
             rank: 0,
