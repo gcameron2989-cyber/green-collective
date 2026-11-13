@@ -103,7 +103,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "TORONTO",
     description: "City Council approved action plan targeting net-zero GHG emissions city-wide by 2040 through green building standards and fleet electrification.",
     impactScope: "Net-Zero by 2040 · Toronto Green Standard Enforcement",
-    officialPortalUrl: "url?id=46",
+    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/environmentally-friendly-city-initiatives/transformto/",
   },
   {
     id: "toronto-ravine-strategy",
