@@ -9,6 +9,7 @@ import Logo from '@/components/logo';
 export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Memoize the client so it NEVER re-instantiates on render
   const supabase = useMemo(() => createClient(), []);
@@ -36,6 +37,11 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  // Close mobile menu whenever pathname changes (user navigates)
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = '/login';
@@ -45,6 +51,7 @@ export default function Navbar() {
 
   const navItems = [
     { href: '/log-action', label: 'Actions' },
+    { href: '/competition', label: 'Leaderboard' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/research', label: 'Research Hub' },
@@ -63,6 +70,7 @@ export default function Navbar() {
           <Logo />
         </Link>
 
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-mono uppercase tracking-wider">
           {navItems.map((item) => (
             <Link
@@ -79,7 +87,8 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider shrink-0" suppressHydrationWarning>
+        {/* Desktop Auth / Profile Action */}
+        <div className="hidden md:flex items-center gap-4 text-xs font-mono uppercase tracking-wider shrink-0" suppressHydrationWarning>
           {isMounted && (
             isAuthenticated ? (
               <>
@@ -111,7 +120,72 @@ export default function Navbar() {
             )
           )}
         </div>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2 text-neutral-700 hover:text-[#0f382c] focus:outline-none"
+          aria-label="Toggle mobile menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isMobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Dropdown Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-neutral-200 shadow-lg px-6 py-6 space-y-4 font-mono text-xs uppercase tracking-wider">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`block py-2 transition-colors ${
+                isActive(item.href)
+                  ? 'text-[#0f382c] font-bold'
+                  : 'text-neutral-600 hover:text-[#0f382c]'
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
+          <div className="pt-4 border-t border-neutral-100 flex flex-col space-y-3" suppressHydrationWarning>
+            {isMounted && (
+              isAuthenticated ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className={`block py-2 ${
+                      isActive('/profile') ? 'text-[#0f382c] font-bold' : 'text-neutral-600'
+                    }`}
+                  >
+                    Profile Hub
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="text-left py-2 text-neutral-500 hover:text-neutral-900"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block py-2 text-[#0f382c] font-bold"
+                >
+                  Log in
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
