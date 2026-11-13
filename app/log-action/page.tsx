@@ -89,7 +89,7 @@ export default function LogActionPage() {
       let calculatedCo2 = detail.impactValue;
       let calculatedPoints = detail.points;
 
-      // Independent distance-based carbon accounting for all 4 transport modes
+      // Independent distance-based carbon accounting for all transport modes
       if (id === "active-transit") {
         const dist = Math.min(100, Math.max(1, commuteDistances[id] || 5));
         calculatedCo2 = Number((dist * 0.25).toFixed(2));
@@ -198,7 +198,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
+          <Link href="[Competition Leaderboard](https://www.greencollective.ca/competition)" className="text-xs font-mono text-[#39705d] hover:underline">
             [← BACK TO COMPETITION]
           </Link>
         </div>
