@@ -16,8 +16,8 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
   const [neighborhood, setNeighborhood] = useState("Point Grey");
   const [distanceKm, setDistanceKm] = useState(5);
-  const [impactPoints, setImpactPoints] = useState(15);
-  const [co2SavedKg, setCo2SavedKg] = useState(1.2);
+  const [impactPoints, setImpactPoints] = useState(25);
+  const [co2SavedKg, setCo2SavedKg] = useState(1.25);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,7 +32,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   useEffect(() => {
     if (actionType.includes("Commute")) {
       let basePoints = 15;
-      let co2RatePerKm = 0.25; // Realistic kg CO2e offset per km for active commute
+      let co2RatePerKm = 0.25; // 5km * 0.25 = 1.25 kg CO2e (realistic bike offset)
 
       if (transportMode === "bus") {
         basePoints = 20;
@@ -155,7 +155,6 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           </div>
         )}
 
-        {/* Dual Attribution Selector: Neighborhood / Community */}
         <div>
           <label className="block text-[11px] text-gray-500 uppercase mb-1">Community / Neighborhood Attribution *</label>
           <select
