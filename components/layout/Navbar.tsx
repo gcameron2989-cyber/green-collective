@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
@@ -10,7 +10,9 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const supabase = createClient();
+  // Memoize the client so it NEVER re-instantiates on render
+  const supabase = useMemo(() => createClient(), []);
+  
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,7 +38,7 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.refresh();
+    window.location.href = '/login';
   };
 
   const isActive = (path: string) => pathname === path;
