@@ -19,7 +19,6 @@ export default function CompetitionPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const supabase = createClient();
 
-  // Clean local regional hubs with zeroed initial metrics, ready for live data or submissions
   const localStandings: LeaderboardEntry[] = [
     { rank: 1, name: 'Kitsilano Community Hub', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
     { rank: 2, name: 'Point Grey & Campus Perimeter', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
@@ -37,37 +36,30 @@ export default function CompetitionPage() {
 
         if (facultyError) throw facultyError;
 
-        const { data: submissions, error: subError } = await supabase
-          .from('submissions')
-          .select('faculty_id, quantity, user_id, eco_action_id');
+        // Query logged_actions table
+        const { data: loggedActions, error: logError } = await supabase
+          .from('logged_actions')
+          .select('affiliation_name, points, user_id, notes, quantity');
 
-        if (subError) throw subError;
+        if (logError) throw logError;
 
         const facultyMap: { [key: string]: { name: string; points: number; users: Set<string> } } = {};
 
         faculties?.forEach((f) => {
-          facultyMap[f.id] = { name: f.name, points: 0, users: new Set() };
+          facultyMap[f.name] = { name: f.name, points: 0, users: new Set() };
         });
 
-        const pointValues: { [key: string]: number } = {
-          'ubc-forestry-field': 50,
-          'sustainable-commute-ubc': 25,
-          'home-meal': 30,
-          'home-beverage': 25,
-          'reusable-container-buy': 15,
-          'refillable-water': 20,
-          'plant-based-meal': 20,
-          'waste-sorting': 10,
-          'thrift-borrow-gear': 30,
-          'campus-cleanup': 50,
-        };
+        loggedActions?.forEach((act) => {
+          const matchedFaculty = Object.keys(facultyMap).find((facName) =>
+            act.affiliation_name?.includes(facName) || act.notes?.includes(facName)
+          );
 
-        submissions?.forEach((sub) => {
-          if (facultyMap[sub.faculty_id]) {
-            const pts = (pointValues[sub.eco_action_id] || 20) * (sub.quantity || 1);
-            facultyMap[sub.faculty_id].points += pts;
-            if (sub.user_id) {
-              facultyMap[sub.faculty_id].users.add(sub.user_id);
+          if (matchedFaculty) {
+            const qty = act.quantity || 1;
+            const pts = (act.points || 25) * qty;
+            facultyMap[matchedFaculty].points += pts;
+            if (act.user_id) {
+              facultyMap[matchedFaculty].users.add(act.user_id);
             }
           }
         });
@@ -78,7 +70,7 @@ export default function CompetitionPage() {
             name: f.name,
             category: 'UBC Faculty',
             participants: f.users.size,
-            carbonOffsetKg: Math.round(f.points * 3.5),
+            carbonOffsetKg: Math.round(f.points * 0.35),
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
@@ -100,7 +92,6 @@ export default function CompetitionPage() {
 
   return (
     <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
-      {/* Editorial Page Header */}
       <section className="border-b border-[#102f26]/10 bg-[#f1f6f2]">
         <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24 lg:px-12">
           <div className="mb-4 flex items-center justify-between">
@@ -108,10 +99,10 @@ export default function CompetitionPage() {
               Leaderboards &amp; Challenges · Regional &amp; Institutional
             </p>
             <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
-              <Link href="/" className="text-[#526760] hover:text-[#102f26]">
+              <Link href="[Back to Home](https://www.greencollective.ca/)" className="text-[#526760] hover:text-[#102f26]">
                 ← Back to Home
               </Link>
-              <Link href="/habits" className="text-[#526760] hover:text-[#102f26]">
+              <Link href="[Log Eco-Action](https://www.greencollective.ca/habits)" className="text-[#526760] hover:text-[#102f26]">
                 Log Eco-Action →
               </Link>
             </div>
@@ -125,9 +116,7 @@ export default function CompetitionPage() {
         </div>
       </section>
 
-      {/* Main Content Hub */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-12">
-        {/* Tier & Sub-Tab Control Bar */}
         <div className="mb-12 p-6 border border-[#102f26]/15 bg-[#f1f6f2] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div>
@@ -185,7 +174,6 @@ export default function CompetitionPage() {
 
         {activeTab === "leaderboard" ? (
           <div className="grid gap-16 lg:grid-cols-[1.2fr_0.8fr]">
-            {/* Leaderboard Table Feed */}
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
@@ -246,7 +234,7 @@ export default function CompetitionPage() {
                   Log your daily transit choices, zero-waste dining, and conservation efforts to push your faculty or neighborhood up the live standings.
                 </p>
                 <Link
-                  href="/habits"
+                  href="/log-action"
                   className="inline-flex items-center gap-2 bg-[#102f26] text-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em]"
                 >
                   Log Action to Personal Ledger →
@@ -254,7 +242,6 @@ export default function CompetitionPage() {
               </div>
             </div>
 
-            {/* Challenge Statistics Sidebar */}
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
@@ -297,12 +284,6 @@ export default function CompetitionPage() {
               <div className="space-y-4 text-sm text-[#526760] leading-relaxed">
                 <p>
                   Green Collective&apos;s dual-tier leaderboard system quantifies and compares grassroots environmental action across both institutional departments (such as UBC faculties) and municipal regional hubs (such as Vancouver neighborhoods).
-                </p>
-                <p>
-                  <strong>Eligibility:</strong> Participants may align their actions with their university faculty, workplace organization, or local neighborhood residential zone.
-                </p>
-                <p>
-                  <strong>Verification &amp; Calculation:</strong> Actions logged through the personal ledger are verified against standardized carbon-intensity coefficients for modal transit shift, energy conservation, and ecological actions.
                 </p>
               </div>
             </div>
