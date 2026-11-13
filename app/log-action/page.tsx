@@ -187,7 +187,7 @@ export default function LogActionPage() {
     try {
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
         const isDistanceBased = TRANSPORT_IDS.includes(item.id);
-        const dist = commuteDistances[item.id] || 10;
+        const dist = commuteDistances[item.id] ?? 0;
         return {
           actionId: item.id,
           quantity: item.selectedQty,
@@ -298,14 +298,14 @@ export default function LogActionPage() {
                         <span className="font-medium text-[#526760]">Commute Distance (km):</span>
                         <input
                           type="number"
-                          min="1"
-                          max="200"
-                          value={commuteDistances[action.id] ?? 10}
+                          min="0"
+                          max="500"
+                          value={commuteDistances[action.id] ?? 0}
                           onChange={(e) => {
-                            const val = Number(e.target.value);
+                            const val = e.target.value;
                             setCommuteDistances((prev) => ({
                               ...prev,
-                              [action.id]: Math.min(200, Math.max(1, val || 10)),
+                              [action.id]: val === "" ? 0 : Math.max(0, Number(val)),
                             }));
                           }}
                           className="w-16 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
@@ -436,7 +436,7 @@ export default function LogActionPage() {
 
             {/* 3. Conditional Faculty Selector (Only opens if UBC Student is Yes) */}
             {isUbcStudent && (
-              <div className="relative pt-1 animate-fadeIn">
+              <div className="relative pt-1">
                 <label className="block font-mono uppercase text-[11px] text-[#39705d] mb-1.5 font-bold">
                   Faculty / School (UBC Vancouver)
                 </label>
