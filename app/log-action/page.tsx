@@ -90,7 +90,7 @@ export default function LogActionPage() {
 
   // Dual Attribution State
   const [selectedSectors, setSelectedSectors] = useState<Sector[]>(["campus"]);
-  const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
+  const [publicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
@@ -399,8 +399,8 @@ export default function LogActionPage() {
               </div>
             </div>
 
-            {/* Faculty Search & Autosort Dropdown */}
-            <div className="relative">
+            {/* Faculty Search Dropdown */}
+            <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Faculty / School (UBC Vancouver)
               </label>
@@ -408,7 +408,6 @@ export default function LogActionPage() {
                 type="text"
                 placeholder="Type to filter faculties..."
                 value={facultySearch}
-                onFocus={() => setIsFacultyDropdownOpen(true)}
                 onChange={(e) => {
                   setFacultySearch(e.target.value);
                   setIsFacultyDropdownOpen(true);
@@ -418,7 +417,7 @@ export default function LogActionPage() {
               <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
               
               {isFacultyDropdownOpen && (
-                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-sm space-y-0.5 p-1">
                   {filteredFaculties.length > 0 ? (
                     filteredFaculties.map((f) => (
                       <button
@@ -429,8 +428,8 @@ export default function LogActionPage() {
                           setFacultySearch("");
                           setIsFacultyDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition ${
-                          faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700"
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                          faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         {f}
@@ -443,8 +442,8 @@ export default function LogActionPage() {
               )}
             </div>
 
-            {/* Neighborhood Search & Autosort Dropdown */}
-            <div className="relative">
+            {/* Neighborhood Search Dropdown */}
+            <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Vancouver Neighborhood / Municipality
               </label>
@@ -452,7 +451,6 @@ export default function LogActionPage() {
                 type="text"
                 placeholder="Type to filter neighborhoods..."
                 value={neighbourhoodSearch}
-                onFocus={() => setIsNeighborhoodDropdownOpen(true)}
                 onChange={(e) => {
                   setNeighbourhoodSearch(e.target.value);
                   setIsNeighborhoodDropdownOpen(true);
@@ -462,7 +460,7 @@ export default function LogActionPage() {
               <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
 
               {isNeighborhoodDropdownOpen && (
-                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-sm space-y-0.5 p-1">
                   {filteredNeighborhoods.length > 0 ? (
                     filteredNeighborhoods.map((n) => (
                       <button
@@ -473,8 +471,8 @@ export default function LogActionPage() {
                           setNeighbourhoodSearch("");
                           setIsNeighborhoodDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition ${
-                          neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700"
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                          neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         {n}
@@ -499,7 +497,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal with Distance Inputs strictly for Transport Actions */}
+      {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -569,7 +567,6 @@ export default function LogActionPage() {
                           </div>
                         </div>
 
-                        {/* Distance Slider strictly checked against TRANSPORT_IDS */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
