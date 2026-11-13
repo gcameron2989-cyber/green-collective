@@ -286,6 +286,7 @@ export default function LogActionPage() {
             {filteredActions.map((action) => {
               const currentQty = cart[action.id] || 0;
               const isSelected = currentQty > 0;
+              const isTransport = TRANSPORT_IDS.includes(action.id);
 
               return (
                 <div
@@ -302,7 +303,28 @@ export default function LogActionPage() {
                       <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
                     </div>
                     <h2 className="text-base font-bold mb-2">{action.name}</h2>
-                    <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
+                    <p className="text-xs text-[#526760] leading-relaxed mb-4">{action.description}</p>
+
+                    {/* Commute distance input directly on card to keep review modal safe */}
+                    {isTransport && (
+                      <div className="mb-4 p-3 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 flex items-center justify-between text-xs">
+                        <span className="font-medium text-[#526760]">Commute Distance (km):</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="200"
+                          value={commuteDistances[action.id] ?? 10}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setCommuteDistances((prev) => ({
+                              ...prev,
+                              [action.id]: Math.min(200, Math.max(1, val || 10)),
+                            }));
+                          }}
+                          className="w-16 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
@@ -498,7 +520,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal - Fully Restored Distance Inputs with Safe Uncontrolled State */}
+      {/* Review Modal - Safe Read-Only Summary */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4" suppressHydrationWarning>
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans" suppressHydrationWarning>
@@ -531,7 +553,7 @@ export default function LogActionPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions &amp; Scaling:
+                  Selected Actions Summary:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
@@ -540,57 +562,25 @@ export default function LogActionPage() {
                     return (
                       <div
                         key={`review-${item.id}`}
-                        className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
+                        className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-1"
                       >
                         <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-bold text-[#102f26]">{item.title}</div>
-                            <div className="text-[10px] text-[#526760]">
-                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold px-2 py-1 bg-white border border-gray-200 rounded-lg">
-                              Qty: {item.selectedQty}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setActionQuantity(item.id, 0)}
-                              className="text-red-500 hover:text-red-700 font-bold px-1"
-                            >
-                              ✕
-                            </button>
-                          </div>
+                          <div className="font-bold text-[#102f26]">{item.title}</div>
+                          <button
+                            type="button"
+                            onClick={() => setActionQuantity(item.id, 0)}
+                            className="text-red-500 hover:text-red-700 font-bold px-2 py-0.5 text-xs"
+                          >
+                            Remove
+                          </button>
                         </div>
-
-                        {/* Safe Uncontrolled Commute Distance Input */}
+                        <div className="text-[10px] text-[#526760] flex justify-between">
+                          <span>Quantity: {item.selectedQty}</span>
+                          <span className="font-bold text-[#102f26]">+{item.points * item.selectedQty} pts · ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂</span>
+                        </div>
                         {isTransport && (
-                          <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
-                            <span className="text-[11px] text-gray-600 font-medium">
-                              {item.id === "active-transit"
-                                ? "Cycling/Walking Distance (km):"
-                                : item.id === "public-transit"
-                                ? "Transit Distance (km):"
-                                : item.id === "ev-rideshare"
-                                ? "EV Rideshare Distance (km):"
-                                : "Carpool Distance (km):"}
-                            </span>
-                            <input
-                              type="number"
-                              min="1"
-                              max="200"
-                              defaultValue={commuteDistances[item.id] ?? 10}
-                              key={`dist-${item.id}-${commuteDistances[item.id]}`}
-                              onBlur={(e) => {
-                                const val = Number(e.target.value);
-                                setCommuteDistances((prev) => ({
-                                  ...prev,
-                                  [item.id]: Math.min(200, Math.max(1, val || 10)),
-                                }));
-                              }}
-                              className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                            />
+                          <div className="text-[10px] text-[#39705d] pt-1">
+                            Commute Distance: {commuteDistances[item.id] || 10} km
                           </div>
                         )}
                       </div>
