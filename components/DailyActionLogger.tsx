@@ -12,9 +12,11 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const { user } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
   const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
+  const [transportMode, setTransportMode] = useState<"bike" | "walk" | "bus" | "ev_carpool">("bike");
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
+  const [distanceKm, setDistanceKm] = useState(5);
   const [impactPoints, setImpactPoints] = useState(15);
-  const [commuteKm, setCommuteKm] = useState(5);
+  const [co2SavedKg, setCo2SavedKg] = useState(2.1);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -24,6 +26,40 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Recalculate points and CO2 whenever transport mode or distance changes
+  useEffect(() => {
+    if (actionType.includes("Commute")) {
+      let basePoints = 15;
+      let co2RatePerKm = 0.21; // Baseline car emissions ~0.21 kg CO2e/km avoided
+
+      if (transportMode === "bike" || transportMode === "walk") {
+        basePoints = 20;
+        co2RatePerKm = 0.25; // Higher active offset value
+      } else if (transportMode === "bus") {
+        basePoints = 25;
+        co2RatePerKm = 0.18;
+      } else if (transportMode === "ev_carpool") {
+        basePoints = 30;
+        co2RatePerKm = 0.15;
+      }
+
+      const calculatedPoints = Math.round(basePoints + distanceKm * 2);
+      const calculatedCo2 = Number((distanceKm * co2RatePerKm).toFixed(2));
+
+      setImpactPoints(calculatedPoints);
+      setCo2SavedKg(calculatedCo2);
+    } else if (actionType.includes("Zero Waste")) {
+      setImpactPoints(10);
+      setCo2SavedKg(0.5);
+    } else if (actionType.includes("Biodiversity")) {
+      setImpactPoints(25);
+      setCo2SavedKg(3.5);
+    } else {
+      setImpactPoints(20);
+      setCo2SavedKg(1.2);
+    }
+  }, [actionType, transportMode, distanceKm]);
 
   const handleLogAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,13 +72,10 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setSuccessMsg("");
     setErrorMsg("");
 
-    // Build notes string including commute distance if applicable
-    let notes = "";
-    if (actionType.includes("Commute") && commuteKm > 0) {
-      notes = `Commute Distance: ${commuteKm} km`;
-    }
+    let notes = actionType.includes("Commute")
+      ? `Mode: ${transportMode} | Distance: ${distanceKm} km | CO2 Saved: ${co2SavedKg} kg`
+      : "";
 
-    // Insert action including the constructed notes field
     const { error } = await supabase.from("user_actions").insert({
       user_id: user.id,
       initiative_id: initiativeId,
@@ -57,7 +90,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     if (error) {
       setErrorMsg(error.message);
     } else {
-      setSuccessMsg(`Successfully logged! +${impactPoints} impact points recorded.`);
+      setSuccessMsg(`Successfully logged! +${impactPoints} pts (~${co2SavedKg} kg $\text{CO}_2\text{e}$ saved).`);
       if (onActionLogged) onActionLogged();
     }
   };
@@ -78,13 +111,13 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           Log Daily Climate Action
         </h3>
         <p className="text-xs text-gray-500 font-mono mt-0.5">
-          Pilot active until December 9, 2026. Submit your daily impact metrics.
+          Pilot active until December 9, 2026. Submit your verified impact metrics.
         </p>
       </div>
 
       {!user ? (
         <div className="p-4 bg-gray-50 border border-gray-200 text-xs font-mono text-gray-600 text-center">
-          Please sign in to log actions and track your class rank.
+          Please sign in to log actions and track your leaderboard rank.
         </div>
       ) : (
         <form onSubmit={handleLogAction} className="space-y-4 font-mono text-xs" suppressHydrationWarning>
@@ -105,20 +138,10 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
             </label>
             <select
               value={actionType}
-              onChange={(e) => {
-                const val = e.target.value;
-                setActionType(val);
-                if (val.includes("Commute")) {
-                  setImpactPoints(15 + commuteKm * 2);
-                } else if (val.includes("Zero Waste")) {
-                  setImpactPoints(10);
-                } else {
-                  setImpactPoints(20);
-                }
-              }}
+              onChange={(e) => setActionType(e.target.value)}
               className="w-full p-2.5 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
             >
-              <option value="Active Commute (Walking/Bike)">Active Commute (Walking/Bike) — Dynamic pts</option>
+              <option value="Active Commute (Walking/Bike)">Sustainable Commute (Bus, Bike, Walk, EV) — Dynamic</option>
               <option value="Zero Waste / Reusable Container">Zero Waste / Reusable Container — 10 pts</option>
               <option value="Campus Biodiversity Stewardship">Campus Biodiversity Stewardship — 25 pts</option>
               <option value="Energy Conservation Action">Energy Conservation Action — 20 pts</option>
@@ -126,25 +149,41 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           </div>
 
           {actionType.includes("Commute") && (
-            <div className="p-3 bg-gray-50 border border-gray-200 space-y-1">
-              <label className="block text-[11px] text-gray-500 uppercase">
-                Commute Distance (Kilometers) *
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="50"
-                value={commuteKm}
-                onChange={(e) => {
-                  const km = Number(e.target.value);
-                  setCommuteKm(km);
-                  setImpactPoints(15 + km * 2);
-                }}
-                className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
-              />
-              <span className="text-[10px] text-gray-400 block">
-                Points scale automatically based on distance (~2 pts per km).
-              </span>
+            <div className="p-4 bg-gray-50 border border-gray-200 space-y-3">
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">
+                  Transport Mode *
+                </label>
+                <select
+                  value={transportMode}
+                  onChange={(e) => setTransportMode(e.target.value as any)}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
+                >
+                  <option value="bike">Bicycle</option>
+                  <option value="walk">Walking</option>
+                  <option value="bus">Public Transit / Bus</option>
+                  <option value="ev_carpool">Carpool / Electric Vehicle</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-gray-500 uppercase mb-1">
+                  Commute Distance (Kilometers) *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={distanceKm}
+                  onChange={(e) => setDistanceKm(Number(e.target.value))}
+                  className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
+                />
+              </div>
+
+              <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 border border-emerald-200 flex justify-between">
+                <span>Estimated Impact:</span>
+                <span className="font-bold">+{impactPoints} pts (~{co2SavedKg} kg $\text{CO}_2\text{e}$ avoided)</span>
+              </div>
             </div>
           )}
 
@@ -162,18 +201,6 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
               <option value="toronto-ravine-strategy-hub">City of Toronto Ravine Strategy & Stewardship</option>
               <option value="c40-cities-network">C40 Cities Global Climate Leadership Network</option>
             </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] text-gray-500 uppercase mb-1">
-              Assigned Impact Score (Points)
-            </label>
-            <input
-              type="number"
-              value={impactPoints}
-              onChange={(e) => setImpactPoints(Number(e.target.value))}
-              className="w-full p-2.5 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans"
-            />
           </div>
 
           <button
