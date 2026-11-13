@@ -64,7 +64,6 @@ const UBC_FACULTIES = [
   "School of Social Work",
   "UBC Vantage College",
   "Vancouver School of Economics",
-];,
 ];
 
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
