@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -18,7 +18,7 @@ interface LoggedActionRow {
   affiliation_name?: string
 }
 
-export default function UserProfilePage() {
+function ProfileContent() {
   const [submissions, setSubmissions] = useState<LoggedActionRow[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -39,7 +39,6 @@ export default function UserProfilePage() {
 
       setUserEmail(user.email || 'UBC Participant')
 
-      // Query the correct table: logged_actions
       const { data: userSubmissions, error } = await supabase
         .from('logged_actions')
         .select('*')
@@ -221,5 +220,13 @@ export default function UserProfilePage() {
       </div>
 
     </div>
+  )
+}
+
+export default function UserProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center font-mono text-xs text-neutral-400">Loading Profile...</div>}>
+      <ProfileContent />
+    </Suspense>
   )
 }
