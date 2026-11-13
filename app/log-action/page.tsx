@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, startTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -101,7 +101,13 @@ export default function LogActionPage() {
   useEffect(() => {
     setIsMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        startTransition(() => {
+          setUser(data.user);
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   const filteredNeighborhoods = useMemo(() => {
