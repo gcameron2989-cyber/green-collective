@@ -87,7 +87,7 @@ export default function LogActionPage() {
   });
 
   // Dual Attribution State
-  const [selectedSectors, setSelectedSectors] = useState<Sector[]>(["campus"]);
+  const [selectedSector, setSelectedSector] = useState<Sector>("campus");
   const [publicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
@@ -119,12 +119,6 @@ export default function LogActionPage() {
     );
   }, [facultySearch]);
 
-  const toggleSector = (s: Sector) => {
-    setSelectedSectors((prev) =>
-      prev.includes(s) ? prev.filter((item) => item !== s) : [...prev, s]
-    );
-  };
-
   const setActionQuantity = (actionId: string, qty: number) => {
     setCart((prev) => {
       const next = { ...prev };
@@ -136,8 +130,6 @@ export default function LogActionPage() {
       return next;
     });
   };
-
-  const clearCart = () => setCart({});
 
   const selectedItemsDetails = useMemo(() => {
     return Object.entries(cart)
@@ -184,15 +176,15 @@ export default function LogActionPage() {
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
-    return `Neighborhood: ${neighbourhood} | Faculty: ${faculty}`;
+    return selectedSector === "campus" ? faculty : neighbourhood;
   };
 
   const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedItemsDetails.length === 0 || selectedSectors.length === 0) return;
+    if (selectedItemsDetails.length === 0) return;
 
     if (!user) {
-      router.push(`/login?redirectTo=${encodeURIComponent("/log-action")}`);
+      router.push("/login");
       return;
     }
 
@@ -207,33 +199,33 @@ export default function LogActionPage() {
           actionId: item.id,
           quantity: item.selectedQty,
           distanceKm: isDistanceBased ? dist : undefined,
-          notes: `Neighborhood: ${neighbourhood} | Faculty: ${faculty}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+          notes: `Sector: ${selectedSector} | Affiliation: ${getAffiliationName()}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
         };
       });
 
-      for (const currentSector of selectedSectors) {
-        const finalAffiliationType: AffiliationType = currentSector === "campus" ? "faculty" : publicAffiliationType;
-        await logBatchUserActions({
-          items: itemsToSubmit,
-          sector: currentSector,
-          affiliationType: finalAffiliationType,
-          affiliationName: getAffiliationName(),
-        });
+      const finalAffiliationType: AffiliationType = selectedSector === "campus" ? "faculty" : publicAffiliationType;
+      
+      const res = await logBatchUserActions({
+        items: itemsToSubmit,
+        sector: selectedSector,
+        affiliationType: finalAffiliationType,
+        affiliationName: getAffiliationName(),
+      });
+
+      if (res && !res.success) {
+        throw new Error("Failed to log actions.");
       }
 
       setStatusMsg({
         type: "success",
-        text: `Logged ${itemsToSubmit.length} actions! Credited to ${neighbourhood} & ${faculty}.`,
+        text: `Successfully logged ${itemsToSubmit.length} actions! Redirecting...`,
       });
 
       setTimeout(() => {
-        clearCart();
-        setStatusMsg(null);
-        router.push("/[competition](https://app.revyl.ai/apps/60d263cb-98ec-486a-b8b9-a9924c9310b5/tests)");
-      }, 1500);
+        router.push("/competition");
+      }, 1000);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
-    } finally {
       setSubmitting(false);
     }
   };
@@ -255,7 +247,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/[competition](https://app.revyl.ai/apps/60d263cb-98ec-486a-b8b9-a9924c9310b5/tests)" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -388,14 +380,14 @@ export default function LogActionPage() {
           <div className="space-y-4 pt-2 border-t border-gray-100 text-xs">
             <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Sector Attribution (Select one or both)
+                Sector Attribution
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => toggleSector("campus")}
+                  onClick={() => setSelectedSector("campus")}
                   className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    selectedSectors.includes("campus")
+                    selectedSector === "campus"
                       ? "bg-[#102f26] text-white border-[#102f26]"
                       : "bg-gray-50 text-[#526760] border-gray-200"
                   }`}
@@ -404,9 +396,9 @@ export default function LogActionPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => toggleSector("public")}
+                  onClick={() => setSelectedSector("public")}
                   className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    selectedSectors.includes("public")
+                    selectedSector === "public"
                       ? "bg-[#102f26] text-white border-[#102f26]"
                       : "bg-gray-50 text-[#526760] border-gray-200"
                   }`}
@@ -416,98 +408,97 @@ export default function LogActionPage() {
               </div>
             </div>
 
-            {/* Faculty Search Dropdown */}
-            <div className="relative">
-              <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Faculty / School (UBC Vancouver)
-              </label>
-              <input
-                type="text"
-                placeholder="Type to filter faculties..."
-                value={facultySearch}
-                onFocus={() => setIsFacultyDropdownOpen(true)}
-                onChange={(e) => {
-                  setFacultySearch(e.target.value);
-                  setIsFacultyDropdownOpen(true);
-                }}
-                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
-              />
-              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
-              
-              {isFacultyDropdownOpen && (
-                <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
-                  {filteredFaculties.length > 0 ? (
-                    filteredFaculties.map((f) => (
-                      <button
-                        type="button"
-                        key={f}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setFaculty(f);
-                          setFacultySearch("");
-                          setIsFacultyDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
-                          faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {f}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-xs text-gray-400">No matching faculty found</div>
-                  )}
-                </div>
-              )}
-            </div>
+            {selectedSector === "campus" ? (
+              <div className="relative">
+                <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+                  Faculty / School (UBC Vancouver)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Type to filter faculties..."
+                  value={facultySearch}
+                  onFocus={() => setIsFacultyDropdownOpen(true)}
+                  onChange={(e) => {
+                    setFacultySearch(e.target.value);
+                    setIsFacultyDropdownOpen(true);
+                  }}
+                  className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+                />
+                <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
+                
+                {isFacultyDropdownOpen && (
+                  <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
+                    {filteredFaculties.length > 0 ? (
+                      filteredFaculties.map((f) => (
+                        <button
+                          type="button"
+                          key={f}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setFaculty(f);
+                            setFacultySearch("");
+                            setIsFacultyDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                            faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {f}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs text-gray-400">No matching faculty found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+                  Vancouver Neighborhood / Municipality
+                </label>
+                <input
+                  type="text"
+                  placeholder="Type to filter neighborhoods..."
+                  value={neighbourhoodSearch}
+                  onFocus={() => setIsNeighborhoodDropdownOpen(true)}
+                  onChange={(e) => {
+                    setNeighbourhoodSearch(e.target.value);
+                    setIsNeighborhoodDropdownOpen(true);
+                  }}
+                  className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+                />
+                <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
 
-            {/* Neighborhood Search Dropdown */}
-            <div className="relative">
-              <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Vancouver Neighborhood / Municipality
-              </label>
-              <input
-                type="text"
-                placeholder="Type to filter neighborhoods..."
-                value={neighbourhoodSearch}
-                onFocus={() => setIsNeighborhoodDropdownOpen(true)}
-                onChange={(e) => {
-                  setNeighbourhoodSearch(e.target.value);
-                  setIsNeighborhoodDropdownOpen(true);
-                }}
-                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
-              />
-              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
-
-              {isNeighborhoodDropdownOpen && (
-                <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
-                  {filteredNeighborhoods.length > 0 ? (
-                    filteredNeighborhoods.map((n) => (
-                      <button
-                        type="button"
-                        key={n}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setNeighbourhood(n);
-                          setNeighbourhoodSearch("");
-                          setIsNeighborhoodDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
-                          neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-xs text-gray-400">No matching neighborhood found</div>
-                  )}
-                </div>
-              )}
-            </div>
+                {isNeighborhoodDropdownOpen && (
+                  <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
+                    {filteredNeighborhoods.length > 0 ? (
+                      filteredNeighborhoods.map((n) => (
+                        <button
+                          type="button"
+                          key={n}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setNeighbourhood(n);
+                            setNeighbourhoodSearch("");
+                            setIsNeighborhoodDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                            neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs text-gray-400">No matching neighborhood found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Selected Items List Preview */}
           {selectedItemsDetails.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <span className="font-mono text-[10px] uppercase text-[#526760] block">Selected Items:</span>
@@ -543,7 +534,7 @@ export default function LogActionPage() {
           <button
             type="button"
             onClick={handleBatchSubmit}
-            disabled={submitting || totalSelectedCount === 0 || selectedSectors.length === 0}
+            disabled={submitting || totalSelectedCount === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
           >
             {submitting ? "Processing..." : `Confirm & Log Actions (+{totalPoints} pts) →`}
