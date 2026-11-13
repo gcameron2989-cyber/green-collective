@@ -3,38 +3,29 @@
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-interface UserSubmission {
+interface LoggedActionRow {
   id: string
   created_at: string
   quantity: number
-  status: 'pending' | 'approved' | 'rejected'
-  faculty_id: string
-  eco_action_id: string
-}
-
-const ECO_ACTIONS_MAP: Record<string, { title: string; points: number; category: string }> = {
-  'home-meal': { category: 'Zero Waste & Dining', title: 'Brought Lunch/Snacks from Home (Zero Single-Use)', points: 30 },
-  'home-beverage': { category: 'Zero Waste & Dining', title: 'Brought Coffee/Tea from Home', points: 25 },
-  'reusable-container-buy': { category: 'Zero Waste & Dining', title: 'Used Reusable Container/Mug for Retail Purchase', points: 15 },
-  'refillable-water': { category: 'Zero Waste & Dining', title: 'Used Refillable Water Bottle vs. Bottled Water', points: 20 },
-  'plant-based-meal': { category: 'Zero Waste & Dining', title: 'Chose 100% Plant-Based Dining Option', points: 20 },
-  'sustainable-commute': { category: 'Mobility & Energy', title: 'Commuted via Transit, Cycling, or Walking', points: 25 },
-  'carpool-trip': { category: 'Mobility & Energy', title: 'Shared Ride / Carpooled to Campus', points: 20 },
-  'stairs-instead-elevator': { category: 'Mobility & Energy', title: 'Took Stairs Instead of Elevator (3+ Floors)', points: 10 },
-  'waste-sorting': { category: 'Circular Economy', title: 'Properly Sorted Compost, Recyclables & Soft Plastics', points: 10 },
-  'thrift-borrow-gear': { category: 'Circular Economy', title: 'Borrowed/Thrifted Academic Gear or Clothes', points: 30 },
-  'campus-cleanup': { category: 'Circular Economy', title: 'Participated in Campus Clean-up / Eco Event', points: 50 },
+  points: number
+  points_earned?: number
+  action_id: string
+  action_name: string
+  notes?: string
+  sector?: string
+  affiliation_name?: string
 }
 
 export default function UserProfilePage() {
-  const [submissions, setSubmissions] = useState<UserSubmission[]>([])
+  const [submissions, setSubmissions] = useState<LoggedActionRow[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -48,31 +39,37 @@ export default function UserProfilePage() {
 
       setUserEmail(user.email || 'UBC Participant')
 
+      // Query the correct table: logged_actions
       const { data: userSubmissions, error } = await supabase
-        .from('submissions')
+        .from('logged_actions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (!error && userSubmissions) {
-        setSubmissions(userSubmissions as unknown as UserSubmission[])
+        setSubmissions(userSubmissions as LoggedActionRow[])
       }
       setLoading(false)
     }
 
     fetchUserProfile()
-  }, [router])
+  }, [router, searchParams])
 
-  const approvedSubmissions = submissions.filter((s) => s.status === 'approved')
-  const totalPoints = approvedSubmissions.reduce(
-    (sum, s) => sum + (ECO_ACTIONS_MAP[s.eco_action_id]?.points || 0) * s.quantity,
+  const totalPoints = submissions.reduce(
+    (sum, s) => sum + Number(s.points_earned ?? s.points ?? 0),
     0
   )
-  const totalActionsLogged = approvedSubmissions.reduce((sum, s) => sum + s.quantity, 0)
-  const zeroWasteCount = approvedSubmissions.filter((s) => ECO_ACTIONS_MAP[s.eco_action_id]?.category === 'Zero Waste & Dining').reduce((sum, s) => sum + s.quantity, 0)
-  const transitCount = approvedSubmissions.filter((s) => ECO_ACTIONS_MAP[s.eco_action_id]?.category === 'Mobility & Energy').reduce((sum, s) => sum + s.quantity, 0)
+  const totalActionsLogged = submissions.reduce((sum, s) => sum + Number(s.quantity || 1), 0)
+  
+  const zeroWasteCount = submissions
+    .filter((s) => s.action_name?.toLowerCase().includes('zero waste') || s.action_name?.toLowerCase().includes('container') || s.action_name?.toLowerCase().includes('meal'))
+    .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
 
-  const co2OffsetKg = (totalActionsLogged * 0.6).toFixed(1)
+  const transitCount = submissions
+    .filter((s) => s.action_name?.toLowerCase().includes('transit') || s.action_name?.toLowerCase().includes('commute') || s.action_name?.toLowerCase().includes('ride'))
+    .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
+
+  const co2OffsetKg = (totalActionsLogged * 0.8).toFixed(1)
   const singleUseSaved = zeroWasteCount * 1
   const challengeTarget = 150
   const challengeProgress = Math.min(Math.round((totalPoints / challengeTarget) * 100), 100)
@@ -88,7 +85,7 @@ export default function UserProfilePage() {
     <div className="w-full max-w-5xl mx-auto px-6 py-12 space-y-10 font-sans bg-white text-neutral-900">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-neutral-100">
         <div className="space-y-2">
           <span className="inline-flex items-center gap-2 px-3 py-1 font-mono text-[11px] uppercase tracking-wider bg-emerald-50 text-emerald-800 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -111,7 +108,7 @@ export default function UserProfilePage() {
       </div>
 
       {/* Progress Bar */}
-      <div className="p-7 rounded-2xl bg-neutral-50 space-y-3">
+      <div className="p-7 rounded-2xl bg-neutral-50 space-y-3 border border-neutral-200/60">
         <div className="flex justify-between items-center text-xs font-mono">
           <span className="font-bold text-neutral-900 uppercase tracking-wider">
             Faculty Challenge Target (150 Pts Goal)
@@ -128,22 +125,22 @@ export default function UserProfilePage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
+        <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 space-y-1">
           <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Total Points</span>
           <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : totalPoints}</div>
           <p className="text-[11px] text-emerald-700 font-medium">Verified credits</p>
         </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
+        <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 space-y-1">
           <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Actions Logged</span>
           <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : totalActionsLogged}</div>
           <p className="text-[11px] text-emerald-700 font-medium">Total submissions</p>
         </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
+        <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 space-y-1">
           <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Est. CO₂ Avoided</span>
           <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : `${co2OffsetKg} kg`}</div>
           <p className="text-[11px] text-emerald-700 font-medium">Emissions offset</p>
         </div>
-        <div className="p-5 rounded-2xl bg-neutral-50 space-y-1">
+        <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 space-y-1">
           <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Items Diverted</span>
           <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : singleUseSaved}</div>
           <p className="text-[11px] text-emerald-700 font-medium">Zero-waste choices</p>
@@ -152,13 +149,13 @@ export default function UserProfilePage() {
 
       {/* Badges */}
       <div className="space-y-4">
-        <h2 className="text-base font-bold text-neutral-900">Milestones & Badges</h2>
+        <h2 className="text-base font-bold text-neutral-900">Milestones &amp; Badges</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {badges.map((badge, idx) => (
             <div
               key={idx}
-              className={`p-5 rounded-2xl text-center space-y-3 transition ${
-                badge.unlocked ? 'bg-neutral-50 text-neutral-900' : 'bg-neutral-100/50 opacity-40 grayscale'
+              className={`p-5 rounded-2xl text-center space-y-3 transition border ${
+                badge.unlocked ? 'bg-neutral-50 border-neutral-200/60 text-neutral-900' : 'bg-neutral-100/50 border-transparent opacity-40 grayscale'
               }`}
             >
               <div className="text-3xl">{badge.icon}</div>
@@ -177,7 +174,7 @@ export default function UserProfilePage() {
       {/* Activity Stream */}
       <div className="space-y-4 pb-12">
         <h2 className="text-base font-bold text-neutral-900">Activity History</h2>
-        <div className="rounded-2xl bg-neutral-50 p-6 space-y-3">
+        <div className="rounded-2xl bg-neutral-50 border border-neutral-200/60 p-6 space-y-3">
           {loading ? (
             <div className="text-center py-12 text-xs font-mono text-neutral-400 animate-pulse">
               Loading activity history...
@@ -191,26 +188,30 @@ export default function UserProfilePage() {
             </div>
           ) : (
             submissions.map((sub) => {
-              const actionDetails = ECO_ACTIONS_MAP[sub.eco_action_id]
-              const points = (actionDetails?.points || 0) * sub.quantity
+              const pts = Number(sub.points_earned ?? sub.points ?? 0)
 
               return (
-                <div key={sub.id} className="p-4 rounded-xl bg-white flex items-center justify-between gap-4 shadow-2xs">
+                <div key={sub.id} className="p-4 rounded-xl bg-white border border-neutral-200/70 flex items-center justify-between gap-4 shadow-2xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
                       <span className="text-xs font-bold text-neutral-900">
-                        {actionDetails?.title || 'Eco Action'}
+                        {sub.action_name || 'Sustainable Action'}
                       </span>
                       <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                        {sub.status}
+                        {sub.sector || 'verified'}
                       </span>
                     </div>
                     <p className="font-mono text-[11px] text-neutral-500">
-                      Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()}
+                      Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()} {sub.affiliation_name ? `• ${sub.affiliation_name}` : ''}
                     </p>
+                    {sub.notes && (
+                      <p className="text-[10px] text-neutral-400 font-mono italic">
+                        {sub.notes}
+                      </p>
+                    )}
                   </div>
-                  <div className="font-mono text-xs font-bold text-emerald-800 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-lg">
-                    +{points} pts
+                  <div className="font-mono text-xs font-bold text-emerald-800 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    +{pts} pts
                   </div>
                 </div>
               )
