@@ -39,7 +39,6 @@ const VANCOUVER_NEIGHBOURHOODS = [
 ];
 
 const UBC_FACULTIES = [
- const UBC_FACULTIES = [
   "Faculty of Applied Science",
   "Faculty of Arts",
   "Faculty of Dentistry",
