@@ -16,7 +16,7 @@ export interface BatchActionItem {
 
 export interface LogBatchActionsInput {
   items: BatchActionItem[]
-  sector: 'public' | 'campus'
+  sector: 'community' | 'campus'
   affiliationType: AffiliationType
   affiliationName: string
 }
@@ -52,8 +52,8 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
         user_id: user.id,
         action_id: item.actionId,
         action_name: item.actionTitle || item.actionId,
-        points: calculatedPoints,         // Satisfies 'points' NOT NULL constraint
-        points_earned: calculatedPoints,  // Satisfies 'points_earned' NOT NULL constraint
+        points: calculatedPoints,
+        points_earned: calculatedPoints,
         sector: sector,
         affiliation_type: affiliationType,
         affiliation_name: affiliationName,
