@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 import { ACTION_REGISTRY, ActionItem } from "@/lib/actions";
 import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
 
-type Sector = "public" | "campus";
 type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
 
 const VANCOUVER_NEIGHBOURHOODS = [
@@ -86,14 +85,12 @@ export default function LogActionPage() {
     "carpool-fossil": 15,
   });
 
-  // Dual Attribution State
-  const [selectedSector, setSelectedSector] = useState<Sector>("campus");
-  const [publicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
-  
+  // Dual Attribution State (Neighborhood is mandatory, UBC Student status is optional toggle)
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
   const [isNeighborhoodDropdownOpen, setIsNeighborhoodDropdownOpen] = useState(false);
-  
+
+  const [isUbcStudent, setIsUbcStudent] = useState<boolean>(true);
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
   const [facultySearch, setFacultySearch] = useState("");
   const [isFacultyDropdownOpen, setIsFacultyDropdownOpen] = useState(false);
@@ -175,10 +172,6 @@ export default function LogActionPage() {
   const filteredActions =
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
 
-  const getAffiliationName = (): string => {
-    return selectedSector === "campus" ? faculty : neighbourhood;
-  };
-
   const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItemsDetails.length === 0) return;
@@ -199,21 +192,26 @@ export default function LogActionPage() {
           actionId: item.id,
           quantity: item.selectedQty,
           distanceKm: isDistanceBased ? dist : undefined,
-          notes: `Sector: ${selectedSector} | Affiliation: ${getAffiliationName()}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+          notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
         };
       });
 
-      const finalAffiliationType: AffiliationType = selectedSector === "campus" ? "faculty" : publicAffiliationType;
-      
-      const res = await logBatchUserActions({
+      // Submit for Public Neighbourhood attribution
+      await logBatchUserActions({
         items: itemsToSubmit,
-        sector: selectedSector,
-        affiliationType: finalAffiliationType,
-        affiliationName: getAffiliationName(),
+        sector: "public",
+        affiliationType: "neighbourhood",
+        affiliationName: neighbourhood,
       });
 
-      if (res && !res.success) {
-        throw new Error("Failed to log actions.");
+      // If UBC Student is toggled on, also submit to Campus Faculty attribution
+      if (isUbcStudent) {
+        await logBatchUserActions({
+          items: itemsToSubmit,
+          sector: "campus",
+          affiliationType: "faculty",
+          affiliationName: faculty,
+        });
       }
 
       setStatusMsg({
@@ -357,7 +355,7 @@ export default function LogActionPage() {
           </div>
         </div>
 
-        {/* Right Sidebar: Summary & Direct Submission Form */}
+        {/* Right Sidebar: Summary & Corrected Dual-Attribution Workflow */}
         <div className="lg:col-span-1 sticky top-8 bg-white border border-[#102f26]/15 rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
@@ -378,39 +376,68 @@ export default function LogActionPage() {
           </div>
 
           <div className="space-y-4 pt-2 border-t border-gray-100 text-xs">
-            <div>
+            {/* 1. Mandatory Neighborhood Selector */}
+            <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Sector Attribution
+                Vancouver Neighborhood / Municipality *
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedSector("campus")}
-                  className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    selectedSector === "campus"
-                      ? "bg-[#102f26] text-white border-[#102f26]"
-                      : "bg-gray-50 text-[#526760] border-gray-200"
-                  }`}
-                >
-                  Campus / UBC
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedSector("public")}
-                  className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    selectedSector === "public"
-                      ? "bg-[#102f26] text-white border-[#102f26]"
-                      : "bg-gray-50 text-[#526760] border-gray-200"
-                  }`}
-                >
-                  Local Public
-                </button>
-              </div>
+              <input
+                type="text"
+                placeholder="Type to filter neighborhoods..."
+                value={neighbourhoodSearch}
+                onFocus={() => setIsNeighborhoodDropdownOpen(true)}
+                onChange={(e) => {
+                  setNeighbourhoodSearch(e.target.value);
+                  setIsNeighborhoodDropdownOpen(true);
+                }}
+                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+              />
+              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
+
+              {isNeighborhoodDropdownOpen && (
+                <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
+                  {filteredNeighborhoods.length > 0 ? (
+                    filteredNeighborhoods.map((n) => (
+                      <button
+                        type="button"
+                        key={n}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setNeighbourhood(n);
+                          setNeighbourhoodSearch("");
+                          setIsNeighborhoodDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                          neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-gray-400">No matching neighborhood found</div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {selectedSector === "campus" ? (
-              <div className="relative">
-                <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+            {/* 2. UBC Student Toggle */}
+            <div className="pt-2 border-t border-gray-100">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="font-mono uppercase text-[11px] text-[#526760]">Are you a UBC student/staff?</span>
+                <input
+                  type="checkbox"
+                  checked={isUbcStudent}
+                  onChange={(e) => setIsUbcStudent(e.target.checked)}
+                  className="w-4 h-4 accent-[#102f26] rounded cursor-pointer"
+                />
+              </label>
+            </div>
+
+            {/* 3. Conditional Faculty Selector (Only opens if UBC Student is Yes) */}
+            {isUbcStudent && (
+              <div className="relative pt-1 animate-fadeIn">
+                <label className="block font-mono uppercase text-[11px] text-[#39705d] mb-1.5 font-bold">
                   Faculty / School (UBC Vancouver)
                 </label>
                 <input
@@ -422,9 +449,9 @@ export default function LogActionPage() {
                     setFacultySearch(e.target.value);
                     setIsFacultyDropdownOpen(true);
                   }}
-                  className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+                  className="w-full p-2.5 text-xs rounded-xl border border-emerald-200 bg-emerald-50/30 font-medium mb-1"
                 />
-                <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
+                <div className="text-[10px] text-gray-500 mb-1">Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span></div>
                 
                 {isFacultyDropdownOpen && (
                   <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
@@ -452,53 +479,10 @@ export default function LogActionPage() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div className="relative">
-                <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                  Vancouver Neighborhood / Municipality
-                </label>
-                <input
-                  type="text"
-                  placeholder="Type to filter neighborhoods..."
-                  value={neighbourhoodSearch}
-                  onFocus={() => setIsNeighborhoodDropdownOpen(true)}
-                  onChange={(e) => {
-                    setNeighbourhoodSearch(e.target.value);
-                    setIsNeighborhoodDropdownOpen(true);
-                  }}
-                  className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
-                />
-                <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
-
-                {isNeighborhoodDropdownOpen && (
-                  <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
-                    {filteredNeighborhoods.length > 0 ? (
-                      filteredNeighborhoods.map((n) => (
-                        <button
-                          type="button"
-                          key={n}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setNeighbourhood(n);
-                            setNeighbourhoodSearch("");
-                            setIsNeighborhoodDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
-                            neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-xs text-gray-400">No matching neighborhood found</div>
-                    )}
-                  </div>
-                )}
-              </div>
             )}
           </div>
 
+          {/* Selected Items List Preview */}
           {selectedItemsDetails.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-gray-100">
               <span className="font-mono text-[10px] uppercase text-[#526760] block">Selected Items:</span>
@@ -537,7 +521,7 @@ export default function LogActionPage() {
             disabled={submitting || totalSelectedCount === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
           >
-            {submitting ? "Processing..." : `Confirm & Log Actions (+{totalPoints} pts) →`}
+            {submitting ? "Processing..." : `Confirm & Log Actions (+${totalPoints} pts) →`}
           </button>
         </div>
       </section>
