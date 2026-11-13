@@ -146,17 +146,18 @@ function LogActionContent() {
 
   const clearCart = () => setCart({});
 
+  // GUARDED MEMO: Safely handles missing or undefined registry items to prevent Error #441
   const selectedItemsDetails = useMemo(() => {
     return Object.entries(cart)
       .map(([id, qty]) => {
-        const detail = ACTION_REGISTRY.find((a) => a.id === id);
+        const detail = ACTION_REGISTRY?.find((a) => a.id === id);
         if (!detail) return null;
 
-        let calculatedCo2 = detail.impactValue;
-        let calculatedPoints = detail.points;
+        let calculatedCo2 = Number(detail.impactValue ?? 0);
+        let calculatedPoints = Number(detail.points ?? 0);
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = commuteDistances[id] ?? 10;
+          const dist = Number(commuteDistances[id] ?? 10);
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(20 + dist * 2.2);
@@ -174,10 +175,10 @@ function LogActionContent() {
 
         return {
           ...detail,
-          title: detail.name,
+          title: detail.name || id,
           co2SavedKg: calculatedCo2,
           points: calculatedPoints,
-          selectedQty: qty,
+          selectedQty: Number(qty || 1),
         };
       })
       .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
@@ -188,7 +189,7 @@ function LogActionContent() {
   const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
 
   const filteredActions =
-    selectedCategory === "All" ? ACTION_REGISTRY : ACTION_REGISTRY.filter((a) => a.category === selectedCategory);
+    selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
     return `Neighborhood: ${neighbourhood} | Faculty: ${faculty}`;
@@ -500,7 +501,7 @@ function LogActionContent() {
         </div>
       </section>
 
-      {/* Review Modal with Fully Isolated Distance Controls */}
+      {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -533,7 +534,7 @@ function LogActionContent() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions &amp; Scaling:
+                  Selected Actions Summary:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
@@ -546,27 +547,22 @@ function LogActionContent() {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-bold text-[#102f26]">{item.name}</div>
+                            <div className="font-bold text-[#102f26]">{item.title}</div>
                             <div className="text-[10px] text-[#526760]">
-                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                              Qty: {item.selectedQty} • +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold px-2 py-1 bg-white border border-gray-200 rounded-lg">
-                              Qty: {item.selectedQty}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setActionQuantity(item.id, 0)}
-                              className="text-red-500 hover:text-red-700 font-bold px-1"
-                            >
-                              ✕
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActionQuantity(item.id, 0)}
+                            className="text-red-500 hover:text-red-700 font-bold px-2 py-1 text-xs"
+                          >
+                            Remove
+                          </button>
                         </div>
 
-                        {/* Isolated distance handler to prevent virtual DOM collision */}
+                        {/* Transport Distance Input Handled Safely Outside Mapped Inline Throttling */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
