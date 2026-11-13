@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./AuthProvider";
 
@@ -10,6 +10,7 @@ interface DailyActionLoggerProps {
 
 export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerProps) {
   const { user } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
   const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
   const [impactPoints, setImpactPoints] = useState(15);
@@ -18,6 +19,10 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const [errorMsg, setErrorMsg] = useState("");
 
   const supabase = createClient();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleLogAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +52,16 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
       if (onActionLogged) onActionLogged();
     }
   };
+
+  // Prevent hydration mismatch by deferring render until client mount
+  if (!isMounted) {
+    return (
+      <div className="bg-white border border-gray-200 p-6 font-sans min-h-[250px] animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-8 bg-gray-100 rounded w-full mb-4"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-gray-200 p-6 font-sans">
@@ -84,7 +99,6 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
               value={actionType}
               onChange={(e) => {
                 setActionType(e.target.value);
-                // Adjust default points based on action
                 if (e.target.value.includes("Commute")) setImpactPoints(15);
                 else if (e.target.value.includes("Zero Waste")) setImpactPoints(10);
                 else setImpactPoints(20);
