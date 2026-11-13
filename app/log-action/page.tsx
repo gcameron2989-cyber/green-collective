@@ -572,7 +572,7 @@ export default function LogActionPage() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsReviewOpen(export => false)}
+                  onClick={() => setIsReviewOpen(false)}
                   className="w-1/2 py-2.5 border border-gray-300 rounded-full text-xs font-semibold"
                 >
                   Back
