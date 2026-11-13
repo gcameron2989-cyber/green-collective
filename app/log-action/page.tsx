@@ -197,20 +197,30 @@ export default function LogActionPage() {
           };
         });
 
-        await logBatchUserActions({
+        const res1 = await logBatchUserActions({
           items: itemsToSubmit,
           sector: "public",
           affiliationType: "neighbourhood",
           affiliationName: neighbourhood,
         });
 
+        if (!res1.success) {
+          setStatusMsg({ type: "error", text: res1.error || "Failed to log public action." });
+          return;
+        }
+
         if (isUbcStudent) {
-          await logBatchUserActions({
+          const res2 = await logBatchUserActions({
             items: itemsToSubmit,
             sector: "campus",
             affiliationType: "faculty",
             affiliationName: faculty,
           });
+
+          if (!res2.success) {
+            setStatusMsg({ type: "error", text: res2.error || "Failed to log campus action." });
+            return;
+          }
         }
 
         setStatusMsg({
