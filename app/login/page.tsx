@@ -20,8 +20,8 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Read return path from URL (?redirectTo=/actions), fallback to /actions
-  const redirectTo = searchParams.get("redirectTo") || searchParams.get("next") || "/actions";
+  // Updated fallback redirect to /profile instead of old /actions
+  const redirectTo = searchParams.get("redirectTo") || searchParams.get("next") || "/profile";
 
   const switchView = (newView: AuthView) => {
     setView(newView);
@@ -92,18 +92,16 @@ function LoginFormContent() {
       }
     }
 
-    // Redirect directly back to /actions (or specified page)
-    router.push(redirectTo);
-    router.refresh();
+    window.location.href = redirectTo;
   };
 
   return (
-    <div className="w-full max-w-md border border-emerald-900/10 rounded-2xl bg-card/90 backdrop-blur p-8 shadow-xl">
+    <div className="w-full max-w-md border border-emerald-900/10 rounded-2xl bg-white p-8 shadow-xl">
       <div className="text-center mb-6">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-[#0f382c] rounded-full mb-3 border border-emerald-200">
           {view === "signup" ? "Join the Network" : view === "forgot" ? "Account Recovery" : "Welcome Back"}
         </span>
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+        <h1 className="text-2xl font-extrabold tracking-tight text-[#102f26]">
           {view === "signup"
             ? "Create your account"
             : view === "forgot"
@@ -113,21 +111,21 @@ function LoginFormContent() {
       </div>
 
       {errorMsg && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-700 text-center">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 text-center">
           {errorMsg}
         </div>
       )}
 
       {infoMsg && (
-        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-800 text-center font-medium">
+        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 text-center font-medium">
           {infoMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4" key={view}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         {view === "signup" && (
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1">
+            <label className="block text-xs font-semibold text-[#102f26] mb-1">
               Institution / Organization (Optional)
             </label>
             <input
@@ -135,13 +133,13 @@ function LoginFormContent() {
               placeholder="e.g. University, Workplace, or Local Chapter"
               value={institution}
               onChange={(e) => setInstitution(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-white focus:outline-none focus:border-[#0f382c]"
             />
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-foreground mb-1">Email Address</label>
+          <label className="block text-xs font-semibold text-[#102f26] mb-1">Email Address</label>
           <input
             type="email"
             required
@@ -149,14 +147,14 @@ function LoginFormContent() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+            className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-white focus:outline-none focus:border-[#0f382c]"
           />
         </div>
 
         {view !== "forgot" && (
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-xs font-semibold text-foreground">Password</label>
+              <label className="block text-xs font-semibold text-[#102f26]">Password</label>
               {view === "signin" && (
                 <button
                   type="button"
@@ -174,7 +172,7 @@ function LoginFormContent() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-background focus:outline-none focus:border-[#0f382c]"
+              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-emerald-900/20 bg-white focus:outline-none focus:border-[#0f382c]"
             />
           </div>
         )}
@@ -194,7 +192,7 @@ function LoginFormContent() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-xs text-muted-foreground pt-4 border-t border-emerald-900/10 space-y-2">
+      <div className="mt-6 text-center text-xs text-gray-500 pt-4 border-t border-emerald-900/10 space-y-2">
         {view === "signup" && (
           <div>
             Already have an account?{" "}
@@ -206,7 +204,7 @@ function LoginFormContent() {
         {view === "signin" && (
           <div>
             New to Green Collective?{" "}
-            <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline font-semibold">
+            <button onClick={() => switchView("signup")} className="font-bold text-[#0f382c] hover:underline">
               Create Account
             </button>
           </div>
