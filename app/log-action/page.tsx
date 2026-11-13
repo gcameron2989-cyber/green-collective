@@ -229,7 +229,7 @@ export default function LogActionPage() {
       setTimeout(() => {
         clearCart();
         setStatusMsg(null);
-        router.push("/competition");
+        router.push("/[competition](https://app.revyl.ai/apps/60d263cb-98ec-486a-b8b9-a9924c9310b5/tests)");
       }, 1500);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
@@ -255,7 +255,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
+          <Link href="/[competition](https://app.revyl.ai/apps/60d263cb-98ec-486a-b8b9-a9924c9310b5/tests)" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -365,7 +365,7 @@ export default function LogActionPage() {
           </div>
         </div>
 
-        {/* Right Sidebar: Summary & Direct Submission Form (No Modals) */}
+        {/* Right Sidebar: Summary & Direct Submission Form */}
         <div className="lg:col-span-1 sticky top-8 bg-white border border-[#102f26]/15 rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
@@ -546,7 +546,7 @@ export default function LogActionPage() {
             disabled={submitting || totalSelectedCount === 0 || selectedSectors.length === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
           >
-            {submitting ? "Processing..." : `Confirm & Log Actions (+${totalPoints} pts) →`}
+            {submitting ? "Processing..." : `Confirm & Log Actions (+{totalPoints} pts) →`}
           </button>
         </div>
       </section>
