@@ -25,7 +25,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Transit or Active Bike Commute",
     category: "Mobility",
     points: 25,
-    co2SavedKg: 2.4,
+    co2SavedKg: 2.1, // Adjusted to realistic scientific baseline
     unitLabel: "trips",
     description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
   },
@@ -34,7 +34,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Zero Single-Use Container",
     category: "Circular Economy",
     points: 30,
-    co2SavedKg: 0.8,
+    co2SavedKg: 0.5,
     unitLabel: "containers",
     description: "Used a reusable cup, mug, or food container at local businesses or dining halls.",
   },
@@ -43,7 +43,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Urban Tree & Ecosystem Stewardship",
     category: "Ecosystem Stewardship",
     points: 50,
-    co2SavedKg: 5.0,
+    co2SavedKg: 3.5,
     unitLabel: "sessions",
     description: "Participated in canopy care, invasive species removal, or community garden maintenance.",
   },
@@ -52,7 +52,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Plant-Based Meal Choice",
     category: "Food & Agriculture",
     points: 20,
-    co2SavedKg: 1.8,
+    co2SavedKg: 1.4,
     unitLabel: "meals",
     description: "Chose a fully plant-based meal over animal-intensive protein options.",
   },
@@ -61,7 +61,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Organic Waste Diversion & Composting",
     category: "Food & Agriculture",
     points: 15,
-    co2SavedKg: 0.6,
+    co2SavedKg: 0.4,
     unitLabel: "days",
     description: "Diverted 100% of household food scraps to municipal green bins or home compost.",
   },
@@ -70,7 +70,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Cold Water Wash & Line Dry",
     category: "Energy & Water",
     points: 15,
-    co2SavedKg: 1.1,
+    co2SavedKg: 0.9,
     unitLabel: "loads",
     description: "Washed laundry in cold water and air-dried garments instead of using a heated dryer.",
   },
@@ -79,7 +79,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Home & Office Energy Reduction",
     category: "Energy & Water",
     points: 20,
-    co2SavedKg: 1.5,
+    co2SavedKg: 1.2,
     unitLabel: "days",
     description: "Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.",
   },
@@ -88,7 +88,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Repair, Upcycle, or Thrift Goods",
     category: "Circular Economy",
     points: 40,
-    co2SavedKg: 3.2,
+    co2SavedKg: 2.5,
     unitLabel: "items",
     description: "Repaired clothing, electronics, or furniture instead of purchasing new items.",
   },
@@ -97,7 +97,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Shared EV / Carpool Trip",
     category: "Mobility",
     points: 35,
-    co2SavedKg: 4.1,
+    co2SavedKg: 3.0,
     unitLabel: "trips",
     description: "Shared an electric vehicle ride or organized carpooling for commutes.",
   },
@@ -106,7 +106,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Shoreline / Park Clean-Up",
     category: "Ecosystem Stewardship",
     points: 60,
-    co2SavedKg: 6.0,
+    co2SavedKg: 4.0,
     unitLabel: "events",
     description: "Collected and properly sorted litter from public parks, beaches, or campus grounds.",
   },
@@ -138,15 +138,14 @@ export default function ActionsPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  // Batch selection cart state: { [actionId]: quantity }
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // Form attribution states
   const [sector, setSector] = useState<Sector>("public");
   const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
@@ -157,6 +156,7 @@ export default function ActionsPage() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
 
     async function loadActions() {
@@ -176,7 +176,6 @@ export default function ActionsPage() {
     }
     loadActions();
 
-    // Check for pending batch submission after auth redirect
     const pending = localStorage.getItem("pending_batch_action_submit");
     if (pending) {
       try {
@@ -195,7 +194,6 @@ export default function ActionsPage() {
     }
   }, []);
 
-  // Cart operations
   const setActionQuantity = (actionId: string, qty: number) => {
     setCart((prev) => {
       const next = { ...prev };
@@ -210,8 +208,7 @@ export default function ActionsPage() {
 
   const clearCart = () => setCart({});
 
-  // Calculations
-  const selectedEntries = Object.entries(cart); // [actionId, qty]
+  const selectedEntries = Object.entries(cart);
   const totalSelectedCount = selectedEntries.reduce((acc, [_, qty]) => acc + qty, 0);
 
   const selectedItemsDetails = selectedEntries
@@ -287,9 +284,12 @@ export default function ActionsPage() {
     }
   };
 
+  if (!isMounted) {
+    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative">
-      {/* Hero Banner */}
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
@@ -300,7 +300,6 @@ export default function ActionsPage() {
             Select one or multiple actions below to log them together and route impact points to your community or faculty.
           </p>
 
-          {/* Category Filters */}
           <div className="flex flex-wrap gap-2 mt-6">
             {CATEGORIES.map((cat) => (
               <button
@@ -319,7 +318,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Action Directory Grid */}
       <section className="max-w-7xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredActions.map((action) => {
@@ -349,13 +347,11 @@ export default function ActionsPage() {
                     ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
                   </span>
 
-                  {/* Quantity Selection Control */}
                   {isSelected ? (
                     <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
                       <button
                         onClick={() => setActionQuantity(action.id, currentQty - 1)}
                         className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
-                        title="Decrease"
                       >
                         -
                       </button>
@@ -365,7 +361,6 @@ export default function ActionsPage() {
                       <button
                         onClick={() => setActionQuantity(action.id, currentQty + 1)}
                         className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
-                        title="Increase"
                       >
                         +
                       </button>
@@ -385,7 +380,6 @@ export default function ActionsPage() {
         </div>
       </section>
 
-      {/* Floating Multi-Select Batch Bar */}
       {totalSelectedCount > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#102f26] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center justify-between gap-6 border border-emerald-500/20 max-w-2xl w-[92%] backdrop-blur">
           <div className="flex items-center gap-3">
@@ -416,7 +410,6 @@ export default function ActionsPage() {
         </div>
       )}
 
-      {/* Batch Review & Attribution Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -446,7 +439,6 @@ export default function ActionsPage() {
             )}
 
             <form onSubmit={handleBatchSubmit} className="space-y-5">
-              {/* Itemized List */}
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
                   1. Actions to record:
@@ -476,7 +468,6 @@ export default function ActionsPage() {
                           type="button"
                           onClick={() => setActionQuantity(item.id, 0)}
                           className="text-red-500 hover:text-red-700 font-bold px-1"
-                          title="Remove item"
                         >
                           ✕
                         </button>
@@ -486,7 +477,6 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              {/* Attribution Selector */}
               <div>
                 <label className="block text-xs font-bold mb-1.5 text-[#102f26]">
                   2. Sector Attribution:
@@ -585,7 +575,6 @@ export default function ActionsPage() {
                 </div>
               )}
 
-              {/* Total Summary Box */}
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
                 <div>
                   <span className="font-bold text-[#102f26]">Total Impact Generated:</span>
