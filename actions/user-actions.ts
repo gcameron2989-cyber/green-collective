@@ -74,9 +74,9 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error(error.message)
   }
 
-  revalidatePath('/[log-action](https://github.com/gcameron2989-cyber/green-collective/tree/main/app/log-action)')
-  revalidatePath('/[competition](https://app.revyl.ai/apps/60d263cb-98ec-486a-b8b9-a9924c9310b5/tests)')
-  revalidatePath('/[profile](https://www.greencollective.ca/profile)')
+  revalidatePath('/log-action')
+  revalidatePath('/competition')
+  revalidatePath('/profile')
 
   return { success: true, count: items.length }
 }
