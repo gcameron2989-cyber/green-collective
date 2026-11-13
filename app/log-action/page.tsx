@@ -197,6 +197,7 @@ export default function LogActionPage() {
           };
         });
 
+        // Submit for Public/Community Sector
         const res1 = await logBatchUserActions({
           items: itemsToSubmit,
           sector: "public",
@@ -209,6 +210,7 @@ export default function LogActionPage() {
           return;
         }
 
+        // Submit for Campus Sector if UBC student checked
         if (isUbcStudent) {
           const res2 = await logBatchUserActions({
             items: itemsToSubmit,
@@ -228,9 +230,10 @@ export default function LogActionPage() {
           text: `Successfully logged ${itemsToSubmit.length} actions! Redirecting...`,
         });
 
+        // Force browser hard assignment with timestamp to bypass profile cache
         setTimeout(() => {
-          window.location.href = "/profile";
-        }, 1000);
+          window.location.assign("/profile?refresh=" + Date.now());
+        }, 800);
       } catch (err: any) {
         setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
       }
