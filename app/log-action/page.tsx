@@ -166,7 +166,7 @@ export default function LogActionPage() {
 
   const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + item.selectedQty, 0);
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
-  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + (item.co2SavedKg * item.selectedQty), 0);
+  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
 
   const filteredActions =
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
@@ -197,20 +197,20 @@ export default function LogActionPage() {
           };
         });
 
-        // Submit for Public/Community Sector
+        // 1. Submit to Community Sector
         const res1 = await logBatchUserActions({
           items: itemsToSubmit,
-          sector: "public",
+          sector: "community",
           affiliationType: "neighbourhood",
           affiliationName: neighbourhood,
         });
 
         if (!res1.success) {
-          setStatusMsg({ type: "error", text: res1.error || "Failed to log public action." });
+          setStatusMsg({ type: "error", text: res1.error || "Failed to log community action." });
           return;
         }
 
-        // Submit for Campus Sector if UBC student checked
+        // 2. Submit to Campus Sector if UBC student checked
         if (isUbcStudent) {
           const res2 = await logBatchUserActions({
             items: itemsToSubmit,
@@ -230,7 +230,6 @@ export default function LogActionPage() {
           text: `Successfully logged ${itemsToSubmit.length} actions! Redirecting...`,
         });
 
-        // Force browser hard assignment with timestamp to bypass profile cache
         setTimeout(() => {
           window.location.assign("/profile?refresh=" + Date.now());
         }, 800);
@@ -287,6 +286,16 @@ export default function LogActionPage() {
               const currentQty = cart[action.id] || 0;
               const isSelected = currentQty > 0;
               const isTransport = TRANSPORT_IDS.includes(action.id);
+              
+              // Calculate real-time dynamic impact for the card preview
+              let cardImpact = Number(action.impactValue ?? 0);
+              if (isTransport) {
+                const dist = Number(commuteDistances[action.id] ?? 0);
+                if (action.id === "active-transit") cardImpact = Number((dist * 0.25).toFixed(2));
+                else if (action.id === "public-transit") cardImpact = Number((dist * 0.18).toFixed(2));
+                else if (action.id === "ev-rideshare") cardImpact = Number((dist * 0.32).toFixed(2));
+                else if (action.id === "carpool-fossil") cardImpact = Number((dist * 0.15).toFixed(2));
+              }
 
               return (
                 <div
@@ -328,7 +337,7 @@ export default function LogActionPage() {
 
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-[11px] text-gray-500 font-medium">
-                      ~{action.impactValue} kg CO₂e / {action.unitLabel}
+                      ~{cardImpact} kg CO₂e / {action.unitLabel}
                     </span>
 
                     {isSelected ? (
