@@ -85,7 +85,7 @@ export default function LogActionPage() {
     "carpool-fossil": 15,
   });
 
-  // Dual Attribution State (Neighborhood is mandatory, UBC Student status is optional toggle)
+  // Dual Attribution State
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
   const [isNeighborhoodDropdownOpen, setIsNeighborhoodDropdownOpen] = useState(false);
@@ -138,7 +138,7 @@ export default function LogActionPage() {
         let calculatedPoints = Number(detail.points ?? 0);
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = Number(commuteDistances[id] ?? 10);
+          const dist = Number(commuteDistances[id] ?? 0);
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(20 + dist * 2.2);
@@ -190,6 +190,8 @@ export default function LogActionPage() {
         const dist = commuteDistances[item.id] ?? 0;
         return {
           actionId: item.id,
+          actionTitle: item.name,
+          points: item.points,
           quantity: item.selectedQty,
           distanceKm: isDistanceBased ? dist : undefined,
           notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
