@@ -35,7 +35,6 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error('No actions selected to log.')
   }
 
-  // Map to match your exact Supabase table schema (action_id, action_name, points, etc.)
   const rowsToInsert = items.map((item) => {
     let formattedNotes = item.notes || ''
     if (item.distanceKm && item.distanceKm > 0) {
