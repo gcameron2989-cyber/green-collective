@@ -22,7 +22,9 @@ interface LoggedActionRow {
 function ProfileContent() {
   const [submissions, setSubmissions] = useState<LoggedActionRow[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState<string>('UBC Participant')
+  const [isEditingUsername, setIsEditingUsername] = useState<boolean>(false)
+  const [customUsername, setCustomUsername] = useState<string>('')
 
   const supabase = createClient()
   const router = useRouter()
@@ -38,7 +40,11 @@ function ProfileContent() {
         return
       }
 
-      setUserEmail(user.email || 'UBC Participant')
+      // Check for profile metadata / custom username or fallback to email handle
+      const emailHandle = user.email ? user.email.split('@')[0] : 'UBC Participant'
+      const savedUsername = user.user_metadata?.username || emailHandle
+      setDisplayName(savedUsername)
+      setCustomUsername(savedUsername)
 
       const { data: userSubmissions, error } = await supabase
         .from('logged_actions')
@@ -53,7 +59,21 @@ function ProfileContent() {
     }
 
     fetchUserProfile()
-  }, [router, searchParams])
+  }, [router, searchParams, supabase])
+
+  const handleSaveUsername = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!customUsername.trim()) return
+
+    const { error } = await supabase.auth.updateUser({
+      data: { username: customUsername.trim() }
+    })
+
+    if (!error) {
+      setDisplayName(customUsername.trim())
+      setIsEditingUsername(false)
+    }
+  }
 
   const totalPoints = submissions.reduce(
     (sum, s) => sum + Number(s.points_earned ?? s.points ?? 0),
@@ -103,9 +123,45 @@ function ProfileContent() {
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900">
             Personal Impact Hub
           </h1>
-          <p className="text-xs font-mono text-neutral-500">
-            Account: <span className="font-semibold text-neutral-800">{userEmail || 'UBC Participant'}</span>
-          </p>
+          
+          <div className="flex items-center gap-3 pt-1">
+            <p className="text-xs font-mono text-neutral-500">
+              Account Handle: <span className="font-semibold text-emerald-800">@{displayName}</span>
+            </p>
+            {!isEditingUsername ? (
+              <button
+                type="button"
+                onClick={() => setIsEditingUsername(true)}
+                className="text-[10px] font-mono text-emerald-700 underline hover:text-emerald-900"
+              >
+                [Edit Username]
+              </button>
+            ) : (
+              <form onSubmit={handleSaveUsername} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={customUsername}
+                  onChange={(e) => setCustomUsername(e.target.value)}
+                  className="px-2 py-1 text-xs border border-emerald-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  placeholder="Enter username"
+                  maxLength={25}
+                />
+                <button
+                  type="submit"
+                  className="px-2.5 py-1 bg-[#0f382c] text-white text-[10px] font-mono rounded-lg hover:bg-emerald-900"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingUsername(false)}
+                  className="text-[10px] font-mono text-neutral-400 hover:text-neutral-700"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
         </div>
 
         <Link
