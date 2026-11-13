@@ -23,11 +23,12 @@ const VANCOUVER_NEIGHBOURHOODS = [
 ];
 
 export default function CompetitionPage() {
-  const [boardTier, setBoardTier] = useState<"institutional" | "local">("institutional");
+  const [boardTier, setBoardTier] = useState<"institutional" | "local" | "best301">("institutional");
   const [activeTab, setActiveTab] = useState<"leaderboard" | "guidelines">("leaderboard");
   
   const [institutionalStandings, setInstitutionalStandings] = useState<LeaderboardEntry[]>([]);
   const [localStandings, setLocalStandings] = useState<LeaderboardEntry[]>([]);
+  const [best301Standings, setBest301Standings] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   
   const supabase = createClient();
@@ -59,6 +60,11 @@ export default function CompetitionPage() {
           neighborhoodMap[n] = { name: n, carbon: 0, users: new Set() };
         });
 
+        // --- Process BEST 301 Cohort Standings ---
+        const best301Map: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {
+          "BEST 301 Cohort": { name: "BEST 301 - Forest BioEconomy", carbon: 0, users: new Set() }
+        };
+
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
           const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
@@ -81,6 +87,12 @@ export default function CompetitionPage() {
           if (matchedNeighborhood && (act.sector === 'community' || act.sector === 'public' || !act.sector)) {
             neighborhoodMap[matchedNeighborhood].carbon += carbonOffset;
             if (act.user_id) neighborhoodMap[matchedNeighborhood].users.add(act.user_id);
+          }
+
+          // Check if it belongs to BEST 301 Cohort
+          if (act.notes?.includes("BEST 301")) {
+            best301Map["BEST 301 Cohort"].carbon += carbonOffset;
+            if (act.user_id) best301Map["BEST 301 Cohort"].users.add(act.user_id);
           }
         });
 
@@ -106,8 +118,18 @@ export default function CompetitionPage() {
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
+        const computedBest301: LeaderboardEntry[] = Object.values(best301Map)
+          .map((b) => ({
+            rank: 1,
+            name: b.name,
+            category: 'UBC Course Cohort',
+            participants: b.users.size,
+            carbonOffsetKg: Math.round(b.carbon * 10) / 10,
+          }));
+
         setInstitutionalStandings(computedInstitutional);
         setLocalStandings(computedLocal);
+        setBest301Standings(computedBest301);
       } catch (err) {
         console.error('Error fetching live standings:', err);
       } finally {
@@ -118,7 +140,7 @@ export default function CompetitionPage() {
     fetchLiveStandings();
   }, [supabase]);
 
-  const currentStandings = boardTier === "institutional" ? institutionalStandings : localStandings;
+  const currentStandings = boardTier === "institutional" ? institutionalStandings : boardTier === "local" ? localStandings : best301Standings;
   const totalCarbon = currentStandings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
   const totalParticipants = currentStandings.reduce((acc, curr) => acc + curr.participants, 0);
 
@@ -143,7 +165,7 @@ export default function CompetitionPage() {
             Community &amp; Institutional Leaderboards
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Track real-time carbon diversion across local Vancouver neighborhood hubs and university faculties.
+            Track real-time carbon diversion across local Vancouver neighborhood hubs, university faculties, and course cohorts.
           </p>
         </div>
       </section>
@@ -155,7 +177,7 @@ export default function CompetitionPage() {
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
                 Leaderboard Tier
               </span>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <button
                   onClick={() => setBoardTier("institutional")}
                   className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
@@ -175,6 +197,16 @@ export default function CompetitionPage() {
                   }`}
                 >
                   Local (Vancouver Hubs)
+                </button>
+                <button
+                  onClick={() => setBoardTier("best301")}
+                  className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
+                    boardTier === "best301"
+                      ? "bg-[#102f26] text-white shadow-sm"
+                      : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
+                  }`}
+                >
+                  BEST 301 Cohort
                 </button>
               </div>
             </div>
@@ -205,7 +237,11 @@ export default function CompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  {boardTier === "institutional" ? "Faculty Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings (Live)"}
+                  {boardTier === "institutional" 
+                    ? "Faculty Standings (Supabase Live)" 
+                    : boardTier === "local" 
+                    ? "Regional Vancouver Neighborhood Standings (Live)" 
+                    : "BEST 301 Course Standings (Live)"}
                 </h2>
                 <span className="font-mono text-[10px] text-[#39705d]">
                   Synced via Database
@@ -258,7 +294,7 @@ export default function CompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  {boardTier === "institutional" ? "Institutional Impact Summary" : "Regional Impact Summary"}
+                  {boardTier === "institutional" ? "Institutional Impact Summary" : boardTier === "local" ? "Regional Impact Summary" : "Course Cohort Impact Summary"}
                 </h2>
               </div>
 
@@ -295,7 +331,7 @@ export default function CompetitionPage() {
                 Sustainability Challenge Guidelines
               </h2>
               <p className="text-sm text-[#526760] leading-relaxed">
-                Green Collective&apos;s dual-tier leaderboard system quantifies and compares grassroots environmental action across both institutional departments (such as UBC faculties) and municipal regional hubs (such as Vancouver neighborhoods).
+                Green Collective&apos;s leaderboard system quantifies and compares grassroots environmental action across institutional departments, regional Vancouver neighborhood hubs, and dedicated academic course cohorts like BEST 301.
               </p>
             </div>
           </div>
