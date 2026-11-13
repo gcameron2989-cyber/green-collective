@@ -229,7 +229,7 @@ function ProfileContent() {
       <div className="space-y-4">
         <h2 className="text-base font-bold text-neutral-900">Milestones &amp; Badges</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {badges.link ? null : badges.map((badge, idx) => (
+          {badges.map((badge, idx) => (
             <div
               key={idx}
               className={`p-5 rounded-2xl text-center space-y-3 transition border ${
