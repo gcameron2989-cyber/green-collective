@@ -81,11 +81,24 @@ function ProfileContent() {
   )
   const totalActionsLogged = submissions.reduce((sum, s) => sum + Number(s.quantity || 1), 0)
   
-  // Precise CO2 Calculation from ACTION_REGISTRY lookup
+  // Precise CO2 Calculation matching Log-Action & Competition distance-aware rules
   const totalCo2Avoided = submissions.reduce((sum, s) => {
     const qty = Number(s.quantity || 1)
     const registryMatch = ACTION_REGISTRY.find((a) => a.id === s.action_id)
-    const baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+    
+    let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+
+    // Check if it's a transport action with distance stored in notes
+    if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(s.action_id)) {
+      const distMatch = s.notes?.match(/Distance:\s*([\d.]+)\s*km/)
+      const dist = distMatch ? parseFloat(distMatch[1]) : 5 // default fallback
+
+      if (s.action_id === "active-transit") baseImpact = dist * 0.25
+      else if (s.action_id === "public-transit") baseImpact = dist * 0.18
+      else if (s.action_id === "ev-rideshare") baseImpact = dist * 0.32
+      else if (s.action_id === "carpool-fossil") baseImpact = dist * 0.15
+    }
+
     return sum + (baseImpact * qty)
   }, 0)
 
@@ -216,7 +229,7 @@ function ProfileContent() {
       <div className="space-y-4">
         <h2 className="text-base font-bold text-neutral-900">Milestones &amp; Badges</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {badges.map((badge, idx) => (
+          {badges.link ? null : badges.map((badge, idx) => (
             <div
               key={idx}
               className={`p-5 rounded-2xl text-center space-y-3 transition border ${
