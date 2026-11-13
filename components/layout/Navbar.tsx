@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -8,21 +7,20 @@ import { useRouter, usePathname } from 'next/navigation';
 import Logo from '@/components/logo';
 
 export default function Navbar() {
+  const [isMounted, setIsMounted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loadingAuth, setLoadingAuth] = useState(true);
 
   const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    setIsMounted(true);
     const checkUser = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       setIsAuthenticated(!!session);
-      setLoadingAuth(false);
     };
 
     checkUser();
@@ -31,7 +29,6 @@ export default function Navbar() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
-      setLoadingAuth(false);
     });
 
     return () => subscription.unsubscribe();
@@ -44,7 +41,7 @@ export default function Navbar() {
 
   const isActive = (path: string) => pathname === path;
 
-const navItems = [
+  const navItems = [
     { href: '/log-action', label: 'Actions' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
@@ -52,10 +49,10 @@ const navItems = [
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
   ];
+
   return (
     <header className="border-b border-neutral-200 bg-white sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-8">
-
         <Link
           href="/"
           className="shrink-0 hover:opacity-75 transition-opacity flex items-center"
@@ -80,8 +77,8 @@ const navItems = [
           ))}
         </nav>
 
-        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider shrink-0">
-          {!loadingAuth && (
+        <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider shrink-0" suppressHydrationWarning>
+          {isMounted && (
             isAuthenticated ? (
               <>
                 <Link
