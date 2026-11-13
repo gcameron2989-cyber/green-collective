@@ -103,7 +103,7 @@ export default function UserProfilePage() {
         </div>
 
         <Link
-          href="/competition/submit"
+          href="/log-action"
           className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#0f382c] text-white font-mono text-xs font-bold uppercase tracking-wider hover:bg-emerald-900 transition shadow-sm"
         >
           + Log Eco Action
@@ -185,7 +185,7 @@ export default function UserProfilePage() {
           ) : submissions.length === 0 ? (
             <div className="text-center py-12 text-xs text-neutral-500 space-y-2">
               <p>No eco-actions logged under your account yet.</p>
-              <Link href="/competition/submit" className="font-mono text-xs font-bold text-emerald-700 underline">
+              <Link href="/log-action" className="font-mono text-xs font-bold text-emerald-700 underline">
                 Log your first action →
               </Link>
             </div>
