@@ -18,7 +18,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     impactValue: 2.4,
     unitLabel: 'trip',
     points: 30,
-    calculationNote: 'Based on displacing direct fossil fuel vehicle emissions.',
+    calculationNote: 'Based on displacing direct fossil fuel vehicle emissions via human power.',
   },
   {
     id: 'public-transit',
@@ -33,11 +33,12 @@ export const ACTION_REGISTRY: ActionItem[] = [
   {
     id: 'carpool-trip',
     category: 'TRANSPORT',
-    name: 'Carpooling / EV Ride',
+    name: 'Shared EV / Carpool Trip',
     description: 'Shared a vehicle trip with passengers or traveled via electric vehicle.',
     impactValue: 1.8,
     unitLabel: 'trip',
     points: 20,
+    calculationNote: 'Calculated per passenger km displacement.',
   },
   {
     id: 'plant-based-meal',
