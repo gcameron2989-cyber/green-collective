@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,7 @@ type PublicAffiliationType = "neighbourhood" | "association" | "company" | "othe
 
 const VANCOUVER_NEIGHBOURHOODS = [
   "Arbutus Ridge",
+  "Burnaby",
   "Downtown",
   "Dunbar-Southlands",
   "Fairview",
@@ -22,21 +23,21 @@ const VANCOUVER_NEIGHBOURHOODS = [
   "Kitsilano",
   "Marpole",
   "Mount Pleasant",
+  "North Vancouver",
   "Oakridge",
+  "Point Grey",
   "Renfrew-Collingwood",
+  "Richmond",
   "Shaughnessy",
   "South Cambie",
   "Strathcona",
   "Sunset",
+  "Surrey",
+  "UBC / UEL",
   "Victoria-Fraserview",
   "West End",
-  "Point Grey",
-  "Burnaby",
-  "Richmond",
-  "North Vancouver",
   "West Vancouver",
-  "Surrey",
-];
+].sort();
 
 const UBC_FACULTIES = [
   "Faculty of Applied Science",
@@ -64,7 +65,7 @@ const UBC_FACULTIES = [
   "School of Social Work",
   "UBC Vantage College",
   "Vancouver School of Economics",
-];
+].sort();
 
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
 
@@ -88,11 +89,15 @@ export default function LogActionPage() {
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // Dual Attribution State
-  const [sector, setSector] = useState<Sector>("campus");
+  const [selectedSectors, setSelectedSectors] = useState<Sector[]>(["campus"]);
   const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
-  const [customAffiliation, setCustomAffiliation] = useState("");
+  const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
+  const [isNeighborhoodDropdownOpen, setIsNeighborhoodDropdownOpen] = useState(false);
+  
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
+  const [facultySearch, setFacultySearch] = useState("");
+  const [isFacultyDropdownOpen, setIsFacultyDropdownOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -101,6 +106,24 @@ export default function LogActionPage() {
     setIsMounted(true);
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
+
+  const filteredNeighborhoods = useMemo(() => {
+    return VANCOUVER_NEIGHBOURHOODS.filter((n) =>
+      n.toLowerCase().includes(neighbourhoodSearch.toLowerCase())
+    );
+  }, [neighbourhoodSearch]);
+
+  const filteredFaculties = useMemo(() => {
+    return UBC_FACULTIES.filter((f) =>
+      f.toLowerCase().includes(facultySearch.toLowerCase())
+    );
+  }, [facultySearch]);
+
+  const toggleSector = (s: Sector) => {
+    setSelectedSectors((prev) =>
+      prev.includes(s) ? prev.filter((item) => item !== s) : [...prev, s]
+    );
+  };
 
   const setActionQuantity = (actionId: string, qty: number) => {
     setCart((prev) => {
@@ -127,7 +150,6 @@ export default function LogActionPage() {
       let calculatedCo2 = detail.impactValue;
       let calculatedPoints = detail.points;
 
-      // Independent distance-based carbon accounting strictly for transport modes
       if (TRANSPORT_IDS.includes(id)) {
         const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
         if (id === "active-transit") {
@@ -162,15 +184,12 @@ export default function LogActionPage() {
     selectedCategory === "All" ? ACTION_REGISTRY : ACTION_REGISTRY.filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
-    const primaryHub = sector === "campus" ? faculty : (publicAffiliationType === "neighbourhood" ? neighbourhood : customAffiliation.trim() || "Local Community");
-    return `${primaryHub} [Neighborhood: ${neighbourhood} | Faculty: ${faculty}]`;
+    return `Neighborhood: ${neighbourhood} | Faculty: ${faculty}`;
   };
 
   const handleBatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedItemsDetails.length === 0) return;
-
-    const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
+    if (selectedItemsDetails.length === 0 || selectedSectors.length === 0) return;
 
     if (!user) {
       router.push(`/login?redirectTo=${encodeURIComponent("/log-action")}`);
@@ -193,12 +212,15 @@ export default function LogActionPage() {
         };
       });
 
-      await logBatchUserActions({
-        items: itemsToSubmit,
-        sector,
-        affiliationType: finalAffiliationType,
-        affiliationName: finalAffiliationName,
-      });
+      for (const currentSector of selectedSectors) {
+        const finalAffiliationType: AffiliationType = currentSector === "campus" ? "faculty" : publicAffiliationType;
+        await logBatchUserActions({
+          items: itemsToSubmit,
+          sector: currentSector,
+          affiliationType: finalAffiliationType,
+          affiliationName: finalAffiliationName,
+        });
+      }
 
       setStatusMsg({
         type: "success",
@@ -342,14 +364,14 @@ export default function LogActionPage() {
           <div className="space-y-4 pt-2 border-t border-gray-100 text-xs">
             <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Sector Attribution
+                Sector Attribution (Select one or both)
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setSector("campus")}
+                  onClick={() => toggleSector("campus")}
                   className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    sector === "campus"
+                    selectedSectors.includes("campus")
                       ? "bg-[#102f26] text-white border-[#102f26]"
                       : "bg-gray-50 text-[#526760] border-gray-200"
                   }`}
@@ -358,9 +380,9 @@ export default function LogActionPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSector("public")}
+                  onClick={() => toggleSector("public")}
                   className={`py-2 px-3 font-bold rounded-xl border transition ${
-                    sector === "public"
+                    selectedSectors.includes("public")
                       ? "bg-[#102f26] text-white border-[#102f26]"
                       : "bg-gray-50 text-[#526760] border-gray-200"
                   }`}
@@ -370,40 +392,98 @@ export default function LogActionPage() {
               </div>
             </div>
 
-            <div>
+            {/* Faculty Search & Autosort Dropdown */}
+            <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Faculty / School (UBC Vancouver)
               </label>
-              <select
-                value={faculty}
-                onChange={(e) => setFaculty(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium"
-              >
-                {UBC_FACULTIES.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+              <input
+                type="text"
+                placeholder="Type to filter faculties..."
+                value={facultySearch}
+                onFocus={() => setIsFacultyDropdownOpen(true)}
+                onChange={(e) => {
+                  setFacultySearch(e.target.value);
+                  setIsFacultyDropdownOpen(true);
+                }}
+                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+              />
+              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
+              
+              {isFacultyDropdownOpen && (
+                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {filteredFaculties.length > 0 ? (
+                    filteredFaculties.map((f) => (
+                      <button
+                        type="button"
+                        key={f}
+                        onClick={() => {
+                          setFaculty(f);
+                          setFacultySearch("");
+                          setIsFacultyDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition ${
+                          faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700"
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-gray-400">No matching faculty found</div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div>
+            {/* Neighborhood Search & Autosort Dropdown */}
+            <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Vancouver Neighborhood / Municipality
               </label>
-              <select
-                value={neighbourhood}
-                onChange={(e) => setNeighbourhood(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium"
-              >
-                {VANCOUVER_NEIGHBOURHOODS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+              <input
+                type="text"
+                placeholder="Type to filter neighborhoods..."
+                value={neighbourhoodSearch}
+                onFocus={() => setIsNeighborhoodDropdownOpen(true)}
+                onChange={(e) => {
+                  setNeighbourhoodSearch(e.target.value);
+                  setIsNeighborhoodDropdownOpen(true);
+                }}
+                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
+              />
+              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
+
+              {isNeighborhoodDropdownOpen && (
+                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {filteredNeighborhoods.length > 0 ? (
+                    filteredNeighborhoods.map((n) => (
+                      <button
+                        type="button"
+                        key={n}
+                        onClick={() => {
+                          setNeighbourhood(n);
+                          setNeighbourhoodSearch("");
+                          setIsNeighborhoodDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-100 transition ${
+                          neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-gray-400">No matching neighborhood found</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <button
             onClick={() => setIsReviewOpen(true)}
-            disabled={totalSelectedCount === 0}
+            disabled={totalSelectedCount === 0 || selectedSectors.length === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
           >
             Review &amp; Log Actions (+{totalPoints} pts) →
