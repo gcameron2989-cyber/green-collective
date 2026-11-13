@@ -7,8 +7,10 @@ export type AffiliationType = 'neighbourhood' | 'association' | 'company' | 'fac
 
 export interface BatchActionItem {
   actionId: string
+  actionTitle?: string
+  points?: number
   quantity: number
-  distanceKm?: number // Added distance support for commuting/travel actions
+  distanceKm?: number
   notes?: string
 }
 
@@ -22,7 +24,6 @@ export interface LogBatchActionsInput {
 export async function logBatchUserActions(input: LogBatchActionsInput) {
   const supabase = await createClient()
 
-  // 1. Authenticate user
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     throw new Error('You must be logged in to record actions.')
@@ -34,11 +35,7 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error('No actions selected to log.')
   }
 
-  if (!sector || !affiliationType || !affiliationName) {
-    throw new Error('Please select both a sector and a specific affiliation.')
-  }
-
-  // 2. Prepare multi-row payload (including optional distance tracking in notes)
+  // Map to match your exact Supabase table schema (action_id, action_name, points, etc.)
   const rowsToInsert = items.map((item) => {
     let formattedNotes = item.notes || ''
     if (item.distanceKm && item.distanceKm > 0) {
@@ -50,6 +47,8 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     return {
       user_id: user.id,
       action_id: item.actionId,
+      action_name: item.actionTitle || item.actionId,
+      points: item.points || 25,
       sector: sector,
       affiliation_type: affiliationType,
       affiliation_name: affiliationName,
@@ -65,7 +64,6 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error(error.message)
   }
 
-  // 3. Revalidate cached routes
   revalidatePath('/actions')
   revalidatePath('/dashboard')
   revalidatePath('/profile')
