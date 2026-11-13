@@ -62,7 +62,7 @@ export default function HomePage() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/habits"
+              href="/log-action"
               className="inline-flex items-center bg-[#102f26] px-7 py-4 text-xs font-mono uppercase tracking-[0.18em] text-white transition-all hover:bg-[#1a4438] shadow-sm"
             >
               Explore Action Registry →
@@ -78,7 +78,7 @@ export default function HomePage() {
           {/* CLICKABLE PILLARS */}
           <div className="mt-16 grid grid-cols-1 gap-4 border-t border-[#102f26]/10 pt-10 text-left sm:grid-cols-3">
             <Link
-              href="/habits"
+              href="/log-action"
               className="group block rounded-sm border border-[#102f26]/10 bg-white/40 p-4 transition-all hover:border-[#102f26]/30 hover:bg-white hover:shadow-sm"
             >
               <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ export default function HomePage() {
 
               <div className="pt-2">
                 <Link
-                  href="/habits"
+                  href="/log-action"
                   className="inline-flex items-center border-b border-[#102f26] pb-1 text-sm font-medium transition-opacity hover:opacity-55 text-[#102f26]"
                 >
                   Open complete personal ledger →
@@ -220,7 +220,7 @@ export default function HomePage() {
                     Selected Actions: {selectedDemoActions.length} of {demoActions.length}
                   </span>
                   <Link
-                    href="/habits"
+                    href="/log-action"
                     className="font-mono text-xs uppercase tracking-[0.14em] text-white hover:underline"
                   >
                     Log to profile →
@@ -267,7 +267,7 @@ export default function HomePage() {
               {ACTION_REGISTRY.map((action) => (
                 <Link
                   key={action.id}
-                  href={`/habits?action=${action.id}`}
+                  href={`/log-action?action=${action.id}`}
                   className="group block border-b border-white/15 py-6 transition-colors hover:bg-white/[0.04]"
                 >
                   <div className="grid gap-4 md:grid-cols-[0.9fr_1.5fr_auto] md:items-center">
@@ -374,7 +374,7 @@ export default function HomePage() {
             </h2>
 
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#526760]">
-              <Link href="/habits" className="hover:text-[#102f26]">
+              <Link href="/log-action" className="hover:text-[#102f26]">
                 Actions →
               </Link>
               <Link href="/competition" className="hover:text-[#102f26]">
