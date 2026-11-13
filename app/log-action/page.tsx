@@ -143,40 +143,42 @@ export default function LogActionPage() {
   const selectedEntries = Object.entries(cart);
   const totalSelectedCount = selectedEntries.reduce((acc, [_, qty]) => acc + qty, 0);
 
-  const selectedItemsDetails = selectedEntries
-    .map(([id, qty]) => {
-      const detail = ACTION_REGISTRY.find((a) => a.id === id);
-      if (!detail) return null;
+  const selectedItemsDetails = useMemo(() => {
+    return selectedEntries
+      .map(([id, qty]) => {
+        const detail = ACTION_REGISTRY.find((a) => a.id === id);
+        if (!detail) return null;
 
-      let calculatedCo2 = detail.impactValue;
-      let calculatedPoints = detail.points;
+        let calculatedCo2 = detail.impactValue;
+        let calculatedPoints = detail.points;
 
-      if (TRANSPORT_IDS.includes(id)) {
-        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
-        if (id === "active-transit") {
-          calculatedCo2 = Number((dist * 0.25).toFixed(2));
-          calculatedPoints = Math.round(20 + dist * 2.2);
-        } else if (id === "public-transit") {
-          calculatedCo2 = Number((dist * 0.18).toFixed(2));
-          calculatedPoints = Math.round(15 + dist * 1.5);
-        } else if (id === "ev-rideshare") {
-          calculatedCo2 = Number((dist * 0.32).toFixed(2));
-          calculatedPoints = Math.round(30 + dist * 2.2);
-        } else if (id === "carpool-fossil") {
-          calculatedCo2 = Number((dist * 0.15).toFixed(2));
-          calculatedPoints = Math.round(15 + dist * 1.2);
+        if (TRANSPORT_IDS.includes(id)) {
+          const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
+          if (id === "active-transit") {
+            calculatedCo2 = Number((dist * 0.25).toFixed(2));
+            calculatedPoints = Math.round(20 + dist * 2.2);
+          } else if (id === "public-transit") {
+            calculatedCo2 = Number((dist * 0.18).toFixed(2));
+            calculatedPoints = Math.round(15 + dist * 1.5);
+          } else if (id === "ev-rideshare") {
+            calculatedCo2 = Number((dist * 0.32).toFixed(2));
+            calculatedPoints = Math.round(30 + dist * 2.2);
+          } else if (id === "carpool-fossil") {
+            calculatedCo2 = Number((dist * 0.15).toFixed(2));
+            calculatedPoints = Math.round(15 + dist * 1.2);
+          }
         }
-      }
 
-      return {
-        ...detail,
-        title: detail.name,
-        co2SavedKg: calculatedCo2,
-        points: calculatedPoints,
-        selectedQty: qty,
-      };
-    })
-    .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
+        return {
+          ...detail,
+          title: detail.name,
+          co2SavedKg: calculatedCo2,
+          points: calculatedPoints,
+          selectedQty: qty,
+        };
+      })
+      .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
+  }, [selectedEntries, commuteDistances]);
 
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
   const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
@@ -313,6 +315,7 @@ export default function LogActionPage() {
                     {isSelected ? (
                       <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
                         <button
+                          type="button"
                           onClick={() => setActionQuantity(action.id, currentQty - 1)}
                           className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
                         >
@@ -322,6 +325,7 @@ export default function LogActionPage() {
                           {currentQty}
                         </span>
                         <button
+                          type="button"
                           onClick={() => setActionQuantity(action.id, currentQty + 1)}
                           className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
                         >
@@ -330,6 +334,7 @@ export default function LogActionPage() {
                       </div>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => setActionQuantity(action.id, 1)}
                         className="px-4 py-1.5 border border-[#102f26] text-[#102f26] text-xs font-bold rounded-full hover:bg-[#102f26] hover:text-white transition"
                       >
@@ -403,6 +408,7 @@ export default function LogActionPage() {
                 placeholder="Type to filter faculties..."
                 value={facultySearch}
                 onFocus={() => setIsFacultyDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsFacultyDropdownOpen(false), 200)}
                 onChange={(e) => {
                   setFacultySearch(e.target.value);
                   setIsFacultyDropdownOpen(true);
@@ -418,6 +424,7 @@ export default function LogActionPage() {
                       <button
                         type="button"
                         key={f}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setFaculty(f);
                           setFacultySearch("");
@@ -447,6 +454,7 @@ export default function LogActionPage() {
                 placeholder="Type to filter neighborhoods..."
                 value={neighbourhoodSearch}
                 onFocus={() => setIsNeighborhoodDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setIsNeighborhoodDropdownOpen(false), 200)}
                 onChange={(e) => {
                   setNeighbourhoodSearch(e.target.value);
                   setIsNeighborhoodDropdownOpen(true);
@@ -462,6 +470,7 @@ export default function LogActionPage() {
                       <button
                         type="button"
                         key={n}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setNeighbourhood(n);
                           setNeighbourhoodSearch("");
@@ -483,6 +492,7 @@ export default function LogActionPage() {
           </div>
 
           <button
+            type="button"
             onClick={() => setIsReviewOpen(true)}
             disabled={totalSelectedCount === 0 || selectedSectors.length === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
