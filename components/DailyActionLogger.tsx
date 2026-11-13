@@ -14,9 +14,10 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
   const [transportMode, setTransportMode] = useState<"bike" | "walk" | "bus" | "ev_carpool">("bike");
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
+  const [neighborhood, setNeighborhood] = useState("Point Grey");
   const [distanceKm, setDistanceKm] = useState(5);
   const [impactPoints, setImpactPoints] = useState(15);
-  const [co2SavedKg, setCo2SavedKg] = useState(2.1);
+  const [co2SavedKg, setCo2SavedKg] = useState(1.2);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -27,30 +28,31 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setIsMounted(true);
   }, []);
 
+  // Recalculate realistic points and CO2 offsets based on actual distance
   useEffect(() => {
     if (actionType.includes("Commute")) {
       let basePoints = 15;
-      let co2RatePerKm = 0.21;
+      let co2RatePerKm = 0.25; // Realistic kg CO2e offset per km for active commute
 
-      if (transportMode === "bike" || transportMode === "walk") {
+      if (transportMode === "bus") {
         basePoints = 20;
-        co2RatePerKm = 0.25;
-      } else if (transportMode === "bus") {
-        basePoints = 25;
         co2RatePerKm = 0.18;
       } else if (transportMode === "ev_carpool") {
-        basePoints = 30;
+        basePoints = 25;
         co2RatePerKm = 0.15;
       }
 
-      setImpactPoints(Math.round(basePoints + distanceKm * 2));
-      setCo2SavedKg(Number((distanceKm * co2RatePerKm).toFixed(2)));
+      const calculatedPoints = Math.round(basePoints + distanceKm * 2);
+      const calculatedCo2 = Number((distanceKm * co2RatePerKm).toFixed(2));
+
+      setImpactPoints(calculatedPoints);
+      setCo2SavedKg(calculatedCo2);
     } else if (actionType.includes("Zero Waste")) {
       setImpactPoints(10);
       setCo2SavedKg(0.5);
     } else {
       setImpactPoints(25);
-      setCo2SavedKg(3.5);
+      setCo2SavedKg(2.0);
     }
   }, [actionType, transportMode, distanceKm]);
 
@@ -65,9 +67,9 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setSuccessMsg("");
     setErrorMsg("");
 
-    let notes = actionType.includes("Commute")
-      ? `Mode: ${transportMode} | Distance: ${distanceKm} km | CO2 Saved: ${co2SavedKg} kg`
-      : "";
+    const notes = actionType.includes("Commute")
+      ? `Mode: ${transportMode} | Distance: ${distanceKm} km | Neighborhood: ${neighborhood} | CO2 Saved: ${co2SavedKg} kg`
+      : `Neighborhood: ${neighborhood}`;
 
     const { error } = await supabase.from("user_actions").insert({
       user_id: user.id,
@@ -83,7 +85,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     if (error) {
       setErrorMsg(error.message);
     } else {
-      setSuccessMsg(`Successfully logged! +${impactPoints} pts (~${co2SavedKg} kg CO2e saved).`);
+      setSuccessMsg(`Successfully logged! +${impactPoints} pts (~${co2SavedKg} kg CO2e saved for ${neighborhood}).`);
       if (onActionLogged) onActionLogged();
     }
   };
@@ -96,6 +98,9 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
         <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-900">
           Log Daily Climate Action
         </h3>
+        <p className="text-xs text-gray-500 font-mono mt-0.5">
+          Select transport distance and community attribution.
+        </p>
       </div>
 
       <form onSubmit={handleLogAction} className="space-y-4 font-mono text-xs">
@@ -136,7 +141,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
               <input
                 type="number"
                 min="1"
-                max="100"
+                max="50"
                 value={distanceKm}
                 onChange={(e) => setDistanceKm(Number(e.target.value))}
                 className="w-full p-2 border border-gray-300 text-xs font-sans bg-white"
@@ -144,11 +149,40 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
             </div>
 
             <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 border border-emerald-200 flex justify-between">
-              <span>Estimated Impact:</span>
+              <span>Calculated Impact:</span>
               <span className="font-bold">+{impactPoints} pts (~{co2SavedKg} kg CO2e avoided)</span>
             </div>
           </div>
         )}
+
+        {/* Dual Attribution Selector: Neighborhood / Community */}
+        <div>
+          <label className="block text-[11px] text-gray-500 uppercase mb-1">Community / Neighborhood Attribution *</label>
+          <select
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
+          >
+            <option value="Point Grey">Point Grey / UBC Campus</option>
+            <option value="Kitsilano">Kitsilano</option>
+            <option value="Main Street / Mount Pleasant">Main Street / Mount Pleasant</option>
+            <option value="Downtown Vancouver">Downtown Vancouver</option>
+            <option value="City of Toronto / Ravines">City of Toronto / Ravines</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[11px] text-gray-500 uppercase mb-1">Associated Initiative *</label>
+          <select
+            value={initiativeId}
+            onChange={(e) => setInitiativeId(e.target.value)}
+            className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
+          >
+            <option value="ubc-forestry-research">UBC Faculty of Forestry Innovation & Research Hub</option>
+            <option value="van-climate-emergency">City of Vancouver Climate Emergency Action Plan (CEAP)</option>
+            <option value="toronto-ravine-strategy-hub">City of Toronto Ravine Strategy & Stewardship</option>
+          </select>
+        </div>
 
         <button
           type="submit"
