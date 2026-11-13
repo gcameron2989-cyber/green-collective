@@ -147,6 +147,7 @@ export default function ActionsPage() {
   const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({ "transit-commute": 5 });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
+  // Dual Attribution State
   const [sector, setSector] = useState<Sector>("public");
   const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
@@ -200,14 +201,15 @@ export default function ActionsPage() {
       const detail = actionsList.find((a) => a.id === id);
       if (!detail) return null;
 
-      // Dynamically calculate CO2 and points if it's a commute action with distance
       let calculatedCo2 = detail.co2SavedKg;
       let calculatedPoints = detail.points;
 
+      // Non-linear carbon accounting for commute distance
       if (id === "transit-commute") {
         const dist = commuteDistances[id] || 5;
-        calculatedCo2 = Number((dist * 0.25).toFixed(2)); // ~0.25 kg CO2e per km
-        calculatedPoints = Math.round(15 + dist * 2);
+        // Diminishing returns formula for efficiency / non-linear scaling
+        calculatedCo2 = Number((dist * 0.22 + Math.log(dist + 1) * 0.5).toFixed(2));
+        calculatedPoints = Math.round(15 + dist * 1.8 + Math.sqrt(dist) * 2);
       }
 
       return {
@@ -226,9 +228,9 @@ export default function ActionsPage() {
     selectedCategory === "All" ? actionsList : actionsList.filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
-    if (sector === "campus") return faculty;
-    if (publicAffiliationType === "neighbourhood") return neighbourhood;
-    return customAffiliation.trim() || "Local Community";
+    const primaryHub = sector === "campus" ? faculty : (publicAffiliationType === "neighbourhood" ? neighbourhood : customAffiliation.trim() || "Local Community");
+    // Bundle both neighborhood and faculty into notes/affiliation for dual tracking
+    return `${primaryHub} [Neighborhood: ${neighbourhood} | Faculty: ${faculty}]`;
   };
 
   const handleBatchSubmit = async (e: React.FormEvent) => {
@@ -249,11 +251,12 @@ export default function ActionsPage() {
       const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
         const isCommute = item.id === "transit-commute";
+        const dist = commuteDistances[item.id] || 5;
         return {
           actionId: item.id,
           quantity: item.selectedQty,
-          distanceKm: isCommute ? commuteDistances[item.id] || 5 : undefined,
-          notes: isCommute ? `Commute Distance: ${commuteDistances[item.id] || 5} km` : undefined,
+          distanceKm: isCommute ? dist : undefined,
+          notes: `Neighborhood: ${neighbourhood} | Faculty: ${faculty}${isCommute ? ` | Commute Distance: ${dist} km` : ""}`,
         };
       });
 
@@ -266,7 +269,7 @@ export default function ActionsPage() {
 
       setStatusMsg({
         type: "success",
-        text: `Logged ${itemsToSubmit.length} actions! Credited to ${finalAffiliationName}.`,
+        text: `Logged ${itemsToSubmit.length} actions! Credited to ${neighbourhood} & ${faculty}.`,
       });
 
       setTimeout(() => {
@@ -294,7 +297,7 @@ export default function ActionsPage() {
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight">Log Verified Impact</h1>
           <p className="text-xs text-[#526760] max-w-xl mt-1">
-            Select actions below to log them together and route impact points to your community or faculty.
+            Select actions below to log them together with precise commute metrics and dual community-faculty attribution.
           </p>
 
           <div className="flex flex-wrap gap-2 mt-6">
@@ -438,7 +441,7 @@ export default function ActionsPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  1. Actions & Distance Configuration:
+                  1. Actions & Commute Scaling:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => (
@@ -495,89 +498,32 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold mb-1.5 text-[#102f26]">
-                  2. Sector Attribution:
+              {/* Dual Attribution: Neighborhood & Faculty Selection */}
+              <div className="space-y-3 p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10">
+                <label className="block text-xs font-bold text-[#102f26]">
+                  2. Dual Community & Institutional Attribution:
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSector("public")}
-                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition ${
-                      sector === "public"
-                        ? "bg-[#102f26] text-white border-[#102f26]"
-                        : "bg-gray-50 text-[#526760] border-gray-200"
-                    }`}
-                  >
-                    Local Public / Community
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSector("campus")}
-                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition ${
-                      sector === "campus"
-                        ? "bg-[#102f26] text-white border-[#102f26]"
-                        : "bg-gray-50 text-[#526760] border-gray-200"
-                    }`}
-                  >
-                    Campus / Student
-                  </button>
-                </div>
-              </div>
 
-              {sector === "public" ? (
-                <div className="p-3.5 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
-                  <label className="block text-xs font-bold text-[#102f26]">
-                    3. Choose Community Attribution:
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
+                    Vancouver Neighborhood Hub:
                   </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(["neighbourhood", "association", "company", "other"] as PublicAffiliationType[]).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setPublicAffiliationType(type)}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg capitalize border ${
-                          publicAffiliationType === type
-                            ? "bg-[#39705d] text-white border-[#39705d]"
-                            : "bg-white text-[#526760] border-gray-200"
-                        }`}
-                      >
-                        {type}
-                      </button>
+                  <select
+                    value={neighbourhood}
+                    onChange={(e) => setNeighbourhood(e.target.value)}
+                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
+                  >
+                    {VANCOUVER_NEIGHBOURHOODS.map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
                     ))}
-                  </div>
-
-                  {publicAffiliationType === "neighbourhood" ? (
-                    <div>
-                      <select
-                        value={neighbourhood}
-                        onChange={(e) => setNeighbourhood(e.target.value)}
-                        className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
-                      >
-                        {VANCOUVER_NEIGHBOURHOODS.map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div>
-                      <input
-                        type="text"
-                        required
-                        placeholder={`e.g., Local ${publicAffiliationType} name`}
-                        value={customAffiliation}
-                        onChange={(e) => setCustomAffiliation(e.target.value)}
-                        className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white"
-                      />
-                    </div>
-                  )}
+                  </select>
                 </div>
-              ) : (
-                <div className="p-3.5 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-2">
-                  <label className="block text-xs font-bold text-[#102f26]">
-                    3. Select Faculty / Student Unit:
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
+                    UBC Faculty / Campus Unit:
                   </label>
                   <select
                     value={faculty}
@@ -591,7 +537,7 @@ export default function ActionsPage() {
                     ))}
                   </select>
                 </div>
-              )}
+              </div>
 
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
                 <div>
