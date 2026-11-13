@@ -71,7 +71,20 @@ export default function CompetitionPage() {
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
           const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
-          const baseImpact = Number(registryMatch?.impactValue ?? 0.5);
+          
+          let baseImpact = Number(registryMatch?.impactValue ?? 0.5);
+
+          // Distance-aware calculation matching log-action ledger precisely
+          if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id)) {
+            const distMatch = act.notes?.match(/Distance:\s*([\d.]+)\s*km/);
+            const dist = distMatch ? parseFloat(distMatch[1]) : 5; // default fallback
+
+            if (act.action_id === "active-transit") baseImpact = dist * 0.25;
+            else if (act.action_id === "public-transit") baseImpact = dist * 0.18;
+            else if (act.action_id === "ev-rideshare") baseImpact = dist * 0.32;
+            else if (act.action_id === "carpool-fossil") baseImpact = dist * 0.15;
+          }
+
           const carbonOffset = baseImpact * qty;
 
           // Check if it belongs to faculty
@@ -96,7 +109,6 @@ export default function CompetitionPage() {
           if (act.notes?.includes("BEST 301")) {
             if (act.user_id) {
               if (!best301UserMap[act.user_id]) {
-                // Use user's actual handle if it's the current user, otherwise fallback
                 const handle = (act.user_id === currentUserId && currentUserHandle) 
                   ? currentUserHandle 
                   : `User_${act.user_id.slice(0, 6)}`;
