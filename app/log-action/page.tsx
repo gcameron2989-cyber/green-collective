@@ -32,6 +32,8 @@ const UBC_FACULTIES = [
 
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
 
+const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
+
 export default function LogActionPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -89,23 +91,22 @@ export default function LogActionPage() {
       let calculatedCo2 = detail.impactValue;
       let calculatedPoints = detail.points;
 
-      // Independent distance-based carbon accounting for all transport modes
-      if (id === "active-transit") {
-        const dist = Math.min(100, Math.max(1, commuteDistances[id] || 5));
-        calculatedCo2 = Number((dist * 0.25).toFixed(2));
-        calculatedPoints = Math.round(20 + dist * 2.2);
-      } else if (id === "public-transit") {
+      // Independent distance-based carbon accounting strictly for transport modes
+      if (TRANSPORT_IDS.includes(id)) {
         const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
-        calculatedCo2 = Number((dist * 0.18).toFixed(2));
-        calculatedPoints = Math.round(15 + dist * 1.5);
-      } else if (id === "ev-rideshare") {
-        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
-        calculatedCo2 = Number((dist * 0.32).toFixed(2));
-        calculatedPoints = Math.round(30 + dist * 2.2);
-      } else if (id === "carpool-fossil") {
-        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 15));
-        calculatedCo2 = Number((dist * 0.15).toFixed(2));
-        calculatedPoints = Math.round(15 + dist * 1.2);
+        if (id === "active-transit") {
+          calculatedCo2 = Number((dist * 0.25).toFixed(2));
+          calculatedPoints = Math.round(20 + dist * 2.2);
+        } else if (id === "public-transit") {
+          calculatedCo2 = Number((dist * 0.18).toFixed(2));
+          calculatedPoints = Math.round(15 + dist * 1.5);
+        } else if (id === "ev-rideshare") {
+          calculatedCo2 = Number((dist * 0.32).toFixed(2));
+          calculatedPoints = Math.round(30 + dist * 2.2);
+        } else if (id === "carpool-fossil") {
+          calculatedCo2 = Number((dist * 0.15).toFixed(2));
+          calculatedPoints = Math.round(15 + dist * 1.2);
+        }
       }
 
       return {
@@ -146,7 +147,7 @@ export default function LogActionPage() {
     try {
       const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
-        const isDistanceBased = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(item.id);
+        const isDistanceBased = TRANSPORT_IDS.includes(item.id);
         const dist = commuteDistances[item.id] || 10;
         return {
           actionId: item.id,
@@ -374,7 +375,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal with Distance Inputs for Transport Actions */}
+      {/* Review Modal with Distance Inputs strictly for Transport Actions */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -406,69 +407,73 @@ export default function LogActionPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions &amp; Distance Scaling (Max 200 km):
+                  Selected Actions &amp; Scaling:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                  {selectedItemsDetails.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-[#102f26]">{item.name}</div>
-                          <div className="text-[10px] text-[#526760]">
-                            +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                  {selectedItemsDetails.map((item) => {
+                    const isTransport = TRANSPORT_IDS.includes(item.id);
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-bold text-[#102f26]">{item.name}</div>
+                            <div className="text-[10px] text-[#526760]">
+                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.selectedQty}
+                              onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
+                              className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setActionQuantity(item.id, 0)}
+                              className="text-red-500 hover:text-red-700 font-bold px-1"
+                            >
+                              ✕
+                            </button>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.selectedQty}
-                            onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
-                            className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setActionQuantity(item.id, 0)}
-                            className="text-red-500 hover:text-red-700 font-bold px-1"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                        {/* Distance Slider strictly checked against TRANSPORT_IDS */}
+                        {isTransport && (
+                          <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
+                            <span className="text-[11px] text-gray-600 font-medium">
+                              {item.id === "active-transit"
+                                ? "Cycling/Walking Distance (km):"
+                                : item.id === "public-transit"
+                                ? "Transit Distance (km):"
+                                : item.id === "ev-rideshare"
+                                ? "EV Rideshare Distance (km):"
+                                : "Carpool Distance (km):"}
+                            </span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="200"
+                              value={commuteDistances[item.id] || 10}
+                              onChange={(e) =>
+                                setCommuteDistances({
+                                  ...commuteDistances,
+                                  [item.id]: Math.min(200, Math.max(1, Number(e.target.value))),
+                                })
+                              }
+                              className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                            />
+                          </div>
+                        )}
                       </div>
-
-                      {/* Distance Sliders for all Transport Actions */}
-                      {["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(item.id) && (
-                        <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
-                          <span className="text-[11px] text-gray-600 font-medium">
-                            {item.id === "active-transit"
-                              ? "Cycling/Walking Distance (km):"
-                              : item.id === "public-transit"
-                              ? "Transit Distance (km):"
-                              : item.id === "ev-rideshare"
-                              ? "EV Rideshare Distance (km):"
-                              : "Carpool Distance (km):"}
-                          </span>
-                          <input
-                            type="number"
-                            min="1"
-                            max="200"
-                            value={commuteDistances[item.id] || 10}
-                            onChange={(e) =>
-                              setCommuteDistances({
-                                ...commuteDistances,
-                                [item.id]: Math.min(200, Math.max(1, Number(e.target.value))),
-                              })
-                            }
-                            className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
