@@ -39,6 +39,7 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     const rowsToInsert = items.map((item) => {
       const safeQty = Math.max(1, item.quantity || 1)
       const safeDistance = item.distanceKm !== undefined ? Math.max(0, item.distanceKm) : undefined
+      const calculatedPoints = (item.points || 25) * safeQty
 
       let formattedNotes = item.notes || ''
       if (safeDistance !== undefined) {
@@ -51,7 +52,8 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
         user_id: user.id,
         action_id: item.actionId,
         action_name: item.actionTitle || item.actionId,
-        points_earned: (item.points || 25) * safeQty, // Mapped to match database column
+        points: calculatedPoints,         // Satisfies 'points' NOT NULL constraint
+        points_earned: calculatedPoints,  // Satisfies 'points_earned' NOT NULL constraint
         sector: sector,
         affiliation_type: affiliationType,
         affiliation_name: affiliationName,
