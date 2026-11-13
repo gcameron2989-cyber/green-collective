@@ -12,69 +12,99 @@ interface LeaderboardEntry {
   carbonOffsetKg: number;
 }
 
+const VANCOUVER_NEIGHBOURHOODS = [
+  "Arbutus Ridge", "Burnaby", "Downtown", "Dunbar-Southlands", "Fairview",
+  "Grandview-Woodland", "Hastings-Sunrise", "Kensington-Cedar Cottage", "Kerrisdale",
+  "Kitsilano", "Marpole", "Mount Pleasant", "North Vancouver", "Oakridge",
+  "Point Grey", "Renfrew-Collingwood", "Richmond", "Shaughnessy", "South Cambie",
+  "Strathcona", "Sunset", "Surrey", "UBC / UEL", "Victoria-Fraserview",
+  "West End", "West Vancouver",
+];
+
 export default function CompetitionPage() {
   const [boardTier, setBoardTier] = useState<"institutional" | "local">("institutional");
   const [activeTab, setActiveTab] = useState<"leaderboard" | "guidelines">("leaderboard");
+  
   const [institutionalStandings, setInstitutionalStandings] = useState<LeaderboardEntry[]>([]);
+  const [localStandings, setLocalStandings] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  
   const supabase = createClient();
-
-  const localStandings: LeaderboardEntry[] = [
-    { rank: 1, name: 'Kitsilano Community Hub', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
-    { rank: 2, name: 'Point Grey & Campus Perimeter', category: 'Vancouver West', participants: 0, carbonOffsetKg: 0 },
-    { rank: 3, name: 'Mount Pleasant Eco-Network', category: 'Vancouver East', participants: 0, carbonOffsetKg: 0 },
-    { rank: 4, name: 'Downtown Core Collective', category: 'Central Vancouver', participants: 0, carbonOffsetKg: 0 },
-    { rank: 5, name: 'Grandview-Woodland', category: 'Vancouver East', participants: 0, carbonOffsetKg: 0 },
-  ];
 
   useEffect(() => {
     const fetchLiveStandings = async () => {
       try {
-        const { data: faculties, error: facultyError } = await supabase
-          .from('faculties')
-          .select('id, name');
+        setLoading(true);
 
-        if (facultyError) throw facultyError;
+        // 1. Fetch Faculties
+        const { data: faculties } = await supabase.from('faculties').select('id, name');
 
+        // 2. Fetch Logged Actions
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
-          .select('affiliation_name, points, user_id, notes, quantity');
+          .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity');
 
         if (logError) throw logError;
 
+        // --- Process Institutional (UBC Faculty) Standings ---
         const facultyMap: { [key: string]: { name: string; points: number; users: Set<string> } } = {};
-
         faculties?.forEach((f) => {
           facultyMap[f.name] = { name: f.name, points: 0, users: new Set() };
         });
 
+        // --- Process Local (Vancouver Neighborhood) Standings ---
+        const neighborhoodMap: { [key: string]: { name: string; points: number; users: Set<string> } } = {};
+        VANCOUVER_NEIGHBOURHOODS.forEach((n) => {
+          neighborhoodMap[n] = { name: n, points: 0, users: new Set() };
+        });
+
         loggedActions?.forEach((act) => {
+          const qty = act.quantity || 1;
+          const pts = Number(act.points_earned ?? act.points ?? 25) * qty;
+
+          // Check if it belongs to faculty
           const matchedFaculty = Object.keys(facultyMap).find((facName) =>
             act.affiliation_name?.includes(facName) || act.notes?.includes(facName)
           );
-
-          if (matchedFaculty) {
-            const qty = act.quantity || 1;
-            const pts = (act.points || 25) * qty;
+          if (matchedFaculty && (act.sector === 'campus' || !act.sector)) {
             facultyMap[matchedFaculty].points += pts;
-            if (act.user_id) {
-              facultyMap[matchedFaculty].users.add(act.user_id);
-            }
+            if (act.user_id) facultyMap[matchedFaculty].users.add(act.user_id);
+          }
+
+          // Check if it belongs to neighborhood (Local)
+          const matchedNeighborhood = Object.keys(neighborhoodMap).find((nName) =>
+            act.affiliation_name?.includes(nName) || act.notes?.includes(nName)
+          );
+          if (matchedNeighborhood && (act.sector === 'community' || act.sector === 'public' || !act.sector)) {
+            neighborhoodMap[matchedNeighborhood].points += pts;
+            if (act.user_id) neighborhoodMap[matchedNeighborhood].users.add(act.user_id);
           }
         });
 
-        const computedStandings: LeaderboardEntry[] = Object.values(facultyMap)
+        const computedInstitutional: LeaderboardEntry[] = Object.values(facultyMap)
           .map((f) => ({
             rank: 0,
             name: f.name,
             category: 'UBC Faculty',
             participants: f.users.size,
-            carbonOffsetKg: Math.round(f.points * 0.35),
+            carbonOffsetKg: Math.round(f.points * 0.4), // Standardized factor
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
-        setInstitutionalStandings(computedStandings);
+        const computedLocal: LeaderboardEntry[] = Object.values(neighborhoodMap)
+          .map((n) => ({
+            rank: 0,
+            name: n.name,
+            category: 'Vancouver Hub',
+            participants: n.users.size,
+            carbonOffsetKg: Math.round(n.points * 0.4), // Standardized factor
+          }))
+          .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
+          .map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+        setInstitutionalStandings(computedInstitutional);
+        setLocalStandings(computedLocal);
       } catch (err) {
         console.error('Error fetching live standings:', err);
       } finally {
@@ -151,9 +181,7 @@ export default function CompetitionPage() {
             <button
               onClick={() => setActiveTab("leaderboard")}
               className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                activeTab === "leaderboard"
-                  ? "bg-[#102f26] text-white"
-                  : "bg-white border border-[#102f26]/20 text-[#102f26]"
+                activeTab === "leaderboard" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
               }`}
             >
               Rankings
@@ -161,9 +189,7 @@ export default function CompetitionPage() {
             <button
               onClick={() => setActiveTab("guidelines")}
               className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition ${
-                activeTab === "guidelines"
-                  ? "bg-[#102f26] text-white"
-                  : "bg-white border border-[#102f26]/20 text-[#102f26]"
+                activeTab === "guidelines" ? "bg-[#102f26] text-white" : "bg-white border border-[#102f26]/20 text-[#102f26]"
               }`}
             >
               Guidelines &amp; Rules
@@ -176,27 +202,27 @@ export default function CompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6 flex justify-between items-center">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  {boardTier === "institutional" ? "Faculty Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings"}
+                  {boardTier === "institutional" ? "Faculty Standings (Supabase Live)" : "Regional Vancouver Neighborhood Standings (Live)"}
                 </h2>
                 <span className="font-mono text-[10px] text-[#39705d]">
-                  {boardTier === "institutional" ? "Synced via Database" : "Awaiting Initial Submissions"}
+                  Synced via Database
                 </span>
               </div>
 
-              {loading && boardTier === "institutional" ? (
+              {loading ? (
                 <div className="p-12 border border-[#102f26]/15 bg-[#f1f6f2] text-center font-mono text-xs text-[#526760] uppercase tracking-wider shadow-sm">
-                  Querying live institutional ledgers...
+                  Querying live ledgers...
                 </div>
               ) : currentStandings.length > 0 ? (
                 <div className="space-y-4">
                   {currentStandings.map((entry) => (
                     <div
-                      key={entry.rank}
+                      key={entry.name}
                       className="p-6 border border-[#102f26]/15 bg-white transition hover:border-[#102f26] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
                     >
                       <div className="flex items-center gap-4">
                         <span className="font-mono text-lg font-bold text-[#39705d] w-6">
-                          0{entry.rank}
+                          {entry.rank < 10 ? `0${entry.rank}` : entry.rank}
                         </span>
                         <div>
                           <h3 className="text-lg font-medium tracking-tight text-[#102f26]">
@@ -224,21 +250,6 @@ export default function CompetitionPage() {
                   No submissions logged yet. Be the first to log an action!
                 </div>
               )}
-
-              <div className="mt-8 p-6 border border-dashed border-[#102f26]/30 bg-[#f1f6f2]">
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#39705d] block mb-1">
-                  Contribute to Your Standing
-                </span>
-                <p className="text-xs text-[#526760] mb-4">
-                  Log your daily transit choices, zero-waste dining, and conservation efforts to push your faculty or neighborhood up the live standings.
-                </p>
-                <Link
-                  href="/log-action"
-                  className="inline-flex items-center gap-2 bg-[#102f26] text-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em]"
-                >
-                  Log Action to Personal Ledger →
-                </Link>
-              </div>
             </div>
 
             <div>
@@ -280,11 +291,9 @@ export default function CompetitionPage() {
               <h2 className="text-2xl font-medium text-[#102f26] mb-4">
                 Sustainability Challenge Guidelines
               </h2>
-              <div className="space-y-4 text-sm text-[#526760] leading-relaxed">
-                <p>
-                  Green Collective&apos;s dual-tier leaderboard system quantifies and compares grassroots environmental action across both institutional departments (such as UBC faculties) and municipal regional hubs (such as Vancouver neighborhoods).
-                </p>
-              </div>
+              <p className="text-sm text-[#526760] leading-relaxed">
+                Green Collective&apos;s dual-tier leaderboard system quantifies and compares grassroots environmental action across both institutional departments (such as UBC faculties) and municipal regional hubs (such as Vancouver neighborhoods).
+              </p>
             </div>
           </div>
         )}
