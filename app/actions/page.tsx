@@ -134,7 +134,7 @@ const UBC_FACULTIES = [
 
 const CATEGORIES = ["All", "Mobility", "Circular Economy", "Food & Agriculture", "Energy & Water", "Ecosystem Stewardship"];
 
-export default function ActionsPage() {
+export default function LogActionPage() {
   const router = useRouter();
   const supabase = createClient();
 
@@ -144,11 +144,14 @@ export default function ActionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({ "transit-commute": 5 });
+  const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({
+    "transit-commute": 5,
+    "ev-charging-shared": 10,
+  });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // Dual Attribution State
-  const [sector, setSector] = useState<Sector>("public");
+  const [sector, setSector] = useState<Sector>("campus");
   const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [customAffiliation, setCustomAffiliation] = useState("");
@@ -160,23 +163,6 @@ export default function ActionsPage() {
   useEffect(() => {
     setIsMounted(true);
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-
-    async function loadActions() {
-      const { data, error } = await supabase.from("actions").select("*");
-      if (!error && data && data.length > 0) {
-        const mapped: ActionCatalogItem[] = data.map((item: any) => ({
-          id: item.id || item.slug,
-          title: item.title,
-          category: item.category || "Circular Economy",
-          points: item.points || 25,
-          co2SavedKg: item.co2_saved_kg || item.co2SavedKg || 1.0,
-          unitLabel: item.unit_label || item.unitLabel || "times",
-          description: item.description || "",
-        }));
-        setActionsList(mapped);
-      }
-    }
-    loadActions();
   }, []);
 
   const setActionQuantity = (actionId: string, qty: number) => {
@@ -204,12 +190,15 @@ export default function ActionsPage() {
       let calculatedCo2 = detail.co2SavedKg;
       let calculatedPoints = detail.points;
 
-      // Non-linear carbon accounting for commute distance
+      // Distance-based dynamic carbon accounting for commute & carpool
       if (id === "transit-commute") {
-        const dist = commuteDistances[id] || 5;
-        // Diminishing returns formula for efficiency / non-linear scaling
-        calculatedCo2 = Number((dist * 0.22 + Math.log(dist + 1) * 0.5).toFixed(2));
-        calculatedPoints = Math.round(15 + dist * 1.8 + Math.sqrt(dist) * 2);
+        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 5));
+        calculatedCo2 = Number((dist * 0.22).toFixed(2));
+        calculatedPoints = Math.round(15 + dist * 1.8);
+      } else if (id === "ev-charging-shared") {
+        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
+        calculatedCo2 = Number((dist * 0.28).toFixed(2));
+        calculatedPoints = Math.round(30 + dist * 2.0);
       }
 
       return {
@@ -229,7 +218,6 @@ export default function ActionsPage() {
 
   const getAffiliationName = (): string => {
     const primaryHub = sector === "campus" ? faculty : (publicAffiliationType === "neighbourhood" ? neighbourhood : customAffiliation.trim() || "Local Community");
-    // Bundle both neighborhood and faculty into notes/affiliation for dual tracking
     return `${primaryHub} [Neighborhood: ${neighbourhood} | Faculty: ${faculty}]`;
   };
 
@@ -240,7 +228,7 @@ export default function ActionsPage() {
     const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
 
     if (!user) {
-      router.push(`/login?redirectTo=${encodeURIComponent("/actions")}`);
+      router.push(`/login?redirectTo=${encodeURIComponent("/log-action")}`);
       return;
     }
 
@@ -250,13 +238,13 @@ export default function ActionsPage() {
     try {
       const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
-        const isCommute = item.id === "transit-commute";
-        const dist = commuteDistances[item.id] || 5;
+        const isDistanceBased = item.id === "transit-commute" || item.id === "ev-charging-shared";
+        const dist = commuteDistances[item.id] || (item.id === "ev-charging-shared" ? 10 : 5);
         return {
           actionId: item.id,
           quantity: item.selectedQty,
-          distanceKm: isCommute ? dist : undefined,
-          notes: `Neighborhood: ${neighbourhood} | Faculty: ${faculty}${isCommute ? ` | Commute Distance: ${dist} km` : ""}`,
+          distanceKm: isDistanceBased ? dist : undefined,
+          notes: `Neighborhood: ${neighbourhood} | Faculty: ${faculty}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
         };
       });
 
@@ -276,7 +264,8 @@ export default function ActionsPage() {
         clearCart();
         setIsReviewOpen(false);
         setStatusMsg(null);
-      }, 1800);
+        router.push("/competition");
+      }, 1500);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
     } finally {
@@ -291,16 +280,25 @@ export default function ActionsPage() {
   return (
     <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
-            Action Network
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight">Log Verified Impact</h1>
-          <p className="text-xs text-[#526760] max-w-xl mt-1">
-            Select actions below to log them together with precise commute metrics and dual community-faculty attribution.
-          </p>
+        <div className="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center">
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
+              Action Ledger · Multi-Select Entry
+            </span>
+            <h1 className="text-3xl font-extrabold tracking-tight">Record Daily Sustainable Actions</h1>
+            <p className="text-xs text-[#526760] max-w-xl mt-1">
+              Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
+            </p>
+          </div>
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
+            [← BACK TO COMPETITION]
+          </Link>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap gap-2 mt-6">
+      <section className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -315,104 +313,163 @@ export default function ActionsPage() {
               </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredActions.map((action) => {
-            const currentQty = cart[action.id] || 0;
-            const isSelected = currentQty > 0;
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredActions.map((action) => {
+              const currentQty = cart[action.id] || 0;
+              const isSelected = currentQty > 0;
 
-            return (
-              <div
-                key={action.id}
-                className={`bg-white border rounded-2xl p-6 shadow-sm flex flex-col justify-between transition-all ${
-                  isSelected ? "border-[#39705d] ring-2 ring-[#39705d]/10 bg-[#fbfdfb]" : "border-[#102f26]/10 hover:border-[#102f26]/30"
-                }`}
-              >
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded font-semibold">
-                      {action.category}
-                    </span>
-                    <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
-                  </div>
-                  <h2 className="text-base font-bold mb-2">{action.title}</h2>
-                  <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
-                </div>
-
-                <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500 font-medium">
-                    ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
-                  </span>
-
-                  {isSelected ? (
-                    <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
-                      <button
-                        onClick={() => setActionQuantity(action.id, currentQty - 1)}
-                        className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
-                      >
-                        -
-                      </button>
-                      <span className="text-xs font-extrabold text-[#102f26] min-w-[18px] text-center">
-                        {currentQty}
+              return (
+                <div
+                  key={action.id}
+                  className={`bg-white border rounded-2xl p-6 shadow-sm flex flex-col justify-between transition-all ${
+                    isSelected ? "border-[#39705d] ring-2 ring-[#39705d]/10 bg-[#fbfdfb]" : "border-[#102f26]/10 hover:border-[#102f26]/30"
+                  }`}
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded font-semibold">
+                        {action.category}
                       </span>
-                      <button
-                        onClick={() => setActionQuantity(action.id, currentQty + 1)}
-                        className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
-                      >
-                        +
-                      </button>
+                      <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setActionQuantity(action.id, 1)}
-                      className="px-4 py-1.5 border border-[#102f26] text-[#102f26] text-xs font-bold rounded-full hover:bg-[#102f26] hover:text-white transition"
-                    >
-                      + Select
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                    <h2 className="text-base font-bold mb-2">{action.title}</h2>
+                    <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
+                  </div>
 
-      {totalSelectedCount > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#102f26] text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center justify-between gap-6 border border-emerald-500/20 max-w-2xl w-[92%] backdrop-blur">
-          <div className="flex items-center gap-3">
-            <span className="bg-[#39705d] text-white text-xs font-extrabold px-2.5 py-1 rounded-full">
-              {selectedItemsDetails.length} {selectedItemsDetails.length === 1 ? "Action" : "Actions"}
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-[11px] text-gray-500 font-medium">
+                      ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
+                    </span>
+
+                    {isSelected ? (
+                      <div className="flex items-center gap-2 bg-[#f1f6f2] border border-[#39705d]/30 rounded-full px-2 py-1">
+                        <button
+                          onClick={() => setActionQuantity(action.id, currentQty - 1)}
+                          className="w-6 h-6 rounded-full bg-white text-[#102f26] font-bold text-xs flex items-center justify-center hover:bg-gray-200 transition"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-extrabold text-[#102f26] min-w-[18px] text-center">
+                          {currentQty}
+                        </span>
+                        <button
+                          onClick={() => setActionQuantity(action.id, currentQty + 1)}
+                          className="w-6 h-6 rounded-full bg-[#102f26] text-white font-bold text-xs flex items-center justify-center hover:bg-[#39705d] transition"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setActionQuantity(action.id, 1)}
+                        className="px-4 py-1.5 border border-[#102f26] text-[#102f26] text-xs font-bold rounded-full hover:bg-[#102f26] hover:text-white transition"
+                      >
+                        + Select
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="lg:col-span-1 sticky top-8 bg-white border border-[#102f26]/15 rounded-2xl p-6 shadow-sm space-y-6">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
+              Submission Summary
             </span>
-            <div className="text-xs">
-              <span className="font-bold text-emerald-300">+{totalPoints} pts</span>
-              <span className="text-gray-300 mx-1.5">•</span>
-              <span className="text-gray-300">~{totalCO2.toFixed(1)} kg CO₂e</span>
+            <h3 className="text-xl font-bold text-[#102f26]">Ledger Impact</h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 text-xs font-mono">
+            <div>
+              <span className="text-[#526760] block mb-0.5">Actions</span>
+              <span className="text-lg font-bold text-[#102f26]">{totalSelectedCount}</span>
+            </div>
+            <div>
+              <span className="text-[#526760] block mb-0.5">Est. Impact</span>
+              <span className="text-lg font-bold text-[#39705d]">~{totalCO2.toFixed(1)} kg CO₂e</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={clearCart}
-              className="text-xs text-gray-400 hover:text-white underline underline-offset-2"
-            >
-              Clear
-            </button>
-            <button
-              onClick={() => setIsReviewOpen(true)}
-              className="px-5 py-2 bg-emerald-400 text-[#102f26] text-xs font-black rounded-full hover:bg-emerald-300 transition shadow"
-            >
-              Review & Log ({totalSelectedCount}) →
-            </button>
-          </div>
-        </div>
-      )}
+          <div className="space-y-4 pt-2 border-t border-gray-100 text-xs">
+            <div>
+              <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+                Sector Attribution
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSector("campus")}
+                  className={`py-2 px-3 font-bold rounded-xl border transition ${
+                    sector === "campus"
+                      ? "bg-[#102f26] text-white border-[#102f26]"
+                      : "bg-gray-50 text-[#526760] border-gray-200"
+                  }`}
+                >
+                  Campus / UBC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSector("public")}
+                  className={`py-2 px-3 font-bold rounded-xl border transition ${
+                    sector === "public"
+                      ? "bg-[#102f26] text-white border-[#102f26]"
+                      : "bg-gray-50 text-[#526760] border-gray-200"
+                  }`}
+                >
+                  Local Public
+                </button>
+              </div>
+            </div>
 
+            <div>
+              <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+                Faculty / Department
+              </label>
+              <select
+                value={faculty}
+                onChange={(e) => setFaculty(e.target.value)}
+                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium"
+              >
+                {UBC_FACULTIES.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
+                Vancouver Neighborhood Hub
+              </label>
+              <select
+                value={neighbourhood}
+                onChange={(e) => setNeighbourhood(e.target.value)}
+                className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium"
+              >
+                {VANCOUVER_NEIGHBOURHOODS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsReviewOpen(true)}
+            disabled={totalSelectedCount === 0}
+            className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
+          >
+            Review &amp; Log Actions (+{totalPoints} pts) →
+          </button>
+        </div>
+      </section>
+
+      {/* Review Modal with Distance Inputs for Commute & EV Carpool */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
             <div className="flex justify-between items-center border-b border-[#102f26]/10 pb-3 mb-4">
               <div>
                 <span className="text-[10px] font-mono uppercase text-[#39705d]">Batch Review</span>
@@ -441,7 +498,7 @@ export default function ActionsPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  1. Actions & Commute Scaling:
+                  Selected Actions &amp; Distance Scaling (Max 200 km):
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => (
@@ -475,18 +532,21 @@ export default function ActionsPage() {
                         </div>
                       </div>
 
-                      {item.id === "transit-commute" && (
+                      {/* Distance Slider / Input for both Transit and Shared EV Carpool */}
+                      {(item.id === "transit-commute" || item.id === "ev-charging-shared") && (
                         <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
-                          <span className="text-[11px] text-gray-600 font-medium">Commute Distance (km):</span>
+                          <span className="text-[11px] text-gray-600 font-medium">
+                            {item.id === "ev-charging-shared" ? "Carpool Distance (km):" : "Commute Distance (km):"}
+                          </span>
                           <input
                             type="number"
                             min="1"
-                            max="100"
-                            value={commuteDistances[item.id] || 5}
+                            max="200"
+                            value={commuteDistances[item.id] || (item.id === "ev-charging-shared" ? 10 : 5)}
                             onChange={(e) =>
                               setCommuteDistances({
                                 ...commuteDistances,
-                                [item.id]: Math.max(1, Number(e.target.value)),
+                                [item.id]: Math.min(200, Math.max(1, Number(e.target.value))),
                               })
                             }
                             className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
@@ -495,47 +555,6 @@ export default function ActionsPage() {
                       )}
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Dual Attribution: Neighborhood & Faculty Selection */}
-              <div className="space-y-3 p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10">
-                <label className="block text-xs font-bold text-[#102f26]">
-                  2. Dual Community & Institutional Attribution:
-                </label>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
-                    Vancouver Neighborhood Hub:
-                  </label>
-                  <select
-                    value={neighbourhood}
-                    onChange={(e) => setNeighbourhood(e.target.value)}
-                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
-                  >
-                    {VANCOUVER_NEIGHBOURHOODS.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#526760] mb-1">
-                    UBC Faculty / Campus Unit:
-                  </label>
-                  <select
-                    value={faculty}
-                    onChange={(e) => setFaculty(e.target.value)}
-                    className="w-full p-2 text-xs rounded-lg border border-gray-300 bg-white font-medium"
-                  >
-                    {UBC_FACULTIES.map((f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
@@ -549,26 +568,20 @@ export default function ActionsPage() {
                 <div className="text-[#102f26] font-black text-sm">+{totalPoints} pts</div>
               </div>
 
-              {!user && (
-                <p className="text-[11px] text-[#39705d] bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
-                  ℹ You are signed out. Submitting will save your selections, prompt sign-in, and automatically log the batch when you return.
-                </p>
-              )}
-
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsReviewOpen(false)}
                   className="w-1/2 py-2.5 border border-gray-300 rounded-full text-xs font-semibold"
                 >
-                  Back to Grid
+                  Back
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || selectedItemsDetails.length === 0}
                   className="w-1/2 py-2.5 bg-[#102f26] text-white rounded-full text-xs font-semibold hover:bg-[#39705d] transition disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : user ? "Confirm & Log All" : "Sign In & Log →"}
+                  {submitting ? "Processing..." : "Confirm & Log All"}
                 </button>
               </div>
             </form>
