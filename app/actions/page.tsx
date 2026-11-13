@@ -22,7 +22,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Transit or Active Bike Commute",
     category: "Mobility",
     points: 25,
-    co2SavedKg: 2.4,
+    co2SavedKg: 2.1,
     unitLabel: "trips",
     description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
   },
@@ -31,7 +31,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Zero Single-Use Container",
     category: "Circular Economy",
     points: 30,
-    co2SavedKg: 0.8,
+    co2SavedKg: 0.5,
     unitLabel: "containers",
     description: "Used a reusable cup, mug, or food container at local businesses or dining halls.",
   },
@@ -40,7 +40,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Urban Tree & Ecosystem Stewardship",
     category: "Ecosystem Stewardship",
     points: 50,
-    co2SavedKg: 5.0,
+    co2SavedKg: 3.5,
     unitLabel: "sessions",
     description: "Participated in canopy care, invasive species removal, or community garden maintenance.",
   },
@@ -49,7 +49,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Plant-Based Meal Choice",
     category: "Food & Agriculture",
     points: 20,
-    co2SavedKg: 1.8,
+    co2SavedKg: 1.4,
     unitLabel: "meals",
     description: "Chose a fully plant-based meal over animal-intensive protein options.",
   },
@@ -58,7 +58,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Organic Waste Diversion & Composting",
     category: "Food & Agriculture",
     points: 15,
-    co2SavedKg: 0.6,
+    co2SavedKg: 0.4,
     unitLabel: "days",
     description: "Diverted 100% of household food scraps to municipal green bins or home compost.",
   },
@@ -67,7 +67,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Cold Water Wash & Line Dry",
     category: "Energy & Water",
     points: 15,
-    co2SavedKg: 1.1,
+    co2SavedKg: 0.9,
     unitLabel: "loads",
     description: "Washed laundry in cold water and air-dried garments instead of using a heated dryer.",
   },
@@ -76,7 +76,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Home & Office Energy Reduction",
     category: "Energy & Water",
     points: 20,
-    co2SavedKg: 1.5,
+    co2SavedKg: 1.2,
     unitLabel: "days",
     description: "Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.",
   },
@@ -85,7 +85,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Repair, Upcycle, or Thrift Goods",
     category: "Circular Economy",
     points: 40,
-    co2SavedKg: 3.2,
+    co2SavedKg: 2.5,
     unitLabel: "items",
     description: "Repaired clothing, electronics, or furniture instead of purchasing new items.",
   },
@@ -94,7 +94,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Shared EV / Carpool Trip",
     category: "Mobility",
     points: 35,
-    co2SavedKg: 4.1,
+    co2SavedKg: 3.0,
     unitLabel: "trips",
     description: "Shared an electric vehicle ride or organized carpooling for commutes.",
   },
@@ -103,7 +103,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Shoreline / Park Clean-Up",
     category: "Ecosystem Stewardship",
     points: 60,
-    co2SavedKg: 6.0,
+    co2SavedKg: 4.0,
     unitLabel: "events",
     description: "Collected and properly sorted litter from public parks, beaches, or campus grounds.",
   },
@@ -154,6 +154,7 @@ export default function ActionsPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -161,7 +162,6 @@ export default function ActionsPage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
-  // Dual attribution states
   const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
   const [community, setCommunity] = useState(METRO_VAN_COMMUNITIES[0]);
 
@@ -169,6 +169,7 @@ export default function ActionsPage() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       if (data.user) {
@@ -200,6 +201,20 @@ export default function ActionsPage() {
       }
     }
     loadActions();
+
+    const pending = localStorage.getItem("pending_batch_action_submit");
+    if (pending) {
+      try {
+        const parsed = JSON.parse(pending);
+        if (parsed.cart) setCart(parsed.cart);
+        if (parsed.faculty) setFaculty(parsed.faculty);
+        if (parsed.community) setCommunity(parsed.community);
+        setIsReviewOpen(true);
+      } catch (err) {
+        console.error("Failed to parse pending batch:", err);
+      }
+      localStorage.removeItem("pending_batch_action_submit");
+    }
   }, [supabase]);
 
   const setActionQuantity = (actionId: string, qty: number) => {
@@ -237,6 +252,8 @@ export default function ActionsPage() {
     if (selectedItemsDetails.length === 0) return;
 
     if (!user) {
+      const pendingData = { cart, faculty, community };
+      localStorage.setItem("pending_batch_action_submit", JSON.stringify(pendingData));
       router.push(`/login?redirectTo=${encodeURIComponent("/actions")}`);
       return;
     }
@@ -250,7 +267,6 @@ export default function ActionsPage() {
         quantity: item.selectedQty,
       }));
 
-      // Log actions crediting faculty
       await logBatchUserActions({
         items: itemsToSubmit,
         sector: "campus",
@@ -258,7 +274,6 @@ export default function ActionsPage() {
         affiliationName: faculty,
       });
 
-      // Update user profile with dual attribution
       await supabase
         .from('profiles')
         .update({ community: community, faculty_id: faculty })
@@ -282,8 +297,12 @@ export default function ActionsPage() {
     }
   };
 
+  if (!isMounted) {
+    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative">
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10">
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#39705d] block mb-1">
@@ -471,7 +490,7 @@ export default function ActionsPage() {
                 </div>
               </div>
 
-              {/* Dual Attribution Selectors (Both active simultaneously) */}
+              {/* Dual Attribution Selectors */}
               <div className="p-4 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 space-y-3">
                 <label className="block text-xs font-bold text-[#102f26]">
                   2. Dual Leaderboard Attribution (Faculty & Neighborhood):
