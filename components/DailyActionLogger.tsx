@@ -3,19 +3,44 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./AuthProvider";
+import { logBatchUserActions } from "@/actions/user-actions";
 
 interface DailyActionLoggerProps {
   onActionLogged?: () => void;
 }
 
+const VANCOUVER_NEIGHBOURHOODS = [
+  "Point Grey",
+  "Kitsilano",
+  "Mount Pleasant",
+  "Fairview / South Granville",
+  "Downtown / West End",
+  "Commercial Drive",
+  "Dunbar-Southlands",
+  "Kerrisdale",
+];
+
+const UBC_FACULTIES = [
+  "Faculty of Forestry",
+  "Faculty of Science",
+  "Faculty of Applied Science",
+  "Sauder School of Business",
+  "Faculty of Arts",
+  "Faculty of Land and Food Systems",
+];
+
 export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerProps) {
   const { user } = useAuth();
   const [isMounted, setIsMounted] = useState(false);
-  const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
+  const [actionId, setActionId] = useState("transit-commute");
   const [transportMode, setTransportMode] = useState<"bike" | "walk" | "bus" | "ev_carpool">("bike");
-  const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
-  const [neighborhood, setNeighborhood] = useState("Point Grey");
   const [distanceKm, setDistanceKm] = useState(5);
+  
+  // Dual Attribution State
+  const [sector, setSector] = useState<"public" | "campus">("campus");
+  const [neighborhood, setNeighborhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
+  const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
+
   const [impactPoints, setImpactPoints] = useState(25);
   const [co2SavedKg, setCo2SavedKg] = useState(1.25);
   const [loading, setLoading] = useState(false);
@@ -30,9 +55,9 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
 
   // Recalculate realistic points and CO2 offsets based on actual distance
   useEffect(() => {
-    if (actionType.includes("Commute")) {
+    if (actionId === "transit-commute") {
       let basePoints = 15;
-      let co2RatePerKm = 0.25; // 5km * 0.25 = 1.25 kg CO2e (realistic bike offset)
+      let co2RatePerKm = 0.25;
 
       if (transportMode === "bus") {
         basePoints = 20;
@@ -47,14 +72,14 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
 
       setImpactPoints(calculatedPoints);
       setCo2SavedKg(calculatedCo2);
-    } else if (actionType.includes("Zero Waste")) {
-      setImpactPoints(10);
+    } else if (actionId === "reusable-container") {
+      setImpactPoints(30);
       setCo2SavedKg(0.5);
     } else {
-      setImpactPoints(25);
-      setCo2SavedKg(2.0);
+      setImpactPoints(50);
+      setCo2SavedKg(3.5);
     }
-  }, [actionType, transportMode, distanceKm]);
+  }, [actionId, transportMode, distanceKm]);
 
   const handleLogAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,26 +92,33 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setSuccessMsg("");
     setErrorMsg("");
 
-    const notes = actionType.includes("Commute")
-      ? `Mode: ${transportMode} | Distance: ${distanceKm} km | Neighborhood: ${neighborhood} | CO2 Saved: ${co2SavedKg} kg`
-      : `Neighborhood: ${neighborhood}`;
+    try {
+      const finalAffiliationName = sector === "campus" 
+        ? `${faculty} [Neighborhood: ${neighborhood}]` 
+        : `${neighborhood} [Faculty: ${faculty}]`;
 
-    const { error } = await supabase.from("user_actions").insert({
-      user_id: user.id,
-      initiative_id: initiativeId,
-      action_type: actionType,
-      impact_points: impactPoints,
-      notes: notes,
-      logged_at: new Date().toISOString().split("T")[0],
-    });
+      await logBatchUserActions({
+        items: [
+          {
+            actionId: actionId,
+            actionTitle: actionId === "transit-commute" ? "Transit or Active Bike Commute" : "Zero Single-Use Container",
+            points: impactPoints,
+            quantity: 1,
+            distanceKm: actionId === "transit-commute" ? distanceKm : undefined,
+            notes: `Mode: ${transportMode} | Neighborhood: ${neighborhood} | Faculty: ${faculty}`,
+          },
+        ],
+        sector: sector,
+        affiliationType: sector === "campus" ? "faculty" : "neighbourhood",
+        affiliationName: finalAffiliationName,
+      });
 
-    setLoading(false);
-
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
-      setSuccessMsg(`Successfully logged! +${impactPoints} pts (~${co2SavedKg} kg CO2e saved for ${neighborhood}).`);
+      setSuccessMsg(`Successfully logged! +${impactPoints} pts (~${co2SavedKg} kg CO2e saved).`);
       if (onActionLogged) onActionLogged();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to log action.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,7 +131,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           Log Daily Climate Action
         </h3>
         <p className="text-xs text-gray-500 font-mono mt-0.5">
-          Select transport distance and community attribution.
+          Select transport distance and dual community-faculty attribution.
         </p>
       </div>
 
@@ -110,17 +142,17 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
         <div>
           <label className="block text-[11px] text-gray-500 uppercase mb-1">Select Action Type *</label>
           <select
-            value={actionType}
-            onChange={(e) => setActionType(e.target.value)}
+            value={actionId}
+            onChange={(e) => setActionId(e.target.value)}
             className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
           >
-            <option value="Active Commute (Walking/Bike)">Sustainable Commute (Bus, Bike, Walk, EV) — Dynamic</option>
-            <option value="Zero Waste / Reusable Container">Zero Waste / Reusable Container — 10 pts</option>
-            <option value="Campus Biodiversity Stewardship">Campus Biodiversity Stewardship — 25 pts</option>
+            <option value="transit-commute">Transit or Active Bike Commute — Dynamic</option>
+            <option value="reusable-container">Zero Single-Use Container — 30 pts</option>
+            <option value="tree-care">Urban Tree & Ecosystem Stewardship — 50 pts</option>
           </select>
         </div>
 
-        {actionType.includes("Commute") && (
+        {actionId === "transit-commute" && (
           <div className="p-4 bg-gray-50 border border-gray-200 space-y-3">
             <div>
               <label className="block text-[11px] text-gray-500 uppercase mb-1">Transport Mode *</label>
@@ -155,31 +187,43 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           </div>
         )}
 
-        <div>
-          <label className="block text-[11px] text-gray-500 uppercase mb-1">Community / Neighborhood Attribution *</label>
-          <select
-            value={neighborhood}
-            onChange={(e) => setNeighborhood(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
-          >
-            <option value="Point Grey">Point Grey / UBC Campus</option>
-            <option value="Kitsilano">Kitsilano</option>
-            <option value="Main Street / Mount Pleasant">Main Street / Mount Pleasant</option>
-            <option value="Downtown Vancouver">Downtown Vancouver</option>
-            <option value="City of Toronto / Ravines">City of Toronto / Ravines</option>
-          </select>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] text-gray-500 uppercase mb-1">Sector *</label>
+            <select
+              value={sector}
+              onChange={(e) => setSector(e.target.value as any)}
+              className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
+            >
+              <option value="campus">Campus / UBC</option>
+              <option value="public">Local Public</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] text-gray-500 uppercase mb-1">Neighborhood *</label>
+            <select
+              value={neighborhood}
+              onChange={(e) => setNeighborhood(e.target.value)}
+              className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
+            >
+              {VANCOUVER_NEIGHBOURHOODS.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>
-          <label className="block text-[11px] text-gray-500 uppercase mb-1">Associated Initiative *</label>
+          <label className="block text-[11px] text-gray-500 uppercase mb-1">UBC Faculty / Unit *</label>
           <select
-            value={initiativeId}
-            onChange={(e) => setInitiativeId(e.target.value)}
+            value={faculty}
+            onChange={(e) => setFaculty(e.target.value)}
             className="w-full p-2.5 border border-gray-300 text-xs font-sans bg-white"
           >
-            <option value="ubc-forestry-research">UBC Faculty of Forestry Innovation & Research Hub</option>
-            <option value="van-climate-emergency">City of Vancouver Climate Emergency Action Plan (CEAP)</option>
-            <option value="toronto-ravine-strategy-hub">City of Toronto Ravine Strategy & Stewardship</option>
+            {UBC_FACULTIES.map((f) => (
+              <option key={f} value={f}>{f}</option>
+            ))}
           </select>
         </div>
 
