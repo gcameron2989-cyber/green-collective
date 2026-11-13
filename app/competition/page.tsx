@@ -41,7 +41,14 @@ export default function CompetitionPage() {
         // 1. Fetch Faculties
         const { data: faculties } = await supabase.from('faculties').select('id, name');
 
-        // 2. Fetch Logged Actions
+        // 2. Fetch Public Profiles for Usernames
+        const { data: profiles } = await supabase.from('profiles').select('id, username');
+        const usernameMap: { [userId: string]: string } = {};
+        profiles?.forEach((p) => {
+          if (p.username) usernameMap[p.id] = p.username;
+        });
+
+        // 3. Fetch Logged Actions
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
           .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity, action_id');
@@ -63,11 +70,6 @@ export default function CompetitionPage() {
         // --- Process BEST 301 Cohort Standings ---
         const best301UserMap: { [userId: string]: { carbon: number; handle: string } } = {};
 
-        // Try to check current authenticated user metadata as a priority handle
-        const { data: { user } } = await supabase.auth.getUser();
-        const currentUserId = user?.id;
-        const currentUserHandle = user?.user_metadata?.username || (user?.email ? user.email.split('@')[0] : null);
-
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
           const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
@@ -77,7 +79,7 @@ export default function CompetitionPage() {
           // Distance-aware calculation matching log-action ledger precisely
           if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id)) {
             const distMatch = act.notes?.match(/Distance:\s*([\d.]+)\s*km/);
-            const dist = distMatch ? parseFloat(distMatch[1]) : 5; // default fallback
+            const dist = distMatch ? parseFloat(distMatch[1]) : 5;
 
             if (act.action_id === "active-transit") baseImpact = dist * 0.25;
             else if (act.action_id === "public-transit") baseImpact = dist * 0.18;
@@ -109,10 +111,7 @@ export default function CompetitionPage() {
           if (act.notes?.includes("BEST 301")) {
             if (act.user_id) {
               if (!best301UserMap[act.user_id]) {
-                const handle = (act.user_id === currentUserId && currentUserHandle) 
-                  ? currentUserHandle 
-                  : `User_${act.user_id.slice(0, 6)}`;
-
+                const handle = usernameMap[act.user_id] || `User_${act.user_id.slice(0, 6)}`;
                 best301UserMap[act.user_id] = {
                   carbon: 0,
                   handle: handle,
