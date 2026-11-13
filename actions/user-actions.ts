@@ -22,53 +22,57 @@ export interface LogBatchActionsInput {
 }
 
 export async function logBatchUserActions(input: LogBatchActionsInput) {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
-    throw new Error('You must be logged in to record actions.')
-  }
-
-  const { items, sector, affiliationType, affiliationName } = input
-
-  if (!items || items.length === 0) {
-    throw new Error('No actions selected to log.')
-  }
-
-  const rowsToInsert = items.map((item) => {
-    const safeQty = Math.max(1, item.quantity || 1)
-    const safeDistance = item.distanceKm !== undefined ? Math.max(0, item.distanceKm) : undefined
-
-    let formattedNotes = item.notes || ''
-    if (safeDistance !== undefined) {
-      formattedNotes = formattedNotes 
-        ? `${formattedNotes} | Distance: ${safeDistance} km` 
-        : `Distance: ${safeDistance} km`
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { success: false, error: 'You must be logged in to record actions.' }
     }
 
-    return {
-      user_id: user.id,
-      action_id: item.actionId,
-      action_name: item.actionTitle || item.actionId,
-      points: (item.points || 25) * safeQty,
-      sector: sector,
-      affiliation_type: affiliationType,
-      affiliation_name: affiliationName,
-      quantity: safeQty,
-      notes: formattedNotes,
-      created_at: new Date().toISOString(),
+    const { items, sector, affiliationType, affiliationName } = input
+
+    if (!items || items.length === 0) {
+      return { success: false, error: 'No actions selected to log.' }
     }
-  })
 
-  const { error } = await supabase.from('logged_actions').insert(rowsToInsert)
+    const rowsToInsert = items.map((item) => {
+      const safeQty = Math.max(1, item.quantity || 1)
+      const safeDistance = item.distanceKm !== undefined ? Math.max(0, item.distanceKm) : undefined
 
-  if (error) {
-    throw new Error(error.message)
+      let formattedNotes = item.notes || ''
+      if (safeDistance !== undefined) {
+        formattedNotes = formattedNotes 
+          ? `${formattedNotes} | Distance: ${safeDistance} km` 
+          : `Distance: ${safeDistance} km`
+      }
+
+      return {
+        user_id: user.id,
+        action_id: item.actionId,
+        action_name: item.actionTitle || item.actionId,
+        points: (item.points || 25) * safeQty,
+        sector: sector,
+        affiliation_type: affiliationType,
+        affiliation_name: affiliationName,
+        quantity: safeQty,
+        notes: formattedNotes,
+        created_at: new Date().toISOString(),
+      }
+    })
+
+    const { error } = await supabase.from('logged_actions').insert(rowsToInsert)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/log-action')
+    revalidatePath('/competition')
+    revalidatePath('/profile')
+
+    return { success: true, count: items.length }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'An unexpected error occurred.' }
   }
-
-  revalidatePath('/log-action')
-  revalidatePath('/competition')
-  revalidatePath('/profile')
-
-  return { success: true, count: items.length }
 }
