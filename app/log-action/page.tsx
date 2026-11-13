@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -71,11 +71,18 @@ const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY"
 
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
+// WRAPPER: Catch any Next.js router suspensions to prevent Error #441 hard crashes
 export default function LogActionPage() {
-  const router = useRouter();
-  const supabase = createClient();
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9f8f6] animate-pulse" />}>
+      <LogActionContent />
+    </Suspense>
+  );
+}
 
-  const [isMounted, setIsMounted] = useState(false);
+function LogActionContent() {
+  const router = useRouter();
+  
   const [user, setUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -104,9 +111,10 @@ export default function LogActionPage() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
+    // FIX: Moving client creation inside useEffect prevents infinite re-render loops
+    const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, [supabase]);
+  }, []); // FIX: Empty dependency array guarantees this only fires once
 
   const filteredNeighborhoods = useMemo(() => {
     return VANCOUVER_NEIGHBOURHOODS.filter((n) =>
@@ -140,11 +148,9 @@ export default function LogActionPage() {
 
   const clearCart = () => setCart({});
 
-  const selectedEntries = Object.entries(cart);
-  const totalSelectedCount = selectedEntries.reduce((acc, [_, qty]) => acc + qty, 0);
-
+  // FIX: Stablized useMemo dependencies prevent input fields from causing map unmounts
   const selectedItemsDetails = useMemo(() => {
-    return selectedEntries
+    return Object.entries(cart)
       .map(([id, qty]) => {
         const detail = ACTION_REGISTRY.find((a) => a.id === id);
         if (!detail) return null;
@@ -178,8 +184,9 @@ export default function LogActionPage() {
         };
       })
       .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
-  }, [selectedEntries, commuteDistances]);
+  }, [cart, commuteDistances]); 
 
+  const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + item.selectedQty, 0);
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
   const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
 
@@ -243,12 +250,8 @@ export default function LogActionPage() {
     }
   };
 
-  if (!isMounted) {
-    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
-  }
-
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative">
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center">
           <div>
@@ -260,7 +263,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -400,7 +403,7 @@ export default function LogActionPage() {
             </div>
 
             {/* Faculty Search Dropdown */}
-            <div>
+            <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Faculty / School (UBC Vancouver)
               </label>
@@ -408,6 +411,7 @@ export default function LogActionPage() {
                 type="text"
                 placeholder="Type to filter faculties..."
                 value={facultySearch}
+                onFocus={() => setIsFacultyDropdownOpen(true)}
                 onChange={(e) => {
                   setFacultySearch(e.target.value);
                   setIsFacultyDropdownOpen(true);
@@ -417,12 +421,13 @@ export default function LogActionPage() {
               <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{faculty}</span></div>
               
               {isFacultyDropdownOpen && (
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-sm space-y-0.5 p-1">
+                <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
                   {filteredFaculties.length > 0 ? (
                     filteredFaculties.map((f) => (
                       <button
                         type="button"
                         key={f}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setFaculty(f);
                           setFacultySearch("");
@@ -443,7 +448,7 @@ export default function LogActionPage() {
             </div>
 
             {/* Neighborhood Search Dropdown */}
-            <div>
+            <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Vancouver Neighborhood / Municipality
               </label>
@@ -451,6 +456,7 @@ export default function LogActionPage() {
                 type="text"
                 placeholder="Type to filter neighborhoods..."
                 value={neighbourhoodSearch}
+                onFocus={() => setIsNeighborhoodDropdownOpen(true)}
                 onChange={(e) => {
                   setNeighbourhoodSearch(e.target.value);
                   setIsNeighborhoodDropdownOpen(true);
@@ -460,12 +466,13 @@ export default function LogActionPage() {
               <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
 
               {isNeighborhoodDropdownOpen && (
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-sm space-y-0.5 p-1">
+                <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
                   {filteredNeighborhoods.length > 0 ? (
                     filteredNeighborhoods.map((n) => (
                       <button
                         type="button"
                         key={n}
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setNeighbourhood(n);
                           setNeighbourhoodSearch("");
@@ -497,7 +504,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal with Safe Static Display to Prevent #441 Render Collision */}
+      {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -530,7 +537,7 @@ export default function LogActionPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions Summary:
+                  Selected Actions &amp; Scaling:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
@@ -545,20 +552,29 @@ export default function LogActionPage() {
                           <div>
                             <div className="font-bold text-[#102f26]">{item.name}</div>
                             <div className="text-[10px] text-[#526760]">
-                              Qty: {item.selectedQty} • +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
                             </div>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => setActionQuantity(item.id, 0)}
-                            className="text-red-500 hover:text-red-700 font-bold px-2 text-xs"
-                          >
-                            Remove
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.selectedQty}
+                              onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
+                              className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setActionQuantity(item.id, 0)}
+                              className="text-red-500 hover:text-red-700 font-bold px-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
 
-                        {/* Transport Distance Input Handled Safely Outside Mapped Inline Throttling */}
+                        {/* Safe handling of numeric distance inputs inside map loop */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
@@ -574,13 +590,14 @@ export default function LogActionPage() {
                               type="number"
                               min="1"
                               max="200"
-                              value={commuteDistances[item.id] || 10}
-                              onChange={(e) =>
-                                setCommuteDistances({
-                                  ...commuteDistances,
-                                  [item.id]: Math.min(200, Math.max(1, Number(e.target.value))),
-                                })
-                              }
+                              value={commuteDistances[item.id] ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCommuteDistances((prev) => ({
+                                  ...prev,
+                                  [item.id]: val === "" ? ("" as any) : Math.min(200, Math.max(1, Number(val))),
+                                }));
+                              }}
                               className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
                             />
                           </div>
