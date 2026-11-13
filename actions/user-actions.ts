@@ -8,6 +8,7 @@ export type AffiliationType = 'neighbourhood' | 'association' | 'company' | 'fac
 export interface BatchActionItem {
   actionId: string
   quantity: number
+  distanceKm?: number // Added distance support for commuting/travel actions
   notes?: string
 }
 
@@ -37,17 +38,26 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error('Please select both a sector and a specific affiliation.')
   }
 
-  // 2. Prepare multi-row payload
-  const rowsToInsert = items.map((item) => ({
-    user_id: user.id,
-    action_id: item.actionId,
-    sector: sector,
-    affiliation_type: affiliationType,
-    affiliation_name: affiliationName,
-    quantity: item.quantity || 1,
-    notes: item.notes || '',
-    created_at: new Date().toISOString(),
-  }))
+  // 2. Prepare multi-row payload (including optional distance tracking in notes)
+  const rowsToInsert = items.map((item) => {
+    let formattedNotes = item.notes || ''
+    if (item.distanceKm && item.distanceKm > 0) {
+      formattedNotes = formattedNotes 
+        ? `${formattedNotes} | Distance: ${item.distanceKm} km` 
+        : `Distance: ${item.distanceKm} km`
+    }
+
+    return {
+      user_id: user.id,
+      action_id: item.actionId,
+      sector: sector,
+      affiliation_type: affiliationType,
+      affiliation_name: affiliationName,
+      quantity: item.quantity || 1,
+      notes: formattedNotes,
+      created_at: new Date().toISOString(),
+    }
+  })
 
   const { error } = await supabase.from('logged_actions').insert(rowsToInsert)
 
@@ -59,6 +69,7 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
   revalidatePath('/actions')
   revalidatePath('/dashboard')
   revalidatePath('/profile')
+  revalidatePath('/competition')
 
   return { success: true, count: items.length }
 }
