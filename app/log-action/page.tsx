@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ACTION_REGISTRY, ActionItem } from "@/lib/actions";
-import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
+import { logBatchUserActions, BatchActionItem } from "@/actions/user-actions";
 
 const VANCOUVER_NEIGHBOURHOODS = [
   "Arbutus Ridge",
@@ -218,7 +218,7 @@ export default function LogActionPage() {
       });
 
       setTimeout(() => {
-        window.location.href = "/competition";
+        window.location.href = "/profile";
       }, 1000);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
@@ -243,8 +243,8 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
-            [← BACK TO COMPETITION]
+          <Link href="/profile" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
+            [← BACK TO PROFILE]
           </Link>
         </div>
       </section>
@@ -572,7 +572,7 @@ export default function LogActionPage() {
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => setIsReviewOpen(false)}
+                  onClick={() => setIsReviewOpen(export => false)}
                   className="w-1/2 py-2.5 border border-gray-300 rounded-full text-xs font-semibold"
                 >
                   Back
