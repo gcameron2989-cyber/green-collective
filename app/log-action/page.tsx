@@ -409,7 +409,6 @@ export default function LogActionPage() {
                 placeholder="Type to filter faculties..."
                 value={facultySearch}
                 onFocus={() => setIsFacultyDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsFacultyDropdownOpen(false), 200)}
                 onChange={(e) => {
                   setFacultySearch(e.target.value);
                   setIsFacultyDropdownOpen(true);
@@ -425,7 +424,6 @@ export default function LogActionPage() {
                       <button
                         type="button"
                         key={f}
-                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setFaculty(f);
                           setFacultySearch("");
@@ -455,7 +453,6 @@ export default function LogActionPage() {
                 placeholder="Type to filter neighborhoods..."
                 value={neighbourhoodSearch}
                 onFocus={() => setIsNeighborhoodDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setIsNeighborhoodDropdownOpen(false), 200)}
                 onChange={(e) => {
                   setNeighbourhoodSearch(e.target.value);
                   setIsNeighborhoodDropdownOpen(true);
@@ -471,7 +468,6 @@ export default function LogActionPage() {
                       <button
                         type="button"
                         key={n}
-                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => {
                           setNeighbourhood(n);
                           setNeighbourhoodSearch("");
