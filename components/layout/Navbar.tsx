@@ -45,7 +45,7 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
 const navItems = [
-    { href: '/habits', label: 'Actions' },
+    { href: '/log-action', label: 'Actions' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/research', label: 'Research Hub' },
