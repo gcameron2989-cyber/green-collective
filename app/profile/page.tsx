@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ACTION_REGISTRY } from '@/lib/actions'
 
 interface LoggedActionRow {
   id: string
@@ -60,6 +61,16 @@ function ProfileContent() {
   )
   const totalActionsLogged = submissions.reduce((sum, s) => sum + Number(s.quantity || 1), 0)
   
+  // Precise CO2 Calculation from ACTION_REGISTRY lookup
+  const totalCo2Avoided = submissions.reduce((sum, s) => {
+    const qty = Number(s.quantity || 1)
+    const registryMatch = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+    const baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+    return sum + (baseImpact * qty)
+  }, 0)
+
+  const co2OffsetKg = totalCo2Avoided.toFixed(1)
+
   const zeroWasteCount = submissions
     .filter((s) => s.action_name?.toLowerCase().includes('zero waste') || s.action_name?.toLowerCase().includes('container') || s.action_name?.toLowerCase().includes('meal'))
     .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
@@ -68,7 +79,6 @@ function ProfileContent() {
     .filter((s) => s.action_name?.toLowerCase().includes('transit') || s.action_name?.toLowerCase().includes('commute') || s.action_name?.toLowerCase().includes('ride'))
     .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
 
-  const co2OffsetKg = (totalActionsLogged * 0.8).toFixed(1)
   const singleUseSaved = zeroWasteCount * 1
   const challengeTarget = 150
   const challengeProgress = Math.min(Math.round((totalPoints / challengeTarget) * 100), 100)
