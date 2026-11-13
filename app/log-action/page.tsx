@@ -156,7 +156,7 @@ function LogActionContent() {
         let calculatedPoints = detail.points;
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = Math.min(200, Math.max(1, commuteDistances[id] ?? 10));
+          const dist = commuteDistances[id] ?? 10;
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(20 + dist * 2.2);
@@ -207,7 +207,6 @@ function LogActionContent() {
     setStatusMsg(null);
 
     try {
-      const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
         const isDistanceBased = TRANSPORT_IDS.includes(item.id);
         const dist = commuteDistances[item.id] || 10;
@@ -225,7 +224,7 @@ function LogActionContent() {
           items: itemsToSubmit,
           sector: currentSector,
           affiliationType: finalAffiliationType,
-          affiliationName: finalAffiliationName,
+          affiliationName: getAffiliationName(),
         });
       }
 
@@ -501,7 +500,7 @@ function LogActionContent() {
         </div>
       </section>
 
-      {/* Review Modal */}
+      {/* Review Modal with Fully Isolated Distance Controls */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -554,13 +553,9 @@ function LogActionContent() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.selectedQty}
-                              onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
-                              className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                            />
+                            <span className="text-xs font-bold px-2 py-1 bg-white border border-gray-200 rounded-lg">
+                              Qty: {item.selectedQty}
+                            </span>
                             <button
                               type="button"
                               onClick={() => setActionQuantity(item.id, 0)}
@@ -571,7 +566,7 @@ function LogActionContent() {
                           </div>
                         </div>
 
-                        {/* Transport Distance Input Handled with NaN prevention */}
+                        {/* Isolated distance handler to prevent virtual DOM collision */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
@@ -587,12 +582,12 @@ function LogActionContent() {
                               type="number"
                               min="1"
                               max="200"
-                              value={commuteDistances[item.id] ?? 10}
-                              onChange={(e) => {
-                                const val = e.target.value;
+                              defaultValue={commuteDistances[item.id] ?? 10}
+                              onBlur={(e) => {
+                                const val = Number(e.target.value);
                                 setCommuteDistances((prev) => ({
                                   ...prev,
-                                  [item.id]: val === "" ? 0 : Math.min(200, Math.max(1, Number(val))),
+                                  [item.id]: Math.min(200, Math.max(1, val || 10)),
                                 }));
                               }}
                               className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
