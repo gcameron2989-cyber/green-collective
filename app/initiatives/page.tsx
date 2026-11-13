@@ -20,18 +20,6 @@ export interface RealInitiative {
 export const INITIAL_INITIATIVES: RealInitiative[] = [
   // --- VANCOUVER & UBC ---
   {
-    id: "ubc-urban-forestry",
-    title: "UBC Faculty of Forestry & Environmental Stewardship",
-    leadOrg: "UBC Faculty of Forestry",
-    category: "ECOSYSTEM STEWARDSHIP",
-    status: "ACTIVE PROGRAM",
-    region: "VANCOUVER / UBC",
-    locationTag: "VANCOUVER / UBC",
-    description: "Keep up to date with groundbreaking research, initiatives, news and events.",
-    impactScope: " News · Events · Branchlines ",
-    officialPortalUrl: "https://forestry.ubc.ca/news/",
-  },
-  {
     id: "ubc-cap-2030",
     title: "UBC Climate Action Plan 2030 (CAP 2030)",
     leadOrg: "UBC Sustainability Hub",
@@ -91,6 +79,18 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     impactScope: "Urban Rainwater Filtration · Biodiversity Corridors",
     officialPortalUrl: "https://www.shapeyourcity.ca/st-george-rainway",
   },
+  {
+    id: "ubc-urban-forestry",
+    title: "UBC Faculty of Forestry & Environmental Stewardship",
+    leadOrg: "UBC Faculty of Forestry",
+    category: "ECOSYSTEM STEWARDSHIP",
+    status: "ACTIVE PROGRAM",
+    region: "VANCOUVER / UBC",
+    locationTag: "VANCOUVER / UBC",
+    description: "Keep up to date with groundbreaking research, initiatives, news and events.",
+    impactScope: " News · Events · Branchlines ",
+    officialPortalUrl: "https://forestry.ubc.ca/news/",
+  },
 
   // --- TORONTO & GTA ---
   {
@@ -103,7 +103,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "TORONTO",
     description: "City Council approved action plan targeting net-zero GHG emissions city-wide by 2040 through green building standards and fleet electrification.",
     impactScope: "Net-Zero by 2040 · Toronto Green Standard Enforcement",
-    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/environmentally-friendly-city-initiatives/transformto/",
+    officialPortalUrl: "url?id=46",
   },
   {
     id: "toronto-ravine-strategy",
