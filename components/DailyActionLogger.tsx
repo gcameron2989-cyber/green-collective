@@ -53,10 +53,9 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     }
   };
 
-  // Prevent hydration mismatch by deferring render until client mount
   if (!isMounted) {
     return (
-      <div className="bg-white border border-gray-200 p-6 font-sans min-h-[250px] animate-pulse">
+      <div className="bg-white border border-gray-200 p-6 font-sans min-h-[250px] animate-pulse" suppressHydrationWarning>
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
         <div className="h-8 bg-gray-100 rounded w-full mb-4"></div>
       </div>
@@ -64,7 +63,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   }
 
   return (
-    <div className="bg-white border border-gray-200 p-6 font-sans">
+    <div className="bg-white border border-gray-200 p-6 font-sans" suppressHydrationWarning>
       <div className="mb-4 pb-3 border-b border-gray-200">
         <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-900">
           Log Daily Climate Action
@@ -79,7 +78,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
           Please sign in to log actions and track your class rank.
         </div>
       ) : (
-        <form onSubmit={handleLogAction} className="space-y-4 font-mono text-xs">
+        <form onSubmit={handleLogAction} className="space-y-4 font-mono text-xs" suppressHydrationWarning>
           {successMsg && (
             <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
               {successMsg}
