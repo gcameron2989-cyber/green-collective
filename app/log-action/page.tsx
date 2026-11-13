@@ -182,7 +182,6 @@ export default function LogActionPage() {
 
     setStatusMsg(null);
 
-    // Wrap async server execution inside startTransition to prevent React #441 panic
     startTransition(async () => {
       try {
         const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
@@ -198,7 +197,6 @@ export default function LogActionPage() {
           };
         });
 
-        // Submit for Public Neighbourhood
         await logBatchUserActions({
           items: itemsToSubmit,
           sector: "public",
@@ -206,7 +204,6 @@ export default function LogActionPage() {
           affiliationName: neighbourhood,
         });
 
-        // Submit for Campus Faculty if toggled on
         if (isUbcStudent) {
           await logBatchUserActions({
             items: itemsToSubmit,
@@ -223,7 +220,7 @@ export default function LogActionPage() {
 
         setTimeout(() => {
           window.location.href = "/profile";
-        }, 800);
+        }, 1000);
       } catch (err: any) {
         setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
       }
