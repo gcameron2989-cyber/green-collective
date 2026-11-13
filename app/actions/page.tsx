@@ -25,7 +25,7 @@ const DEFAULT_ACTIONS: ActionCatalogItem[] = [
     title: "Transit or Active Bike Commute",
     category: "Mobility",
     points: 25,
-    co2SavedKg: 2.1, // Adjusted to realistic scientific baseline
+    co2SavedKg: 2.1,
     unitLabel: "trips",
     description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
   },
@@ -144,6 +144,7 @@ export default function ActionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({ "transit-commute": 5 });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   const [sector, setSector] = useState<Sector>("public");
@@ -175,23 +176,6 @@ export default function ActionsPage() {
       }
     }
     loadActions();
-
-    const pending = localStorage.getItem("pending_batch_action_submit");
-    if (pending) {
-      try {
-        const parsed = JSON.parse(pending);
-        if (parsed.cart) setCart(parsed.cart);
-        if (parsed.sector) setSector(parsed.sector);
-        if (parsed.publicAffiliationType) setPublicAffiliationType(parsed.publicAffiliationType);
-        if (parsed.neighbourhood) setNeighbourhood(parsed.neighbourhood);
-        if (parsed.customAffiliation) setCustomAffiliation(parsed.customAffiliation);
-        if (parsed.faculty) setFaculty(parsed.faculty);
-        setIsReviewOpen(true);
-      } catch (err) {
-        console.error("Failed to parse pending batch:", err);
-      }
-      localStorage.removeItem("pending_batch_action_submit");
-    }
   }, []);
 
   const setActionQuantity = (actionId: string, qty: number) => {
@@ -214,7 +198,24 @@ export default function ActionsPage() {
   const selectedItemsDetails = selectedEntries
     .map(([id, qty]) => {
       const detail = actionsList.find((a) => a.id === id);
-      return detail ? { ...detail, selectedQty: qty } : null;
+      if (!detail) return null;
+
+      // Dynamically calculate CO2 and points if it's a commute action with distance
+      let calculatedCo2 = detail.co2SavedKg;
+      let calculatedPoints = detail.points;
+
+      if (id === "transit-commute") {
+        const dist = commuteDistances[id] || 5;
+        calculatedCo2 = Number((dist * 0.25).toFixed(2)); // ~0.25 kg CO2e per km
+        calculatedPoints = Math.round(15 + dist * 2);
+      }
+
+      return {
+        ...detail,
+        points: calculatedPoints,
+        co2SavedKg: calculatedCo2,
+        selectedQty: qty,
+      };
     })
     .filter(Boolean) as (ActionCatalogItem & { selectedQty: number })[];
 
@@ -237,15 +238,6 @@ export default function ActionsPage() {
     const finalAffiliationType: AffiliationType = sector === "campus" ? "faculty" : publicAffiliationType;
 
     if (!user) {
-      const pendingData = {
-        cart,
-        sector,
-        publicAffiliationType,
-        neighbourhood,
-        customAffiliation,
-        faculty,
-      };
-      localStorage.setItem("pending_batch_action_submit", JSON.stringify(pendingData));
       router.push(`/login?redirectTo=${encodeURIComponent("/actions")}`);
       return;
     }
@@ -255,10 +247,15 @@ export default function ActionsPage() {
 
     try {
       const finalAffiliationName = getAffiliationName();
-      const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => ({
-        actionId: item.id,
-        quantity: item.selectedQty,
-      }));
+      const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
+        const isCommute = item.id === "transit-commute";
+        return {
+          actionId: item.id,
+          quantity: item.selectedQty,
+          distanceKm: isCommute ? commuteDistances[item.id] || 5 : undefined,
+          notes: isCommute ? `Commute Distance: ${commuteDistances[item.id] || 5} km` : undefined,
+        };
+      });
 
       await logBatchUserActions({
         items: itemsToSubmit,
@@ -297,7 +294,7 @@ export default function ActionsPage() {
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight">Log Verified Impact</h1>
           <p className="text-xs text-[#526760] max-w-xl mt-1">
-            Select one or multiple actions below to log them together and route impact points to your community or faculty.
+            Select actions below to log them together and route impact points to your community or faculty.
           </p>
 
           <div className="flex flex-wrap gap-2 mt-6">
@@ -404,7 +401,7 @@ export default function ActionsPage() {
               onClick={() => setIsReviewOpen(true)}
               className="px-5 py-2 bg-emerald-400 text-[#102f26] text-xs font-black rounded-full hover:bg-emerald-300 transition shadow"
             >
-              Log Selected ({totalSelectedCount}) →
+              Review & Log ({totalSelectedCount}) →
             </button>
           </div>
         </div>
@@ -441,37 +438,58 @@ export default function ActionsPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  1. Actions to record:
+                  1. Actions & Distance Configuration:
                 </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-2.5 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60"
+                      className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
                     >
-                      <div>
-                        <div className="font-bold text-[#102f26]">{item.title}</div>
-                        <div className="text-[10px] text-[#526760]">
-                          +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-[#102f26]">{item.title}</div>
+                          <div className="text-[10px] text-[#526760]">
+                            +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.selectedQty}
+                            onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
+                            className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setActionQuantity(item.id, 0)}
+                            className="text-red-500 hover:text-red-700 font-bold px-1"
+                          >
+                            ✕
+                          </button>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.selectedQty}
-                          onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
-                          className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setActionQuantity(item.id, 0)}
-                          className="text-red-500 hover:text-red-700 font-bold px-1"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      {item.id === "transit-commute" && (
+                        <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
+                          <span className="text-[11px] text-gray-600 font-medium">Commute Distance (km):</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={commuteDistances[item.id] || 5}
+                            onChange={(e) =>
+                              setCommuteDistances({
+                                ...commuteDistances,
+                                [item.id]: Math.max(1, Number(e.target.value)),
+                              })
+                            }
+                            className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
