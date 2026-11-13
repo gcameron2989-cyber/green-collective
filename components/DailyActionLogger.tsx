@@ -14,7 +14,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
   const [impactPoints, setImpactPoints] = useState(15);
-  const [commuteKm, setCommuteKm] = useState(5); // New distance state for commuting
+  const [commuteKm, setCommuteKm] = useState(5);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -36,17 +36,19 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setSuccessMsg("");
     setErrorMsg("");
 
-    // Include distance in notes if it's a commute action
+    // Build notes string including commute distance if applicable
     let notes = "";
     if (actionType.includes("Commute") && commuteKm > 0) {
       notes = `Commute Distance: ${commuteKm} km`;
     }
 
+    // Insert action including the constructed notes field
     const { error } = await supabase.from("user_actions").insert({
       user_id: user.id,
       initiative_id: initiativeId,
       action_type: actionType,
       impact_points: impactPoints,
+      notes: notes,
       logged_at: new Date().toISOString().split("T")[0],
     });
 
@@ -123,7 +125,6 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
             </select>
           </div>
 
-          {/* Dynamic Commute Distance Input */}
           {actionType.includes("Commute") && (
             <div className="p-3 bg-gray-50 border border-gray-200 space-y-1">
               <label className="block text-[11px] text-gray-500 uppercase">
@@ -137,7 +138,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
                 onChange={(e) => {
                   const km = Number(e.target.value);
                   setCommuteKm(km);
-                  setImpactPoints(15 + km * 2); // Scale points dynamically with distance
+                  setImpactPoints(15 + km * 2);
                 }}
                 className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
               />
