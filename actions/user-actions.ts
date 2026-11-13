@@ -35,30 +35,22 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
     throw new Error('No actions selected to log.')
   }
 
-  // Anti-Spam Safeguards: Validate max quantity and cap distance inputs
   const rowsToInsert = items.map((item) => {
-    const safeQty = Math.min(50, Math.max(1, item.quantity || 1))
-    let safeDistance = item.distanceKm ? Math.min(200, Math.max(1, item.distanceKm)) : undefined
+    const safeQty = Math.max(1, item.quantity || 1)
+    const safeDistance = item.distanceKm !== undefined ? Math.max(0, item.distanceKm) : undefined
 
     let formattedNotes = item.notes || ''
-    if (safeDistance) {
+    if (safeDistance !== undefined) {
       formattedNotes = formattedNotes 
         ? `${formattedNotes} | Distance: ${safeDistance} km` 
         : `Distance: ${safeDistance} km`
-    }
-
-    let calculatedPoints = item.points || 25
-    if (item.actionId === 'transit-commute' && safeDistance) {
-      calculatedPoints = Math.round(15 + safeDistance * 1.8)
-    } else if (item.actionId === 'ev-charging-shared' && safeDistance) {
-      calculatedPoints = Math.round(30 + safeDistance * 2.0)
     }
 
     return {
       user_id: user.id,
       action_id: item.actionId,
       action_name: item.actionTitle || item.actionId,
-      points: calculatedPoints * safeQty,
+      points: (item.points || 25) * safeQty,
       sector: sector,
       affiliation_type: affiliationType,
       affiliation_name: affiliationName,
