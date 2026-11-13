@@ -40,15 +40,15 @@ function ProfileContent() {
         return
       }
 
-      // 1. Try fetching from public profiles table first
+      // 1. Try fetching from public profiles table safely without .single()
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
-        .single()
 
       const emailHandle = user.email ? user.email.split('@')[0] : 'UBC Participant'
-      const savedUsername = profileData?.username || user.user_metadata?.username || emailHandle
+      const existingProfileUsername = profileData && profileData.length > 0 ? profileData[0].username : null
+      const savedUsername = existingProfileUsername || user.user_metadata?.username || emailHandle
       
       setDisplayName(savedUsername)
       setCustomUsername(savedUsername)
@@ -75,20 +75,29 @@ function ProfileContent() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const trimmedName = customUsername.trim()
+
     // 1. Update Auth user metadata
     await supabase.auth.updateUser({
-      data: { username: customUsername.trim() }
+      data: { username: trimmedName }
     })
 
-    // 2. Upsert into public profiles table for leaderboard visibility
+    // 2. Upsert into public profiles table with fallback handling
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: user.id, username: customUsername.trim(), updated_at: new Date().toISOString() })
+      .upsert(
+        { id: user.id, username: trimmedName, updated_at: new Date().toISOString() },
+        { onConflict: 'id' }
+      )
 
-    if (!error) {
-      setDisplayName(customUsername.trim())
-      setIsEditingUsername(false)
+    if (error) {
+      console.error('Error saving username:', error.message)
+      alert(`Could not save username: ${error.message}`)
+      return
     }
+
+    setDisplayName(trimmedName)
+    setIsEditingUsername(false)
   }
 
   const totalPoints = submissions.reduce(
