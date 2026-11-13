@@ -1,3 +1,22 @@
+"use client";
+
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
+
+export interface RealInitiative {
+  id: string;
+  title: string;
+  leadOrg: string;
+  category: string;
+  status: string;
+  region: "VANCOUVER / UBC" | "TORONTO / GTA" | "GLOBAL / REMOTE";
+  locationTag: string;
+  description: string;
+  impactScope: string;
+  officialPortalUrl: string;
+  isUserSubmitted?: boolean;
+}
+
 export const INITIAL_INITIATIVES: RealInitiative[] = [
   // --- VANCOUVER & UBC ---
   {
