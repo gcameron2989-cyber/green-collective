@@ -41,11 +41,13 @@ export default function CompetitionPage() {
         // 1. Fetch Faculties
         const { data: faculties } = await supabase.from('faculties').select('id, name');
 
-        // 2. Fetch Public Profiles for Usernames
+        // 2. Safely Fetch Public Profiles for Usernames
         const { data: profiles } = await supabase.from('profiles').select('id, username');
         const usernameMap: { [userId: string]: string } = {};
         profiles?.forEach((p) => {
-          if (p.username) usernameMap[p.id] = p.username;
+          if (p.id && p.username) {
+            usernameMap[p.id] = p.username;
+          }
         });
 
         // 3. Fetch Logged Actions
@@ -111,7 +113,7 @@ export default function CompetitionPage() {
           if (act.notes?.includes("BEST 301")) {
             if (act.user_id) {
               if (!best301UserMap[act.user_id]) {
-                const handle = usernameMap[act.user_id] || `User_${act.user_id.slice(0, 6)}`;
+                const handle = usernameMap[act.user_id] || `BEST_Scholar_${act.user_id.slice(0, 4)}`;
                 best301UserMap[act.user_id] = {
                   carbon: 0,
                   handle: handle,
