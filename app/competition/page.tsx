@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   category: string;
   participants: number;
   carbonOffsetKg: number;
+  contributorHandles?: string[];
 }
 
 const VANCOUVER_NEIGHBOURHOODS = [
@@ -41,7 +42,7 @@ export default function CompetitionPage() {
         // 1. Fetch Faculties
         const { data: faculties } = await supabase.from('faculties').select('id, name');
 
-        // 2. Fetch Logged Actions
+        // 2. Fetch Logged Actions along with user profiles if possible, or parse user_id
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
           .select('sector, affiliation_name, points, points_earned, user_id, notes, quantity, action_id');
@@ -60,10 +61,8 @@ export default function CompetitionPage() {
           neighborhoodMap[n] = { name: n, carbon: 0, users: new Set() };
         });
 
-        // --- Process BEST 301 Cohort Standings ---
-        const best301Map: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {
-          "BEST 301 Cohort": { name: "BEST 301 - Forest BioEconomy", carbon: 0, users: new Set() }
-        };
+        // --- Process BEST 301 Cohort Standings with Individual User Handles ---
+        const best301UserMap: { [userId: string]: { carbon: number; handle: string } } = {};
 
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
@@ -91,8 +90,16 @@ export default function CompetitionPage() {
 
           // Check if it belongs to BEST 301 Cohort
           if (act.notes?.includes("BEST 301")) {
-            best301Map["BEST 301 Cohort"].carbon += carbonOffset;
-            if (act.user_id) best301Map["BEST 301 Cohort"].users.add(act.user_id);
+            if (act.user_id) {
+              if (!best301UserMap[act.user_id]) {
+                // Fallback handle based on user_id substring or generic participant label
+                best301UserMap[act.user_id] = {
+                  carbon: 0,
+                  handle: `Participant_${act.user_id.slice(0, 6)}`,
+                };
+              }
+              best301UserMap[act.user_id].carbon += carbonOffset;
+            }
           }
         });
 
@@ -118,14 +125,17 @@ export default function CompetitionPage() {
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
-        const computedBest301: LeaderboardEntry[] = Object.values(best301Map)
-          .map((b) => ({
-            rank: 1,
-            name: b.name,
-            category: 'UBC Course Cohort',
-            participants: b.users.size,
-            carbonOffsetKg: Math.round(b.carbon * 10) / 10,
-          }));
+        // Map individual users participating in BEST 301 into leaderboard rows
+        const computedBest301: LeaderboardEntry[] = Object.entries(best301UserMap)
+          .map(([userId, data]) => ({
+            rank: 0,
+            name: data.handle,
+            category: 'BEST 301 Student',
+            participants: 1,
+            carbonOffsetKg: Math.round(data.carbon * 10) / 10,
+          }))
+          .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
+          .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
         setInstitutionalStandings(computedInstitutional);
         setLocalStandings(computedLocal);
@@ -142,7 +152,7 @@ export default function CompetitionPage() {
 
   const currentStandings = boardTier === "institutional" ? institutionalStandings : boardTier === "local" ? localStandings : best301Standings;
   const totalCarbon = currentStandings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
-  const totalParticipants = currentStandings.reduce((acc, curr) => acc + curr.participants, 0);
+  const totalParticipants = boardTier === "best301" ? currentStandings.length : currentStandings.reduce((acc, curr) => acc + curr.participants, 0);
 
   return (
     <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-24 font-sans">
@@ -206,7 +216,7 @@ export default function CompetitionPage() {
                       : "bg-white border border-[#102f26]/20 text-[#102f26] hover:bg-[#f9f8f6]"
                   }`}
                 >
-                  BEST 301 Cohort
+                  BEST 301 Individual Standings
                 </button>
               </div>
             </div>
@@ -241,7 +251,7 @@ export default function CompetitionPage() {
                     ? "Faculty Standings (Supabase Live)" 
                     : boardTier === "local" 
                     ? "Regional Vancouver Neighborhood Standings (Live)" 
-                    : "BEST 301 Course Standings (Live)"}
+                    : "BEST 301 Student Leaderboard (Live)"}
                 </h2>
                 <span className="font-mono text-[10px] text-[#39705d]">
                   Synced via Database
@@ -265,10 +275,10 @@ export default function CompetitionPage() {
                         </span>
                         <div>
                           <h3 className="text-lg font-medium tracking-tight text-[#102f26]">
-                            {entry.name}
+                            {boardTier === "best301" ? `@${entry.name}` : entry.name}
                           </h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
-                            {entry.category} · {entry.participants} Active Contributor{entry.participants === 1 ? '' : 's'}
+                            {entry.category}
                           </p>
                         </div>
                       </div>
@@ -294,7 +304,7 @@ export default function CompetitionPage() {
             <div>
               <div className="border-b border-[#102f26]/15 pb-4 mb-6">
                 <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-[#102f26]">
-                  {boardTier === "institutional" ? "Institutional Impact Summary" : boardTier === "local" ? "Regional Impact Summary" : "Course Cohort Impact Summary"}
+                  {boardTier === "institutional" ? "Institutional Impact Summary" : boardTier === "local" ? "Regional Impact Summary" : "Cohort Participant Summary"}
                 </h2>
               </div>
 
@@ -310,12 +320,12 @@ export default function CompetitionPage() {
                 </div>
 
                 <div className="p-6 border border-[#102f26]/15 bg-white shadow-sm">
-                  <span className="font-mono text-[10px] text-[#39705d] block mb-1">Active Participation</span>
+                  <span className="font-mono text-[10px] text-[#39705d] block mb-1">Active Competitors</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
-                    {totalParticipants} Participant{totalParticipants === 1 ? '' : 's'}
+                    {totalParticipants} Competitor{totalParticipants === 1 ? '' : 's'}
                   </p>
                   <p className="text-[#71847d]">
-                    Unique contributors across active tiers.
+                    Unique usernames contributing to this leaderboard.
                   </p>
                 </div>
               </div>
@@ -331,7 +341,7 @@ export default function CompetitionPage() {
                 Sustainability Challenge Guidelines
               </h2>
               <p className="text-sm text-[#526760] leading-relaxed">
-                Green Collective&apos;s leaderboard system quantifies and compares grassroots environmental action across institutional departments, regional Vancouver neighborhood hubs, and dedicated academic course cohorts like BEST 301.
+                Green Collective&apos;s leaderboard system quantifies grassroots environmental action across institutional departments, Vancouver neighborhoods, and individual student handles for course cohorts like BEST 301.
               </p>
             </div>
           </div>
