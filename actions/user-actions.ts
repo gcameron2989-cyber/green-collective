@@ -16,7 +16,7 @@ export interface BatchActionItem {
 
 export interface LogBatchActionsInput {
   items: BatchActionItem[]
-  sector: 'community' | 'campus'
+  sector: 'community' | 'campus'|'public'
   affiliationType: AffiliationType
   affiliationName: string
 }
