@@ -36,7 +36,6 @@ export default function CompetitionPage() {
 
         if (facultyError) throw facultyError;
 
-        // Query logged_actions table
         const { data: loggedActions, error: logError } = await supabase
           .from('logged_actions')
           .select('affiliation_name, points, user_id, notes, quantity');
@@ -99,10 +98,10 @@ export default function CompetitionPage() {
               Leaderboards &amp; Challenges · Regional &amp; Institutional
             </p>
             <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-[0.14em]">
-              <Link href="[Back to Home](https://www.greencollective.ca/)" className="text-[#526760] hover:text-[#102f26]">
+              <Link href="/" className="text-[#526760] hover:text-[#102f26]">
                 ← Back to Home
               </Link>
-              <Link href="[Log Eco-Action](https://www.greencollective.ca/habits)" className="text-[#526760] hover:text-[#102f26]">
+              <Link href="/log-action" className="text-[#526760] hover:text-[#102f26]">
                 Log Eco-Action →
               </Link>
             </div>
