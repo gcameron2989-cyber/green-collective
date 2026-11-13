@@ -1,22 +1,3 @@
-"use client";
-
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
-
-export interface RealInitiative {
-  id: string;
-  title: string;
-  leadOrg: string;
-  category: string;
-  status: string;
-  region: "VANCOUVER / UBC" | "TORONTO / GTA" | "GLOBAL / REMOTE";
-  locationTag: string;
-  description: string;
-  impactScope: string;
-  officialPortalUrl: string;
-  isUserSubmitted?: boolean;
-}
-
 export const INITIAL_INITIATIVES: RealInitiative[] = [
   // --- VANCOUVER & UBC ---
   {
@@ -77,7 +58,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "GREATER VANCOUVER",
     description: "Regional transit decarbonization roadmap prioritizing electric battery bus deployment, SkyTrain expansion, and active travel integration.",
     impactScope: "100% Zero-Emission Fleet Target · RapidBus Network",
-    officialPortalUrl: "https://www.translink.ca/about-us/about-translink/sustainability",
+    officialPortalUrl: "https://www.translink.ca/about-us/about-translink/climate-action",
   },
   {
     id: "st-george-rainway",
@@ -115,7 +96,7 @@ export const INITIAL_INITIATIVES: RealInitiative[] = [
     locationTag: "TORONTO",
     description: "Protection and ecological enhancement of Toronto's 11,000-hectare ravine system, preserving natural canopy and urban watershed resilience.",
     impactScope: "11,000 Hectares Protected · Invasive Species Abatement",
-    officialPortalUrl: "https://www.toronto.ca/services-payments/water-environment/trees/torontos-ravine-strategy/",
+    officialPortalUrl: "https://www.toronto.ca/city-government/accountability-operations-customer-service/long-term-vision-plans-and-strategies/ravine-strategy/",
   },
   {
     id: "trca-green-infrastructure",
