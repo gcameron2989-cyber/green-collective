@@ -4,113 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ACTION_REGISTRY, ActionItem } from "@/lib/actions";
 import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
 
 type Sector = "public" | "campus";
 type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
-
-interface ActionCatalogItem {
-  id: string;
-  title: string;
-  category: "Mobility" | "Circular Economy" | "Food & Agriculture" | "Energy & Water" | "Ecosystem Stewardship";
-  points: number;
-  co2SavedKg: number;
-  unitLabel: string;
-  description: string;
-}
-
-const DEFAULT_ACTIONS: ActionCatalogItem[] = [
-  {
-    id: "transit-commute",
-    title: "Transit or Active Bike Commute",
-    category: "Mobility",
-    points: 25,
-    co2SavedKg: 2.1,
-    unitLabel: "trips",
-    description: "Replaced single-occupancy vehicle driving with transit, cycling, or walking.",
-  },
-  {
-    id: "reusable-container",
-    title: "Zero Single-Use Container",
-    category: "Circular Economy",
-    points: 30,
-    co2SavedKg: 0.5,
-    unitLabel: "containers",
-    description: "Used a reusable cup, mug, or food container at local businesses or dining halls.",
-  },
-  {
-    id: "tree-care",
-    title: "Urban Tree & Ecosystem Stewardship",
-    category: "Ecosystem Stewardship",
-    points: 50,
-    co2SavedKg: 3.5,
-    unitLabel: "sessions",
-    description: "Participated in canopy care, invasive species removal, or community garden maintenance.",
-  },
-  {
-    id: "plant-based-meal",
-    title: "Plant-Based Meal Choice",
-    category: "Food & Agriculture",
-    points: 20,
-    co2SavedKg: 1.4,
-    unitLabel: "meals",
-    description: "Chose a fully plant-based meal over animal-intensive protein options.",
-  },
-  {
-    id: "food-waste-compost",
-    title: "Organic Waste Diversion & Composting",
-    category: "Food & Agriculture",
-    points: 15,
-    co2SavedKg: 0.4,
-    unitLabel: "days",
-    description: "Diverted 100% of household food scraps to municipal green bins or home compost.",
-  },
-  {
-    id: "cold-water-laundry",
-    title: "Cold Water Wash & Line Dry",
-    category: "Energy & Water",
-    points: 15,
-    co2SavedKg: 0.9,
-    unitLabel: "loads",
-    description: "Washed laundry in cold water and air-dried garments instead of using a heated dryer.",
-  },
-  {
-    id: "energy-conservation",
-    title: "Home & Office Energy Reduction",
-    category: "Energy & Water",
-    points: 20,
-    co2SavedKg: 1.2,
-    unitLabel: "days",
-    description: "Lowered thermostat, eliminated phantom power loads, or installed high-efficiency LEDs.",
-  },
-  {
-    id: "repair-upcycle",
-    title: "Repair, Upcycle, or Thrift Goods",
-    category: "Circular Economy",
-    points: 40,
-    co2SavedKg: 2.5,
-    unitLabel: "items",
-    description: "Repaired clothing, electronics, or furniture instead of purchasing new items.",
-  },
-  {
-    id: "ev-charging-shared",
-    title: "Shared EV / Carpool Trip",
-    category: "Mobility",
-    points: 35,
-    co2SavedKg: 3.0,
-    unitLabel: "trips",
-    description: "Shared an electric vehicle ride or organized carpooling for commutes.",
-  },
-  {
-    id: "community-clean-up",
-    title: "Shoreline / Park Clean-Up",
-    category: "Ecosystem Stewardship",
-    points: 60,
-    co2SavedKg: 4.0,
-    unitLabel: "events",
-    description: "Collected and properly sorted litter from public parks, beaches, or campus grounds.",
-  },
-];
 
 const VANCOUVER_NEIGHBOURHOODS = [
   "Kitsilano",
@@ -132,7 +30,7 @@ const UBC_FACULTIES = [
   "Faculty of Land and Food Systems",
 ];
 
-const CATEGORIES = ["All", "Mobility", "Circular Economy", "Food & Agriculture", "Energy & Water", "Ecosystem Stewardship"];
+const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
 
 export default function LogActionPage() {
   const router = useRouter();
@@ -140,13 +38,14 @@ export default function LogActionPage() {
 
   const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [actionsList, setActionsList] = useState<ActionCatalogItem[]>(DEFAULT_ACTIONS);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const [cart, setCart] = useState<Record<string, number>>({});
   const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({
-    "transit-commute": 5,
-    "ev-charging-shared": 10,
+    "active-transit": 5,
+    "public-transit": 10,
+    "ev-rideshare": 10,
+    "carpool-fossil": 15,
   });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
@@ -184,37 +83,46 @@ export default function LogActionPage() {
 
   const selectedItemsDetails = selectedEntries
     .map(([id, qty]) => {
-      const detail = actionsList.find((a) => a.id === id);
+      const detail = ACTION_REGISTRY.find((a) => a.id === id);
       if (!detail) return null;
 
-      let calculatedCo2 = detail.co2SavedKg;
+      let calculatedCo2 = detail.impactValue;
       let calculatedPoints = detail.points;
 
-      // Distance-based dynamic carbon accounting for commute & carpool
-      if (id === "transit-commute") {
-        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 5));
-        calculatedCo2 = Number((dist * 0.22).toFixed(2));
-        calculatedPoints = Math.round(15 + dist * 1.8);
-      } else if (id === "ev-charging-shared") {
+      // Independent distance-based carbon accounting for all 4 transport modes
+      if (id === "active-transit") {
+        const dist = Math.min(100, Math.max(1, commuteDistances[id] || 5));
+        calculatedCo2 = Number((dist * 0.25).toFixed(2));
+        calculatedPoints = Math.round(20 + dist * 2.2);
+      } else if (id === "public-transit") {
         const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
-        calculatedCo2 = Number((dist * 0.28).toFixed(2));
-        calculatedPoints = Math.round(30 + dist * 2.0);
+        calculatedCo2 = Number((dist * 0.18).toFixed(2));
+        calculatedPoints = Math.round(15 + dist * 1.5);
+      } else if (id === "ev-rideshare") {
+        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
+        calculatedCo2 = Number((dist * 0.32).toFixed(2));
+        calculatedPoints = Math.round(30 + dist * 2.2);
+      } else if (id === "carpool-fossil") {
+        const dist = Math.min(200, Math.max(1, commuteDistances[id] || 15));
+        calculatedCo2 = Number((dist * 0.15).toFixed(2));
+        calculatedPoints = Math.round(15 + dist * 1.2);
       }
 
       return {
         ...detail,
-        points: calculatedPoints,
+        title: detail.name,
         co2SavedKg: calculatedCo2,
+        points: calculatedPoints,
         selectedQty: qty,
       };
     })
-    .filter(Boolean) as (ActionCatalogItem & { selectedQty: number })[];
+    .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
 
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
   const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
 
   const filteredActions =
-    selectedCategory === "All" ? actionsList : actionsList.filter((a) => a.category === selectedCategory);
+    selectedCategory === "All" ? ACTION_REGISTRY : ACTION_REGISTRY.filter((a) => a.category === selectedCategory);
 
   const getAffiliationName = (): string => {
     const primaryHub = sector === "campus" ? faculty : (publicAffiliationType === "neighbourhood" ? neighbourhood : customAffiliation.trim() || "Local Community");
@@ -238,8 +146,8 @@ export default function LogActionPage() {
     try {
       const finalAffiliationName = getAffiliationName();
       const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
-        const isDistanceBased = item.id === "transit-commute" || item.id === "ev-charging-shared";
-        const dist = commuteDistances[item.id] || (item.id === "ev-charging-shared" ? 10 : 5);
+        const isDistanceBased = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(item.id);
+        const dist = commuteDistances[item.id] || 10;
         return {
           actionId: item.id,
           quantity: item.selectedQty,
@@ -333,13 +241,13 @@ export default function LogActionPage() {
                       </span>
                       <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
                     </div>
-                    <h2 className="text-base font-bold mb-2">{action.title}</h2>
+                    <h2 className="text-base font-bold mb-2">{action.name}</h2>
                     <p className="text-xs text-[#526760] leading-relaxed mb-6">{action.description}</p>
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-[11px] text-gray-500 font-medium">
-                      ~{action.co2SavedKg} kg CO₂e / {action.unitLabel}
+                      ~{action.impactValue} kg CO₂e / {action.unitLabel}
                     </span>
 
                     {isSelected ? (
@@ -466,7 +374,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal with Distance Inputs for Commute & EV Carpool */}
+      {/* Review Modal with Distance Inputs for Transport Actions */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -508,7 +416,7 @@ export default function LogActionPage() {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-[#102f26]">{item.title}</div>
+                          <div className="font-bold text-[#102f26]">{item.name}</div>
                           <div className="text-[10px] text-[#526760]">
                             +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
                           </div>
@@ -532,17 +440,23 @@ export default function LogActionPage() {
                         </div>
                       </div>
 
-                      {/* Distance Slider / Input for both Transit and Shared EV Carpool */}
-                      {(item.id === "transit-commute" || item.id === "ev-charging-shared") && (
+                      {/* Distance Sliders for all Transport Actions */}
+                      {["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(item.id) && (
                         <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                           <span className="text-[11px] text-gray-600 font-medium">
-                            {item.id === "ev-charging-shared" ? "Carpool Distance (km):" : "Commute Distance (km):"}
+                            {item.id === "active-transit"
+                              ? "Cycling/Walking Distance (km):"
+                              : item.id === "public-transit"
+                              ? "Transit Distance (km):"
+                              : item.id === "ev-rideshare"
+                              ? "EV Rideshare Distance (km):"
+                              : "Carpool Distance (km):"}
                           </span>
                           <input
                             type="number"
                             min="1"
                             max="200"
-                            value={commuteDistances[item.id] || (item.id === "ev-charging-shared" ? 10 : 5)}
+                            value={commuteDistances[item.id] || 10}
                             onChange={(e) =>
                               setCommuteDistances({
                                 ...commuteDistances,
