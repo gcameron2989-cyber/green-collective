@@ -85,7 +85,6 @@ export default function LogActionPage() {
     "ev-rideshare": 10,
     "carpool-fossil": 15,
   });
-  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // Dual Attribution State
   const [selectedSectors, setSelectedSectors] = useState<Sector[]>(["campus"]);
@@ -229,7 +228,6 @@ export default function LogActionPage() {
 
       setTimeout(() => {
         clearCart();
-        setIsReviewOpen(false);
         setStatusMsg(null);
         router.push("/competition");
       }, 1500);
@@ -305,7 +303,6 @@ export default function LogActionPage() {
                     <h2 className="text-base font-bold mb-2">{action.name}</h2>
                     <p className="text-xs text-[#526760] leading-relaxed mb-4">{action.description}</p>
 
-                    {/* Commute distance input directly on card to keep review modal safe */}
                     {isTransport && (
                       <div className="mb-4 p-3 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 flex items-center justify-between text-xs">
                         <span className="font-medium text-[#526760]">Commute Distance (km):</span>
@@ -368,6 +365,7 @@ export default function LogActionPage() {
           </div>
         </div>
 
+        {/* Right Sidebar: Summary & Direct Submission Form (No Modals) */}
         <div className="lg:col-span-1 sticky top-8 bg-white border border-[#102f26]/15 rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
@@ -509,116 +507,49 @@ export default function LogActionPage() {
             </div>
           </div>
 
+          {/* Selected Items List Preview */}
+          {selectedItemsDetails.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              <span className="font-mono text-[10px] uppercase text-[#526760] block">Selected Items:</span>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {selectedItemsDetails.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center text-xs p-2 bg-[#f1f6f2] rounded-lg">
+                    <span className="font-medium truncate max-w-[140px]">{item.title} (x{item.selectedQty})</span>
+                    <button
+                      type="button"
+                      onClick={() => setActionQuantity(item.id, 0)}
+                      className="text-red-500 hover:text-red-700 font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {statusMsg && (
+            <div
+              className={`p-3 rounded-xl text-xs font-medium text-center ${
+                statusMsg.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : "bg-red-50 text-red-700 border border-red-200"
+              }`}
+            >
+              {statusMsg.text}
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={() => setIsReviewOpen(true)}
-            disabled={totalSelectedCount === 0 || selectedSectors.length === 0}
+            onClick={handleBatchSubmit}
+            disabled={submitting || totalSelectedCount === 0 || selectedSectors.length === 0}
             className="w-full py-3.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow disabled:opacity-40"
           >
-            Review &amp; Log Actions (+{totalPoints} pts) →
+            {submitting ? "Processing..." : `Confirm & Log Actions (+${totalPoints} pts) →`}
           </button>
         </div>
       </section>
-
-      {/* Review Modal - Safe Read-Only Summary */}
-      {isReviewOpen && (
-        <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4" suppressHydrationWarning>
-          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans" suppressHydrationWarning>
-            <div className="flex justify-between items-center border-b border-[#102f26]/10 pb-3 mb-4">
-              <div>
-                <span className="text-[10px] font-mono uppercase text-[#39705d]">Batch Review</span>
-                <h3 className="text-lg font-bold">Log {selectedItemsDetails.length} Selected Actions</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsReviewOpen(false)}
-                className="text-gray-400 hover:text-black font-mono text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            {statusMsg && (
-              <div
-                className={`p-3 rounded-xl text-xs font-medium mb-4 text-center ${
-                  statusMsg.type === "success"
-                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                }`}
-              >
-                {statusMsg.text}
-              </div>
-            )}
-
-            <form onSubmit={handleBatchSubmit} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions Summary:
-                </label>
-                <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                  {selectedItemsDetails.map((item) => {
-                    const isTransport = TRANSPORT_IDS.includes(item.id);
-
-                    return (
-                      <div
-                        key={`review-${item.id}`}
-                        className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-1"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="font-bold text-[#102f26]">{item.title}</div>
-                          <button
-                            type="button"
-                            onClick={() => setActionQuantity(item.id, 0)}
-                            className="text-red-500 hover:text-red-700 font-bold px-2 py-0.5 text-xs"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <div className="text-[10px] text-[#526760] flex justify-between">
-                          <span>Quantity: {item.selectedQty}</span>
-                          <span className="font-bold text-[#102f26]">+{item.points * item.selectedQty} pts · ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂</span>
-                        </div>
-                        {isTransport && (
-                          <div className="text-[10px] text-[#39705d] pt-1">
-                            Commute Distance: {commuteDistances[item.id] || 10} km
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
-                <div>
-                  <span className="font-bold text-[#102f26]">Total Impact Generated:</span>
-                  <div className="text-[11px] text-[#39705d]">
-                    ~{totalCO2.toFixed(1)} kg CO₂ emissions avoided
-                  </div>
-                </div>
-                <div className="text-[#102f26] font-black text-sm">+{totalPoints} pts</div>
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewOpen(false)}
-                  className="w-1/2 py-2.5 border border-gray-300 rounded-full text-xs font-semibold"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting || selectedItemsDetails.length === 0}
-                  className="w-1/2 py-2.5 bg-[#102f26] text-white rounded-full text-xs font-semibold hover:bg-[#39705d] transition disabled:opacity-50"
-                >
-                  {submitting ? "Processing..." : "Confirm & Log All"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
