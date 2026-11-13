@@ -14,6 +14,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
   const [actionType, setActionType] = useState("Active Commute (Walking/Bike)");
   const [initiativeId, setInitiativeId] = useState("ubc-forestry-research");
   const [impactPoints, setImpactPoints] = useState(15);
+  const [commuteKm, setCommuteKm] = useState(5); // New distance state for commuting
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -34,6 +35,12 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
     setLoading(true);
     setSuccessMsg("");
     setErrorMsg("");
+
+    // Include distance in notes if it's a commute action
+    let notes = "";
+    if (actionType.includes("Commute") && commuteKm > 0) {
+      notes = `Commute Distance: ${commuteKm} km`;
+    }
 
     const { error } = await supabase.from("user_actions").insert({
       user_id: user.id,
@@ -85,7 +92,7 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
             </div>
           )}
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs">
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs">
               {errorMsg}
             </div>
           )}
@@ -97,19 +104,48 @@ export default function DailyActionLogger({ onActionLogged }: DailyActionLoggerP
             <select
               value={actionType}
               onChange={(e) => {
-                setActionType(e.target.value);
-                if (e.target.value.includes("Commute")) setImpactPoints(15);
-                else if (e.target.value.includes("Zero Waste")) setImpactPoints(10);
-                else setImpactPoints(20);
+                const val = e.target.value;
+                setActionType(val);
+                if (val.includes("Commute")) {
+                  setImpactPoints(15 + commuteKm * 2);
+                } else if (val.includes("Zero Waste")) {
+                  setImpactPoints(10);
+                } else {
+                  setImpactPoints(20);
+                }
               }}
               className="w-full p-2.5 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
             >
-              <option value="Active Commute (Walking/Bike)">Active Commute (Walking/Bike) — 15 pts</option>
+              <option value="Active Commute (Walking/Bike)">Active Commute (Walking/Bike) — Dynamic pts</option>
               <option value="Zero Waste / Reusable Container">Zero Waste / Reusable Container — 10 pts</option>
               <option value="Campus Biodiversity Stewardship">Campus Biodiversity Stewardship — 25 pts</option>
               <option value="Energy Conservation Action">Energy Conservation Action — 20 pts</option>
             </select>
           </div>
+
+          {/* Dynamic Commute Distance Input */}
+          {actionType.includes("Commute") && (
+            <div className="p-3 bg-gray-50 border border-gray-200 space-y-1">
+              <label className="block text-[11px] text-gray-500 uppercase">
+                Commute Distance (Kilometers) *
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="50"
+                value={commuteKm}
+                onChange={(e) => {
+                  const km = Number(e.target.value);
+                  setCommuteKm(km);
+                  setImpactPoints(15 + km * 2); // Scale points dynamically with distance
+                }}
+                className="w-full p-2 border border-gray-300 focus:outline-none focus:border-black text-xs font-sans bg-white"
+              />
+              <span className="text-[10px] text-gray-400 block">
+                Points scale automatically based on distance (~2 pts per km).
+              </span>
+            </div>
+          )}
 
           <div>
             <label className="block text-[11px] text-gray-500 uppercase mb-1">
