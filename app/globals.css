@@ -2,25 +2,25 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 158 64% 32%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 158 64% 92%;
-    --accent-foreground: 158 64% 20%;
+    --background: 40 27% 91%;          /* #F4F1EA (Raw Canvas) */
+    --foreground: 160 30% 10%;         /* #12221C (Deep Moss) */
+    --card: 40 27% 95%;
+    --card-foreground: 160 30% 10%;
+    --popover: 40 27% 91%;
+    --popover-foreground: 160 30% 10%;
+    --primary: 160 30% 10%;            /* Deep Moss primary */
+    --primary-foreground: 40 27% 91%;
+    --secondary: 40 20% 85%;
+    --secondary-foreground: 160 30% 10%;
+    --muted: 40 15% 80%;
+    --muted-foreground: 160 10% 32%;
+    --accent: 14 54% 45%;              /* #B35432 (Pacific Cedar / Rust) */
+    --accent-foreground: 40 27% 91%;
     --destructive: 0 84.2% 60.2%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 158 64% 32%;
-    --radius: 0.75rem;
+    --border: 160 20% 75%;
+    --input: 160 20% 75%;
+    --ring: 14 54% 45%;
+    --radius: 0rem;                    /* Editorial sharp corners */
   }
 }
 
@@ -42,4 +42,17 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Editorial text selection */
+::selection {
+  background-color: #B35432;
+  color: #F4F1EA;
 }
