@@ -166,7 +166,7 @@ export default function LogActionPage() {
 
   const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + item.selectedQty, 0);
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
-  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
+  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + (item.co2SavedKg * item.selectedQty), 0);
 
   const filteredActions =
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
