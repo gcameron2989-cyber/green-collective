@@ -71,7 +71,6 @@ const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY"
 
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
-// WRAPPER: Catch any Next.js router suspensions to prevent Error #441 hard crashes
 export default function LogActionPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#f9f8f6] animate-pulse" />}>
@@ -111,10 +110,9 @@ function LogActionContent() {
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    // FIX: Moving client creation inside useEffect prevents infinite re-render loops
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []); // FIX: Empty dependency array guarantees this only fires once
+  }, []);
 
   const filteredNeighborhoods = useMemo(() => {
     return VANCOUVER_NEIGHBOURHOODS.filter((n) =>
@@ -148,7 +146,6 @@ function LogActionContent() {
 
   const clearCart = () => setCart({});
 
-  // FIX: Stablized useMemo dependencies prevent input fields from causing map unmounts
   const selectedItemsDetails = useMemo(() => {
     return Object.entries(cart)
       .map(([id, qty]) => {
@@ -159,7 +156,7 @@ function LogActionContent() {
         let calculatedPoints = detail.points;
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = Math.min(200, Math.max(1, commuteDistances[id] || 10));
+          const dist = Math.min(200, Math.max(1, commuteDistances[id] ?? 10));
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(20 + dist * 2.2);
@@ -574,7 +571,7 @@ function LogActionContent() {
                           </div>
                         </div>
 
-                        {/* Safe handling of numeric distance inputs inside map loop */}
+                        {/* Transport Distance Input Handled with NaN prevention */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
@@ -590,12 +587,12 @@ function LogActionContent() {
                               type="number"
                               min="1"
                               max="200"
-                              value={commuteDistances[item.id] ?? ""}
+                              value={commuteDistances[item.id] ?? 10}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setCommuteDistances((prev) => ({
                                   ...prev,
-                                  [item.id]: val === "" ? ("" as any) : Math.min(200, Math.max(1, Number(val))),
+                                  [item.id]: val === "" ? 0 : Math.min(200, Math.max(1, Number(val))),
                                 }));
                               }}
                               className="w-20 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
