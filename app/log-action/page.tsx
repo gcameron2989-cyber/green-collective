@@ -91,6 +91,7 @@ export default function LogActionPage() {
   // Dual Attribution State
   const [selectedSectors, setSelectedSectors] = useState<Sector[]>(["campus"]);
   const [publicAffiliationType, setPublicAffiliationType] = useState<PublicAffiliationType>("neighbourhood");
+  
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
   const [isNeighborhoodDropdownOpen, setIsNeighborhoodDropdownOpen] = useState(false);
@@ -105,7 +106,7 @@ export default function LogActionPage() {
   useEffect(() => {
     setIsMounted(true);
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []);
+  }, [supabase]);
 
   const filteredNeighborhoods = useMemo(() => {
     return VANCOUVER_NEIGHBOURHOODS.filter((n) =>
@@ -501,6 +502,7 @@ export default function LogActionPage() {
                 <h3 className="text-lg font-bold">Log {selectedItemsDetails.length} Selected Actions</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsReviewOpen(false)}
                 className="text-gray-400 hover:text-black font-mono text-sm"
               >
@@ -531,7 +533,7 @@ export default function LogActionPage() {
 
                     return (
                       <div
-                        key={item.id}
+                        key={`review-${item.id}`}
                         className="p-3 bg-[#f1f6f2] rounded-xl text-xs border border-gray-200/60 space-y-2"
                       >
                         <div className="flex items-center justify-between">
