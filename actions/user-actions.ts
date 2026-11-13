@@ -51,7 +51,7 @@ export async function logBatchUserActions(input: LogBatchActionsInput) {
         user_id: user.id,
         action_id: item.actionId,
         action_name: item.actionTitle || item.actionId,
-        points: (item.points || 25) * safeQty,
+        points_earned: (item.points || 25) * safeQty, // Mapped to match database column
         sector: sector,
         affiliation_type: affiliationType,
         affiliation_name: affiliationName,
