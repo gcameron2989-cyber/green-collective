@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ACTION_REGISTRY, ActionItem } from "@/lib/actions";
@@ -64,7 +64,6 @@ const UBC_FACULTIES = [
 ].sort();
 
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
-
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
 export default function LogActionPage() {
@@ -91,13 +90,15 @@ export default function LogActionPage() {
   const [facultySearch, setFacultySearch] = useState("");
   const [isFacultyDropdownOpen, setIsFacultyDropdownOpen] = useState(false);
 
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user)).catch(() => {});
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setUser(data.user);
+    }).catch(() => {});
   }, []);
 
   const filteredNeighborhoods = useMemo(() => {
@@ -113,14 +114,16 @@ export default function LogActionPage() {
   }, [facultySearch]);
 
   const setActionQuantity = (actionId: string, qty: number) => {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (qty <= 0) {
-        delete next[actionId];
-      } else {
-        next[actionId] = qty;
-      }
-      return next;
+    startTransition(() => {
+      setCart((prev) => {
+        const next = { ...prev };
+        if (qty <= 0) {
+          delete next[actionId];
+        } else {
+          next[actionId] = qty;
+        }
+        return next;
+      });
     });
   };
 
@@ -168,7 +171,7 @@ export default function LogActionPage() {
   const filteredActions =
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
 
-  const handleBatchSubmit = async (e: React.FormEvent) => {
+  const handleBatchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedItemsDetails.length === 0) return;
 
@@ -177,53 +180,54 @@ export default function LogActionPage() {
       return;
     }
 
-    setSubmitting(true);
     setStatusMsg(null);
 
-    try {
-      const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
-        const isDistanceBased = TRANSPORT_IDS.includes(item.id);
-        const dist = commuteDistances[item.id] ?? 0;
-        return {
-          actionId: item.id,
-          actionTitle: item.name,
-          points: item.points,
-          quantity: item.selectedQty,
-          distanceKm: isDistanceBased ? dist : undefined,
-          notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
-        };
-      });
+    // Wrap async server execution inside startTransition to prevent React #441 panic
+    startTransition(async () => {
+      try {
+        const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
+          const isDistanceBased = TRANSPORT_IDS.includes(item.id);
+          const dist = commuteDistances[item.id] ?? 0;
+          return {
+            actionId: item.id,
+            actionTitle: item.name,
+            points: item.points,
+            quantity: item.selectedQty,
+            distanceKm: isDistanceBased ? dist : undefined,
+            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+          };
+        });
 
-      // Submit for Public Neighbourhood
-      await logBatchUserActions({
-        items: itemsToSubmit,
-        sector: "public",
-        affiliationType: "neighbourhood",
-        affiliationName: neighbourhood,
-      });
-
-      // Submit for Campus Faculty if toggled on
-      if (isUbcStudent) {
+        // Submit for Public Neighbourhood
         await logBatchUserActions({
           items: itemsToSubmit,
-          sector: "campus",
-          affiliationType: "faculty",
-          affiliationName: faculty,
+          sector: "public",
+          affiliationType: "neighbourhood",
+          affiliationName: neighbourhood,
         });
+
+        // Submit for Campus Faculty if toggled on
+        if (isUbcStudent) {
+          await logBatchUserActions({
+            items: itemsToSubmit,
+            sector: "campus",
+            affiliationType: "faculty",
+            affiliationName: faculty,
+          });
+        }
+
+        setStatusMsg({
+          type: "success",
+          text: `Successfully logged ${itemsToSubmit.length} actions! Redirecting...`,
+        });
+
+        setTimeout(() => {
+          window.location.href = "/profile";
+        }, 800);
+      } catch (err: any) {
+        setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
       }
-
-      setStatusMsg({
-        type: "success",
-        text: `Successfully logged ${itemsToSubmit.length} actions! Credited to ${neighbourhood}${isUbcStudent ? ` & ${faculty}` : ""}.`,
-      });
-
-      setTimeout(() => {
-        window.location.href = "/profile";
-      }, 1000);
-    } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
-      setSubmitting(false);
-    }
+    });
   };
 
   if (!isMounted) {
@@ -579,10 +583,10 @@ export default function LogActionPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || selectedItemsDetails.length === 0}
+                  disabled={isPending || selectedItemsDetails.length === 0}
                   className="w-1/2 py-2.5 bg-[#102f26] text-white rounded-full text-xs font-semibold hover:bg-[#39705d] transition disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : "Confirm & Log All"}
+                  {isPending ? "Processing..." : "Confirm & Log All"}
                 </button>
               </div>
             </form>
