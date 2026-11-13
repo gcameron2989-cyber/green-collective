@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ACTION_REGISTRY, ActionItem } from "@/lib/actions";
 import { logBatchUserActions, AffiliationType, BatchActionItem } from "@/actions/user-actions";
@@ -69,8 +68,6 @@ const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY"
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
 export default function LogActionPage() {
-  const router = useRouter();
-
   const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -100,7 +97,7 @@ export default function LogActionPage() {
   useEffect(() => {
     setIsMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => setUser(data.user)).catch(() => {});
   }, []);
 
   const filteredNeighborhoods = useMemo(() => {
@@ -176,7 +173,7 @@ export default function LogActionPage() {
     if (selectedItemsDetails.length === 0) return;
 
     if (!user) {
-      router.push("/login");
+      window.location.href = "/login";
       return;
     }
 
@@ -221,11 +218,8 @@ export default function LogActionPage() {
       });
 
       setTimeout(() => {
-        setCart({});
-        setIsReviewOpen(false);
-        setStatusMsg(null);
-        router.push("/competition");
-      }, 1200);
+        window.location.href = "/competition";
+      }, 1000);
     } catch (err: any) {
       setStatusMsg({ type: "error", text: err.message || "Failed to submit batch actions." });
       setSubmitting(false);
@@ -233,7 +227,7 @@ export default function LogActionPage() {
   };
 
   if (!isMounted) {
-    return <div className="min-h-screen bg-[#f9f8f6] animate-pulse" suppressHydrationWarning />;
+    return <div className="min-h-screen bg-[#f9f8f6]" suppressHydrationWarning />;
   }
 
   return (
@@ -359,7 +353,7 @@ export default function LogActionPage() {
           </div>
         </div>
 
-        {/* Right Sidebar: Summary & Review Modal Trigger */}
+        {/* Right Sidebar */}
         <div className="lg:col-span-1 sticky top-8 bg-white border border-[#102f26]/15 rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
@@ -438,7 +432,7 @@ export default function LogActionPage() {
               </label>
             </div>
 
-            {/* Faculty Selector (Opens if UBC Student is Yes) */}
+            {/* Faculty Selector */}
             {isUbcStudent && (
               <div className="relative pt-1">
                 <label className="block font-mono uppercase text-[11px] text-[#39705d] mb-1.5 font-bold">
@@ -497,7 +491,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal - Clean Overlay matching earlier successful state */}
+      {/* Review Modal */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4" suppressHydrationWarning>
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans" suppressHydrationWarning>
