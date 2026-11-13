@@ -11,23 +11,60 @@ type Sector = "public" | "campus";
 type PublicAffiliationType = "neighbourhood" | "association" | "company" | "other";
 
 const VANCOUVER_NEIGHBOURHOODS = [
-  "Kitsilano",
-  "Point Grey",
-  "Mount Pleasant",
-  "Fairview / South Granville",
-  "Downtown / West End",
-  "Commercial Drive",
+  "Arbutus Ridge",
+  "Downtown",
   "Dunbar-Southlands",
+  "Fairview",
+  "Grandview-Woodland",
+  "Hastings-Sunrise",
+  "Kensington-Cedar Cottage",
   "Kerrisdale",
+  "Kitsilano",
+  "Marpole",
+  "Mount Pleasant",
+  "Oakridge",
+  "Renfrew-Collingwood",
+  "Shaughnessy",
+  "South Cambie",
+  "Strathcona",
+  "Sunset",
+  "Victoria-Fraserview",
+  "West End",
+  "Point Grey",
+  "Burnaby",
+  "Richmond",
+  "North Vancouver",
+  "West Vancouver",
+  "Surrey",
 ];
 
 const UBC_FACULTIES = [
-  "Faculty of Forestry",
-  "Faculty of Science",
-  "Faculty of Applied Science",
-  "Sauder School of Business",
-  "Faculty of Arts",
-  "Faculty of Land and Food Systems",
+  "Applied Science, Faculty of",
+  "Architecture and Landscape Architecture, School of",
+  "Arts, Faculty of",
+  "Audiology and Speech Sciences, School of",
+  "Business, Sauder School of",
+  "Community and Regional Planning, School of",
+  "Dentistry, Faculty of",
+  "Education, Faculty of",
+  "Extended Learning",
+  "Forestry & Environmental Stewardship, Faculty of",
+  "Graduate and Postdoctoral Studies",
+  "Information, School of",
+  "Journalism, School of",
+  "Kinesiology, School of",
+  "Land and Food Systems, Faculty of",
+  "Law, Peter A. Allard School of",
+  "Medicine, Faculty of",
+  "Music, School of",
+  "Nursing, School of",
+  "Pharmaceutical Sciences, Faculty of",
+  "Population and Public Health, School of",
+  "Public Policy and Global Affairs, School of",
+  "Science, Faculty of",
+  "Social Work, School of",
+  "UBC Vantage College",
+  "Vancouver School of Economics",
 ];
 
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
@@ -199,7 +236,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="[Competition Leaderboard](https://www.greencollective.ca/competition)" className="text-xs font-mono text-[#39705d] hover:underline">
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -336,7 +373,7 @@ export default function LogActionPage() {
 
             <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Faculty / Department
+                Faculty / School (UBC Vancouver)
               </label>
               <select
                 value={faculty}
@@ -351,7 +388,7 @@ export default function LogActionPage() {
 
             <div>
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
-                Vancouver Neighborhood Hub
+                Vancouver Neighborhood / Municipality
               </label>
               <select
                 value={neighbourhood}
