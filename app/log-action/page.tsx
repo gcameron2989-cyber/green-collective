@@ -260,7 +260,7 @@ export default function LogActionPage() {
               Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
             </p>
           </div>
-          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline">
+          <Link href="/competition" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
             [← BACK TO COMPETITION]
           </Link>
         </div>
@@ -272,6 +272,7 @@ export default function LogActionPage() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
                   selectedCategory === cat
