@@ -497,7 +497,7 @@ export default function LogActionPage() {
         </div>
       </section>
 
-      {/* Review Modal */}
+      {/* Review Modal with Safe Static Display to Prevent #441 Render Collision */}
       {isReviewOpen && (
         <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans">
@@ -530,7 +530,7 @@ export default function LogActionPage() {
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions &amp; Scaling:
+                  Selected Actions Summary:
                 </label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
@@ -545,28 +545,20 @@ export default function LogActionPage() {
                           <div>
                             <div className="font-bold text-[#102f26]">{item.name}</div>
                             <div className="text-[10px] text-[#526760]">
-                              +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
+                              Qty: {item.selectedQty} • +{item.points * item.selectedQty} pts • ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.selectedQty}
-                              onChange={(e) => setActionQuantity(item.id, parseInt(e.target.value) || 1)}
-                              className="w-14 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setActionQuantity(item.id, 0)}
-                              className="text-red-500 hover:text-red-700 font-bold px-1"
-                            >
-                              ✕
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActionQuantity(item.id, 0)}
+                            className="text-red-500 hover:text-red-700 font-bold px-2 text-xs"
+                          >
+                            Remove
+                          </button>
                         </div>
 
+                        {/* Transport Distance Input Handled Safely Outside Mapped Inline Throttling */}
                         {isTransport && (
                           <div className="pt-2 border-t border-gray-200/60 flex items-center justify-between">
                             <span className="text-[11px] text-gray-600 font-medium">
