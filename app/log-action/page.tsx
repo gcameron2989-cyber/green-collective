@@ -347,7 +347,7 @@ export default function LogActionPage() {
                             const val = e.target.value;
                             setCommuteDistances((prev) => ({
                               ...prev,
-                              [action.id]: val === "" ? 0 : Math.max(0, Number(val)),
+                              [action.id]: val === "" ? 0 : parseFloat(val) || 0,
                             }));
                           }}
                           className="w-16 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
