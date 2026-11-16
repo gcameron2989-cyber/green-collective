@@ -162,7 +162,7 @@ export function getFormattedImpact(action: ActionItem): string {
   return `~${action.impactValue.toFixed(2)} kg CO₂e / ${action.unitLabel}`;
 }
 
-/** Helper function to calculate total carbon impact with quantity/distance scaling */
+/** Helper function to calculate carbon impact with quantity/distance scaling */
 export function calculateActionImpact(action: ActionItem, quantityOrDistance: number): number {
   return Number((action.impactValue * quantityOrDistance).toFixed(2));
 }
@@ -170,4 +170,20 @@ export function calculateActionImpact(action: ActionItem, quantityOrDistance: nu
 /** Helper function to calculate points with quantity/distance scaling */
 export function calculateActionPoints(action: ActionItem, quantityOrDistance: number): number {
   return Math.round(action.points * quantityOrDistance);
+}
+
+/** Helper function to calculate total carbon impact for selected action IDs */
+export function calculateTotalImpact(selectedIds: string[]): number {
+  return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
+    (sum, action) => sum + action.impactValue,
+    0
+  );
+}
+
+/** Helper function to calculate total points for selected action IDs */
+export function calculateTotalPoints(selectedIds: string[]): number {
+  return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
+    (sum, action) => sum + action.points,
+    0
+  );
 }
