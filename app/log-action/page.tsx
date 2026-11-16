@@ -249,7 +249,7 @@ export default function LogActionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-32 font-sans relative" suppressHydrationWarning>
+    <div className="min-h-screen bg-[#f9f8f6] text-[#102f26] pb-36 font-sans relative" suppressHydrationWarning>
       <section className="bg-[#f1f6f2] border-b border-[#102f26]/10">
         <div className="max-w-7xl mx-auto px-6 py-10 flex justify-between items-center">
           <div>
@@ -346,7 +346,7 @@ export default function LogActionPage() {
                             const val = e.target.value;
                             setCommuteDistances((prev) => ({
                               ...prev,
-                              [action.id]: val, // Keep as string so user can clear it completely without forcing a 0
+                              [action.id]: val,
                             }));
                           }}
                           className="w-16 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
@@ -545,6 +545,27 @@ export default function LogActionPage() {
           </button>
         </div>
       </section>
+
+      {/* Mobile Sticky Floating Bar */}
+      {totalSelectedCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#102f26]/20 p-4 shadow-2xl sm:hidden flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono text-[#526760] block uppercase tracking-wider">
+              Selected ({totalSelectedCount} actions)
+            </span>
+            <span className="text-xs font-extrabold text-[#102f26]">
+              +{totalPoints} pts · ~{totalCO2.toFixed(1)} kg CO₂e
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsReviewOpen(true)}
+            className="px-4 py-2.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow"
+          >
+            Review &amp; Log →
+          </button>
+        </div>
+      )}
 
       {/* Review Modal */}
       {isReviewOpen && (
