@@ -82,6 +82,14 @@ export default function LogActionPage() {
   });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
+  // Proposal Form State
+  const [isProposing, setIsProposing] = useState(false);
+  const [proposalTitle, setProposalTitle] = useState("");
+  const [proposalDesc, setProposalDesc] = useState("");
+  const [proposalCategory, setProposalCategory] = useState("CAMPUS");
+  const [proposalImpact, setProposalImpact] = useState("");
+  const [proposalSubmitted, setProposalSubmitted] = useState(false);
+
   // Attribution State
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
@@ -244,6 +252,36 @@ export default function LogActionPage() {
     });
   };
 
+  const handleProposeAction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const { error } = await supabase.from("proposed_actions").insert({
+      user_id: currentUser.id,
+      action_title: proposalTitle,
+      description: proposalDesc,
+      category: proposalCategory,
+      estimated_impact: parseFloat(proposalImpact) || 1.0,
+      status: 'pending'
+    });
+
+    if (error) {
+      console.error("Error submitting proposal:", error);
+      alert("Failed to submit proposal. Please try again.");
+    } else {
+      setProposalSubmitted(true);
+      setProposalTitle("");
+      setProposalDesc("");
+      setProposalImpact("");
+    }
+  };
+
   if (!isMounted) {
     return <div className="min-h-screen bg-[#f9f8f6]" suppressHydrationWarning />;
   }
@@ -393,6 +431,93 @@ export default function LogActionPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Propose New Action Section */}
+          <div className="mt-8 p-6 border border-[#102f26]/15 bg-[#f1f6f2] rounded-2xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-bold text-[#102f26]">Can&apos;t find the eco-action you&apos;re looking for?</h3>
+                <p className="text-xs text-[#526760] mt-0.5">Propose a new verifiable action for administrative review and platform integration.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProposing(!isProposing)}
+                className="px-4 py-2 bg-[#102f26] text-white text-xs font-mono uppercase tracking-wider rounded-lg hover:bg-[#39705d] transition"
+              >
+                {isProposing ? "Close Form" : "Propose Action →"}
+              </button>
+            </div>
+
+            {isProposing && (
+              <form onSubmit={handleProposeAction} className="mt-6 space-y-4 border-t border-[#102f26]/10 pt-6">
+                {proposalSubmitted ? (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-mono rounded-xl text-center">
+                    ✓ Proposal submitted successfully! It has been sent for review.
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Action Title</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g., Composting Office Food Waste"
+                          value={proposalTitle}
+                          onChange={(e) => setProposalTitle(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-[#102f26]/20 rounded-lg text-xs text-[#102f26]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Category / Sector</label>
+                        <select
+                          value={proposalCategory}
+                          onChange={(e) => setProposalCategory(e.target.value)}
+                          className="w-full px-3 py-2 bg-white border border-[#102f26]/20 rounded-lg text-xs text-[#102f26]"
+                        >
+                          <option value="CAMPUS">Campus / Institutional</option>
+                          <option value="COMMUNITY">Community / Neighborhood</option>
+                          <option value="TRANSPORT">Active & Public Transit</option>
+                          <option value="FOOD">Food & Diet</option>
+                          <option value="ENERGY">Energy & Efficiency</option>
+                          <option value="WASTE">Waste & Circularity</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Description & Verification Method</label>
+                      <textarea
+                        required
+                        rows={2}
+                        placeholder="Explain how this action reduces carbon emissions..."
+                        value={proposalDesc}
+                        onChange={(e) => setProposalDesc(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-[#102f26]/20 rounded-lg text-xs text-[#102f26]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Estimated CO₂ Offset (kg per instance)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        required
+                        placeholder="1.5"
+                        value={proposalImpact}
+                        onChange={(e) => setProposalImpact(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-[#102f26]/20 rounded-lg text-xs text-[#102f26]"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-[#39705d] text-white text-xs font-mono uppercase tracking-wider rounded-lg hover:bg-[#102f26] transition shadow-sm"
+                    >
+                      Submit Action for Review
+                    </button>
+                  </>
+                )}
+              </form>
+            )}
           </div>
         </div>
 
