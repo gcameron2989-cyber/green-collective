@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { ACTION_REGISTRY } from '@/lib/actions'
 
 interface FeedItem {
   id: string
@@ -99,7 +100,7 @@ export default function CollectiveFeedPage() {
             Collective Feed
           </h1>
           <p className="mt-2 text-sm text-[#526760]">
-            Real-time sustainability actions logged by members you&apos;ve joined in your collective network.
+            Real-time sustainability actions and carbon impact logged by members you&apos;ve joined in your collective network.
           </p>
         </div>
       </section>
@@ -122,32 +123,56 @@ export default function CollectiveFeedPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {feedItems.map((item) => (
-              <div 
-                key={item.id} 
-                className="p-6 border border-[#102f26]/15 bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition hover:border-[#102f26]"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Link href={`/profile/${item.user_id}`} className="font-mono text-xs font-bold text-[#39705d] hover:underline">
-                      @{item.username}
-                    </Link>
-                    <span className="text-neutral-300">•</span>
-                    <span className="font-mono text-[10px] text-[#71847d]">
-                      {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-medium text-[#102f26]">{item.action_name}</h3>
-                  <p className="font-mono text-[11px] text-[#526760]">
-                    Quantity: {item.quantity} {item.notes ? `• ${item.notes}` : ''}
-                  </p>
-                </div>
+            {feedItems.map((item) => {
+              const qty = Number(item.quantity || 1)
+              const registryMatch = ACTION_REGISTRY.find((a) => a.id === item.action_id)
+              let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
 
-                <div className="font-mono text-xs font-bold text-[#102f26] bg-[#f1f6f2] px-3.5 py-2 rounded-lg border border-[#102f26]/10 text-right">
-                  +{Number(item.points_earned ?? item.points ?? 0)} pts
+              if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(item.action_id)) {
+                const distMatch = item.notes?.match(/Distance:\s*([\d.]+)\s*km/)
+                const dist = distMatch ? parseFloat(distMatch[1]) : 5
+
+                if (item.action_id === "active-transit") baseImpact = dist * 0.25
+                else if (item.action_id === "public-transit") baseImpact = dist * 0.18
+                else if (item.action_id === "ev-rideshare") baseImpact = dist * 0.32
+                else if (item.action_id === "carpool-fossil") baseImpact = dist * 0.15
+              }
+
+              const itemCo2 = (baseImpact * qty).toFixed(1)
+              const pts = Number(item.points_earned ?? item.points ?? 0)
+
+              return (
+                <div 
+                  key={item.id} 
+                  className="p-6 border border-[#102f26]/15 bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition hover:border-[#102f26]"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/profile/${item.user_id}`} className="font-mono text-xs font-bold text-[#39705d] hover:underline">
+                        @{item.username}
+                      </Link>
+                      <span className="text-neutral-300">•</span>
+                      <span className="font-mono text-[10px] text-[#71847d]">
+                        {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-medium text-[#102f26]">{item.action_name}</h3>
+                    <p className="font-mono text-[11px] text-[#526760]">
+                      Quantity: {item.quantity} {item.notes ? `• ${item.notes}` : ''}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="font-mono text-xs font-bold text-[#39705d] bg-emerald-50 px-3.5 py-2 rounded-lg border border-emerald-200 text-right">
+                      ~{itemCo2} kg CO₂e
+                    </div>
+                    <div className="font-mono text-xs font-bold text-[#102f26] bg-[#f1f6f2] px-3.5 py-2 rounded-lg border border-[#102f26]/10 text-right">
+                      +{pts} pts
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
