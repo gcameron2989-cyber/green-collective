@@ -72,11 +72,13 @@ export default function LogActionPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [commuteDistances, setCommuteDistances] = useState<Record<string, number>>({
-    "active-transit": 5,
-    "public-transit": 10,
-    "ev-rideshare": 10,
-    "carpool-fossil": 15,
+  
+  // Track distances as strings so the input field can be completely blank if cleared
+  const [commuteDistances, setCommuteDistances] = useState<Record<string, string>>({
+    "active-transit": "5",
+    "public-transit": "10",
+    "ev-rideshare": "10",
+    "carpool-fossil": "15",
   });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
 
@@ -139,7 +141,7 @@ export default function LogActionPage() {
         let calculatedPoints = Number(detail.points ?? 0);
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = Number(commuteDistances[id] ?? 0);
+          const dist = parseFloat(commuteDistances[id]) || 0;
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(dist * 15);
@@ -154,7 +156,6 @@ export default function LogActionPage() {
             calculatedPoints = Math.round(dist * 8);
           }
         } else {
-          // Multiply standard items by quantity
           calculatedCo2 = Number((detail.impactValue * numericQty).toFixed(2));
           calculatedPoints = Math.round(detail.points * numericQty);
         }
@@ -192,7 +193,7 @@ export default function LogActionPage() {
       try {
         const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
           const isDistanceBased = TRANSPORT_IDS.includes(item.id);
-          const dist = commuteDistances[item.id] ?? 0;
+          const dist = parseFloat(commuteDistances[item.id]) || 0;
           return {
             actionId: item.id,
             actionTitle: item.name,
@@ -203,7 +204,6 @@ export default function LogActionPage() {
           };
         });
 
-        // 1. Submit to Community Sector
         const res1 = await logBatchUserActions({
           items: itemsToSubmit,
           sector: "community",
@@ -216,7 +216,6 @@ export default function LogActionPage() {
           return;
         }
 
-        // 2. Submit to Campus Sector if UBC student checked
         if (isUbcStudent) {
           const res2 = await logBatchUserActions({
             items: itemsToSubmit,
@@ -297,7 +296,7 @@ export default function LogActionPage() {
               let cardPoints = Number(action.points ?? 0);
 
               if (isTransport) {
-                const dist = Number(commuteDistances[action.id] ?? 0);
+                const dist = parseFloat(commuteDistances[action.id]) || 0;
                 if (action.id === "active-transit") {
                   cardImpact = Number((dist * 0.25).toFixed(2));
                   cardPoints = Math.round(dist * 15);
@@ -342,12 +341,12 @@ export default function LogActionPage() {
                           type="number"
                           min="0"
                           max="500"
-                          value={commuteDistances[action.id] ?? 0}
+                          value={commuteDistances[action.id]}
                           onChange={(e) => {
                             const val = e.target.value;
                             setCommuteDistances((prev) => ({
                               ...prev,
-                              [action.id]: val === "" ? 0 : parseFloat(val) || 0,
+                              [action.id]: val, // Keep as string so user can clear it completely without forcing a 0
                             }));
                           }}
                           className="w-16 p-1 text-center font-bold text-xs rounded-lg border border-gray-300 bg-white"
@@ -519,7 +518,6 @@ export default function LogActionPage() {
                   )}
                 </div>
 
-                {/* BEST 301 Sub-toggle (Appears only when Faculty of Forestry is selected) */}
                 {faculty === "Faculty of Forestry" && (
                   <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200/80">
                     <label className="flex items-center justify-between cursor-pointer">
@@ -602,7 +600,7 @@ export default function LogActionPage() {
                           </button>
                         </div>
                         <div className="text-[10px] text-[#526760] flex justify-between">
-                          <span>{isTransport ? `Distance: ${commuteDistances[item.id] ?? 0} km` : `Quantity: ${item.selectedQty}`}</span>
+                          <span>{isTransport ? `Distance: ${parseFloat(commuteDistances[item.id]) || 0} km` : `Quantity: ${item.selectedQty}`}</span>
                           <span className="font-bold text-[#102f26]">+{item.points} pts · ~{item.co2SavedKg} kg CO₂</span>
                         </div>
                       </div>
