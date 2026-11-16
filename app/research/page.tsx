@@ -11,6 +11,7 @@ interface ResearchPost {
   department: string;
   research_type: 'study_participant' | 'policy_brief' | 'dataset_share';
   contact_email: string;
+  status: string;
   created_at: string;
 }
 
@@ -22,10 +23,11 @@ export default function ResearchHubPage() {
 
   useEffect(() => {
     const fetchPosts = async () => {
+      // Only fetch approved research posts so pending items stay in your Master Admin Hub
       const { data, error } = await supabase
         .from('research_posts')
         .select('*')
-        .eq('status', 'active')
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -113,7 +115,7 @@ export default function ResearchHubPage() {
               No active research entries found
             </p>
             <p className="mt-2 text-sm text-[#526760]">
-              Contribute a policy brief or invite participants to an ongoing campus study.
+              Contribute a policy brief or invite participants to an ongoing campus study. (New submissions require admin review).
             </p>
           </div>
         ) : (
@@ -126,7 +128,7 @@ export default function ResearchHubPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] bg-[#e2ede5] px-2.5 py-1">
-                      {item.research_type.replace('_', ' ')}
+                      {item.research_type ? item.research_type.replace('_', ' ') : 'research'}
                     </span>
                     <span className="font-mono text-xs text-[#526760] font-medium">
                       {item.department}
