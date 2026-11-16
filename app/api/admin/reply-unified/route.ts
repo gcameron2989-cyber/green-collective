@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       tableName = 'marketplace_listings'
       newStatus = 'approved'
     } else if (itemType === 'research') {
-      tableName = 'research_submissions'
+      tableName = 'research_posts' // <--- Updated to match your research table name
       newStatus = 'approved'
     }
 
