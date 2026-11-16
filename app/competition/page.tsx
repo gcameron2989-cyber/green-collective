@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   category: string;
   participants: number;
   carbonOffsetKg: number;
+  totalPoints: number;
   userId?: string;
 }
 
@@ -59,25 +60,26 @@ export default function CompetitionPage() {
         if (logError) throw logError;
 
         // --- Process Institutional (UBC Faculty) Standings ---
-        const facultyMap: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {};
+        const facultyMap: { [key: string]: { name: string; carbon: number; points: number; users: Set<string> } } = {};
         faculties?.forEach((f) => {
-          facultyMap[f.name] = { name: f.name, carbon: 0, users: new Set() };
+          facultyMap[f.name] = { name: f.name, carbon: 0, points: 0, users: new Set() };
         });
 
         // --- Process Local (Vancouver Neighborhood) Standings ---
-        const neighborhoodMap: { [key: string]: { name: string; carbon: number; users: Set<string> } } = {};
+        const neighborhoodMap: { [key: string]: { name: string; carbon: number; points: number; users: Set<string> } } = {};
         VANCOUVER_NEIGHBOURHOODS.forEach((n) => {
-          neighborhoodMap[n] = { name: n, carbon: 0, users: new Set() };
+          neighborhoodMap[n] = { name: n, carbon: 0, points: 0, users: new Set() };
         });
 
         // --- Process BEST 301 Cohort Standings ---
-        const best301UserMap: { [userId: string]: { carbon: number; handle: string } } = {};
+        const best301UserMap: { [userId: string]: { carbon: number; points: number; handle: string } } = {};
 
         loggedActions?.forEach((act) => {
           const qty = Number(act.quantity || 1);
           const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
           
           let baseImpact = Number(registryMatch?.impactValue ?? 0.5);
+          const pointsEarned = Number(act.points_earned ?? act.points ?? (registryMatch?.points ? registryMatch.points * qty : 10));
 
           // Distance-aware calculation matching log-action ledger precisely
           if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id)) {
@@ -90,7 +92,7 @@ export default function CompetitionPage() {
             else if (act.action_id === "carpool-fossil") baseImpact = dist * 0.15;
           }
 
-          const carbonOffset = baseImpact * qty;
+          const carbonOffset = baseImpact * (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id) ? 1 : qty);
 
           // Check if it belongs to faculty
           const matchedFaculty = Object.keys(facultyMap).find((facName) =>
@@ -98,6 +100,7 @@ export default function CompetitionPage() {
           );
           if (matchedFaculty && (act.sector === 'campus' || !act.sector)) {
             facultyMap[matchedFaculty].carbon += carbonOffset;
+            facultyMap[matchedFaculty].points += pointsEarned;
             if (act.user_id) facultyMap[matchedFaculty].users.add(act.user_id);
           }
 
@@ -107,6 +110,7 @@ export default function CompetitionPage() {
           );
           if (matchedNeighborhood && (act.sector === 'community' || act.sector === 'public' || !act.sector)) {
             neighborhoodMap[matchedNeighborhood].carbon += carbonOffset;
+            neighborhoodMap[matchedNeighborhood].points += pointsEarned;
             if (act.user_id) neighborhoodMap[matchedNeighborhood].users.add(act.user_id);
           }
 
@@ -117,10 +121,12 @@ export default function CompetitionPage() {
                 const handle = usernameMap[act.user_id] || `BEST_Scholar_${act.user_id.slice(0, 4)}`;
                 best301UserMap[act.user_id] = {
                   carbon: 0,
+                  points: 0,
                   handle: handle,
                 };
               }
               best301UserMap[act.user_id].carbon += carbonOffset;
+              best301UserMap[act.user_id].points += pointsEarned;
             }
           }
         });
@@ -132,8 +138,9 @@ export default function CompetitionPage() {
             category: 'UBC Faculty',
             participants: f.users.size,
             carbonOffsetKg: Math.round(f.carbon * 10) / 10,
+            totalPoints: f.points,
           }))
-          .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
+          .sort((a, b) => b.totalPoints - a.totalPoints || b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
         const computedLocal: LeaderboardEntry[] = Object.values(neighborhoodMap)
@@ -143,8 +150,9 @@ export default function CompetitionPage() {
             category: 'Vancouver Hub',
             participants: n.users.size,
             carbonOffsetKg: Math.round(n.carbon * 10) / 10,
+            totalPoints: n.points,
           }))
-          .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
+          .sort((a, b) => b.totalPoints - a.totalPoints || b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
         const computedBest301: LeaderboardEntry[] = Object.entries(best301UserMap)
@@ -154,9 +162,10 @@ export default function CompetitionPage() {
             category: 'BEST 301 Student',
             participants: 1,
             carbonOffsetKg: Math.round(data.carbon * 10) / 10,
+            totalPoints: data.points,
             userId: userId,
           }))
-          .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
+          .sort((a, b) => b.totalPoints - a.totalPoints || b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
         setInstitutionalStandings(computedInstitutional);
@@ -174,6 +183,7 @@ export default function CompetitionPage() {
 
   const currentStandings = boardTier === "institutional" ? institutionalStandings : boardTier === "local" ? localStandings : best301Standings;
   const totalCarbon = currentStandings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
+  const totalPointsEarned = currentStandings.reduce((acc, curr) => acc + curr.totalPoints, 0);
   const totalParticipants = boardTier === "best301" ? currentStandings.length : currentStandings.reduce((acc, curr) => acc + curr.participants, 0);
 
   return (
@@ -197,7 +207,7 @@ export default function CompetitionPage() {
             Community &amp; Institutional Leaderboards
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Track real-time carbon diversion across local Vancouver neighborhood hubs, university faculties, and course cohorts.
+            Track real-time challenge points and carbon diversion across local Vancouver neighborhood hubs, university faculties, and course cohorts.
           </p>
         </div>
       </section>
@@ -313,13 +323,23 @@ export default function CompetitionPage() {
                         </div>
                       </div>
 
-                      <div className="text-left sm:text-right">
-                        <span className="font-mono text-xl font-medium text-[#102f26] block">
-                          {entry.carbonOffsetKg.toLocaleString()} kg
-                        </span>
-                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71847d]">
-                          CO₂ Equivalent Offset
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right bg-emerald-50 px-3.5 py-1.5 rounded-lg border border-emerald-200">
+                          <span className="font-mono text-base font-bold text-[#39705d] block">
+                            ~{entry.carbonOffsetKg.toLocaleString()} kg
+                          </span>
+                          <span className="font-mono text-[9px] uppercase tracking-wider text-[#526760]">
+                            CO₂ Offset
+                          </span>
+                        </div>
+                        <div className="text-right bg-[#f1f6f2] px-3.5 py-1.5 rounded-lg border border-[#102f26]/10">
+                          <span className="font-mono text-base font-bold text-[#102f26] block">
+                            +{entry.totalPoints.toLocaleString()} pts
+                          </span>
+                          <span className="font-mono text-[9px] uppercase tracking-wider text-[#71847d]">
+                            Challenge Pts
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -342,10 +362,20 @@ export default function CompetitionPage() {
                 <div className="p-6 border border-[#102f26]/15 bg-white shadow-sm">
                   <span className="font-mono text-[10px] text-[#39705d] block mb-1">Total Carbon Mitigated</span>
                   <p className="font-medium text-[#102f26] text-2xl mb-1">
-                    {totalCarbon.toLocaleString()} kg
+                    {totalCarbon.toLocaleString()} kg CO₂e
                   </p>
                   <p className="text-[#71847d]">
                     Aggregated directly from verified participant action submissions.
+                  </p>
+                </div>
+
+                <div className="p-6 border border-[#102f26]/15 bg-white shadow-sm">
+                  <span className="font-mono text-[10px] text-[#39705d] block mb-1">Total Challenge Points</span>
+                  <p className="font-medium text-[#102f26] text-2xl mb-1">
+                    +{totalPointsEarned.toLocaleString()} pts
+                  </p>
+                  <p className="text-[#71847d]">
+                    Total points earned across all registered members.
                   </p>
                 </div>
 
@@ -355,7 +385,7 @@ export default function CompetitionPage() {
                     {totalParticipants} Competitor{totalParticipants === 1 ? '' : 's'}
                   </p>
                   <p className="text-[#71847d]">
-                    Unique usernames contributing to this leaderboard.
+                    Unique participants contributing to this leaderboard tier.
                   </p>
                 </div>
               </div>
@@ -371,7 +401,7 @@ export default function CompetitionPage() {
                 Sustainability Challenge Guidelines
               </h2>
               <p className="text-sm text-[#526760] leading-relaxed">
-                Green Collective&apos;s leaderboard system quantifies grassroots environmental action across institutional departments, Vancouver neighborhoods, and individual student handles for course cohorts like BEST 301.
+                Green Collective&apos;s leaderboard system quantifies grassroots environmental action across institutional departments, Vancouver neighborhoods, and individual student handles for course cohorts like BEST 301. Rankings reflect both challenge points and estimated carbon emissions mitigated.
               </p>
             </div>
           </div>
