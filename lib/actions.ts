@@ -3,9 +3,10 @@ export interface ActionItem {
   category: 'TRANSPORT' | 'FOOD' | 'ENERGY' | 'WASTE' | 'CIRCULARITY' | 'CONSUMPTION' | 'COMMUNITY';
   name: string;
   description: string;
-  impactValue: number; // e.g. 2.4 kg CO2e
-  unitLabel: string; // e.g. "trip", "meal", "load", "day", "item"
-  points: number;
+  impactValue: number; // base CO2e per unit (or per km if distance-based)
+  unitLabel: string; // e.g. "trip", "meal", "load", "day", "item", "km"
+  points: number; // base points per unit (or per km if distance-based)
+  isDistanceBased?: boolean;
   calculationNote?: string;
 }
 
@@ -15,29 +16,32 @@ export const ACTION_REGISTRY: ActionItem[] = [
     category: 'TRANSPORT',
     name: 'Active Transit (Cycling / Walking)',
     description: 'Completely eliminate vehicle emissions by commuting under human power.',
-    impactValue: 2.4,
-    unitLabel: 'trip',
-    points: 30,
-    calculationNote: 'Based on displacing direct fossil fuel vehicle emissions via human power.',
+    impactValue: 0.25, // kg CO2e per km
+    unitLabel: 'km',
+    points: 15,        // points per km
+    isDistanceBased: true,
+    calculationNote: 'Linear scale based on human-powered displacement of vehicle emissions (~0.25 kg CO₂e/km).',
   },
   {
     id: 'public-transit',
     category: 'TRANSPORT',
     name: 'Public Transit (Bus / SkyTrain)',
     description: 'Share efficient high-capacity transit instead of driving a single-occupancy vehicle.',
-    impactValue: 2.04,
-    unitLabel: 'trip',
-    points: 25,
-    calculationNote: 'Calculated using regional bus and SkyTrain grid emission averages.',
+    impactValue: 0.18, // kg CO2e per km
+    unitLabel: 'km',
+    points: 10,        // points per km
+    isDistanceBased: true,
+    calculationNote: 'Regional transit grid emission offset compared to single-occupant driving.',
   },
   {
     id: 'ev-rideshare',
     category: 'TRANSPORT',
     name: 'Shared EV Ride / Uber Green',
     description: 'Traveled via battery-electric rideshare or zero-emission fleet vehicle.',
-    impactValue: 2.8,
-    unitLabel: 'trip',
-    points: 30,
+    impactValue: 0.32, // kg CO2e per km
+    unitLabel: 'km',
+    points: 8,         // points per km
+    isDistanceBased: true,
     calculationNote: 'Zero tailpipe emissions offset factor.',
   },
   {
@@ -45,10 +49,11 @@ export const ACTION_REGISTRY: ActionItem[] = [
     category: 'TRANSPORT',
     name: 'Traditional Carpool (Combustion Vehicle)',
     description: 'Shared a ride in a standard gasoline/diesel sedan, SUV, or truck to split emissions.',
-    impactValue: 1.4,
-    unitLabel: 'trip',
-    points: 20,
-    calculationNote: 'Emissions offset scaled by passenger occupancy.',
+    impactValue: 0.15, // kg CO2e per km
+    unitLabel: 'km',
+    points: 8,         // points per km
+    isDistanceBased: true,
+    calculationNote: 'Emissions offset scaled by passenger occupancy splitting.',
   },
   {
     id: 'plant-based-meal',
@@ -57,7 +62,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Opt for whole plant ingredients over high-emission livestock alternatives.',
     impactValue: 1.5,
     unitLabel: 'meal',
-    points: 20,
+    points: 30,
     calculationNote: 'Replaces ruminant meat baseline carbon footprint.',
   },
   {
@@ -67,7 +72,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Reduce long-distance cold-chain transport and freight emissions.',
     impactValue: 0.8,
     unitLabel: 'meal',
-    points: 15,
+    points: 20,
   },
   {
     id: 'zero-food-waste',
@@ -76,7 +81,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Successfully consumed or repurposed leftovers to prevent food waste.',
     impactValue: 0.6,
     unitLabel: 'meal',
-    points: 20,
+    points: 15,
   },
   {
     id: 'line-dry',
@@ -85,7 +90,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Bypass energy-intensive electric heating elements in clothes dryers completely.',
     impactValue: 2.4,
     unitLabel: 'load',
-    points: 25,
+    points: 50,
   },
   {
     id: 'thermostat-setback',
@@ -94,7 +99,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Lower residential heating setpoints slightly to reduce natural gas / electric load.',
     impactValue: 1.8,
     unitLabel: 'day',
-    points: 20,
+    points: 40,
   },
   {
     id: 'cold-water-laundry',
@@ -103,7 +108,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Wash clothing using cold water settings instead of heated water cycles.',
     impactValue: 0.6,
     unitLabel: 'load',
-    points: 15,
+    points: 20,
   },
   {
     id: 'waste-sorting',
@@ -121,7 +126,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Extend product lifespans to offset raw material extraction and manufacturing.',
     impactValue: 3.2,
     unitLabel: 'item',
-    points: 40,
+    points: 70,
   },
   {
     id: 'second-hand',
@@ -130,7 +135,7 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Source apparel or goods second-hand to avoid supply chain production impacts.',
     impactValue: 4.5,
     unitLabel: 'item',
-    points: 50,
+    points: 90,
   },
   {
     id: 'reusable-cup',
@@ -148,27 +153,21 @@ export const ACTION_REGISTRY: ActionItem[] = [
     description: 'Participated in campus sustainability clean-up or ecological restoration.',
     impactValue: 4.0,
     unitLabel: 'event',
-    points: 50,
+    points: 100,
   },
 ];
 
-/** Calculated formatted string (e.g. "~2.4 kg CO₂e / trip") */
+/** Calculated formatted string (e.g. "~0.25 kg CO₂e / km" or "~2.40 kg CO₂e / load") */
 export function getFormattedImpact(action: ActionItem): string {
   return `~${action.impactValue.toFixed(2)} kg CO₂e / ${action.unitLabel}`;
 }
 
-/** Helper function to calculate total carbon impact for selected action IDs */
-export function calculateTotalImpact(selectedIds: string[]): number {
-  return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
-    (sum, action) => sum + action.impactValue,
-    0
-  );
+/** Helper function to calculate total carbon impact with quantity/distance scaling */
+export function calculateActionImpact(action: ActionItem, quantityOrDistance: number): number {
+  return Number((action.impactValue * quantityOrDistance).toFixed(2));
 }
 
-/** Helper function to calculate total points for selected action IDs */
-export function calculateTotalPoints(selectedIds: string[]): number {
-  return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
-    (sum, action) => sum + action.points,
-    0
-  );
+/** Helper function to calculate points with quantity/distance scaling */
+export function calculateActionPoints(action: ActionItem, quantityOrDistance: number): number {
+  return Math.round(action.points * quantityOrDistance);
 }
