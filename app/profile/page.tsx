@@ -40,7 +40,6 @@ function ProfileContent() {
         return
       }
 
-      // 1. Try fetching from public profiles table safely without .single()
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username')
@@ -77,12 +76,10 @@ function ProfileContent() {
 
     const trimmedName = customUsername.trim()
 
-    // 1. Update Auth user metadata
     await supabase.auth.updateUser({
       data: { username: trimmedName }
     })
 
-    // 2. Upsert into public profiles table with fallback handling
     const { error } = await supabase
       .from('profiles')
       .upsert(
@@ -128,12 +125,54 @@ function ProfileContent() {
 
   const co2OffsetKg = totalCo2Avoided.toFixed(1)
 
+  // Category point counters for progress breakdowns
+  const categoryPoints: Record<string, number> = {
+    TRANSPORT: 0,
+    FOOD: 0,
+    ENERGY: 0,
+    WASTE: 0,
+    CIRCULARITY: 0,
+    COMMUNITY: 0,
+  }
+
+  submissions.forEach((s) => {
+    const match = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+    const cat = match?.category || 'COMMUNITY'
+    const pts = Number(s.points_earned ?? s.points ?? 0)
+    if (categoryPoints[cat] !== undefined) {
+      categoryPoints[cat] += pts
+    } else {
+      categoryPoints['COMMUNITY'] += pts
+    }
+  })
+
   const zeroWasteCount = submissions
     .filter((s) => s.action_name?.toLowerCase().includes('zero waste') || s.action_name?.toLowerCase().includes('container') || s.action_name?.toLowerCase().includes('meal'))
     .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
 
   const transitCount = submissions
     .filter((s) => s.action_name?.toLowerCase().includes('transit') || s.action_name?.toLowerCase().includes('commute') || s.action_name?.toLowerCase().includes('ride'))
+    .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
+
+  const circularityCount = submissions
+    .filter((s) => {
+      const match = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+      return match?.category === 'CIRCULARITY'
+    })
+    .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
+
+  const energyCount = submissions
+    .filter((s) => {
+      const match = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+      return match?.category === 'ENERGY'
+    })
+    .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
+
+  const foodCount = submissions
+    .filter((s) => {
+      const match = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+      return match?.category === 'FOOD'
+    })
     .reduce((sum, s) => sum + Number(s.quantity || 1), 0)
 
   const singleUseSaved = zeroWasteCount * 1
@@ -144,7 +183,11 @@ function ProfileContent() {
     { name: 'First Step', desc: 'Log 1 eco-action', unlocked: totalActionsLogged >= 1, icon: '🌱' },
     { name: 'Zero Waste Hero', desc: '5+ zero-waste choices', unlocked: zeroWasteCount >= 5, icon: '♻️' },
     { name: 'Commuter Pro', desc: '5+ green commutes', unlocked: transitCount >= 5, icon: '🚲' },
+    { name: 'Circular Pioneer', desc: '3+ circularity items', unlocked: circularityCount >= 3, icon: '🔄' },
+    { name: 'Energy Conservative', desc: '3+ energy conservation actions', unlocked: energyCount >= 3, icon: '⚡' },
+    { name: 'Food Systems Champ', desc: '3+ sustainable food choices', unlocked: foodCount >= 3, icon: '🥗' },
     { name: 'UBC Challenge Finisher', desc: 'Earn 150+ challenge pts', unlocked: totalPoints >= 150, icon: '🏆' },
+    { name: 'Carbon Centurion', desc: 'Save 50+ kg CO₂e', unlocked: totalCo2Avoided >= 50, icon: '🌍' },
   ]
 
   return (
@@ -246,6 +289,28 @@ function ProfileContent() {
           <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">Items Diverted</span>
           <div className="text-3xl font-extrabold text-neutral-900">{loading ? '...' : singleUseSaved}</div>
           <p className="text-[11px] text-emerald-700 font-medium">Zero-waste choices</p>
+        </div>
+      </div>
+
+      {/* Category Breakdown Section */}
+      <div className="p-6 rounded-2xl bg-neutral-50 border border-neutral-200/60 space-y-4">
+        <h2 className="text-sm font-bold text-neutral-900 uppercase tracking-wider font-mono">Impact by Category</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Object.entries(categoryPoints).map(([cat, pts]) => {
+            const maxVal = Math.max(totalPoints, 1)
+            const percentage = Math.min(Math.round((pts / maxVal) * 100), 100)
+            return (
+              <div key={cat} className="space-y-1 bg-white p-3.5 rounded-xl border border-neutral-200/70">
+                <div className="flex justify-between items-center text-xs font-mono">
+                  <span className="font-bold text-neutral-800">{cat}</span>
+                  <span className="font-extrabold text-emerald-700">{pts} pts</span>
+                </div>
+                <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-600 rounded-full transition-all duration-300" style={{ width: `${percentage}%` }} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
