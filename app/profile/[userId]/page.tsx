@@ -3,6 +3,7 @@
 import React, { useEffect, useState, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { ACTION_REGISTRY } from '@/lib/actions'
 
 interface LoggedActionRow {
   id: string
@@ -10,6 +11,7 @@ interface LoggedActionRow {
   quantity: number
   points: number
   points_earned?: number
+  action_id: string
   action_name: string
   notes?: string
   sector?: string
@@ -95,15 +97,37 @@ export default function UserPublicProfilePage({ params }: { params: Promise<{ us
 
   const totalPoints = submissions.reduce((sum, s) => sum + Number(s.points_earned ?? s.points ?? 0), 0)
 
+  const totalCo2Avoided = submissions.reduce((sum, s) => {
+    const qty = Number(s.quantity || 1)
+    const registryMatch = ACTION_REGISTRY.find((a) => a.id === s.action_id)
+    
+    let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+
+    if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(s.action_id)) {
+      const distMatch = s.notes?.match(/Distance:\s*([\d.]+)\s*km/)
+      const dist = distMatch ? parseFloat(distMatch[1]) : (s.quantity || 5)
+
+      if (s.action_id === "active-transit") baseImpact = dist * 0.25
+      else if (s.action_id === "public-transit") baseImpact = dist * 0.18
+      else if (s.action_id === "ev-rideshare") baseImpact = dist * 0.32
+      else if (s.action_id === "carpool-fossil") baseImpact = dist * 0.15
+    }
+
+    const impact = baseImpact * (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(s.action_id) ? 1 : qty)
+    return sum + impact
+  }, 0)
+
   return (
     <div className="w-full max-w-4xl mx-auto px-6 py-12 space-y-8 font-sans bg-white text-neutral-900">
-      <div className="flex items-center justify-between border-b pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-6 gap-4">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
             Public Member Profile
           </span>
           <h1 className="text-3xl font-extrabold tracking-tight mt-2">@{username}</h1>
-          <p className="text-xs font-mono text-neutral-500 mt-1">Total Impact Points: <span className="text-emerald-800 font-bold">{totalPoints} pts</span></p>
+          <p className="text-xs font-mono text-neutral-500 mt-1">
+            Total Impact: <span className="text-emerald-800 font-bold">{totalPoints} pts</span> • <span className="text-emerald-800 font-bold">{totalCo2Avoided.toFixed(1)} kg CO₂e</span>
+          </p>
         </div>
 
         {currentAuthId && currentAuthId !== targetUserId && (
@@ -130,20 +154,44 @@ export default function UserPublicProfilePage({ params }: { params: Promise<{ us
           </div>
         ) : (
           <div className="space-y-3">
-            {submissions.map((sub) => (
-              <div key={sub.id} className="p-4 rounded-xl border border-neutral-200 flex justify-between items-center bg-neutral-50/50">
-                <div>
-                  <div className="text-xs font-bold text-neutral-900">{sub.action_name}</div>
-                  <div className="font-mono text-[11px] text-neutral-500">
-                    Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()} {sub.affiliation_name ? `• ${sub.affiliation_name}` : ''}
+            {submissions.map((sub) => {
+              const qty = Number(sub.quantity || 1)
+              const registryMatch = ACTION_REGISTRY.find((a) => a.id === sub.action_id)
+              let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+
+              if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(sub.action_id)) {
+                const distMatch = sub.notes?.match(/Distance:\s*([\d.]+)\s*km/)
+                const dist = distMatch ? parseFloat(distMatch[1]) : (sub.quantity || 5)
+
+                if (sub.action_id === "active-transit") baseImpact = dist * 0.25
+                else if (sub.action_id === "public-transit") baseImpact = dist * 0.18
+                else if (sub.action_id === "ev-rideshare") baseImpact = dist * 0.32
+                else if (sub.action_id === "carpool-fossil") baseImpact = dist * 0.15
+              }
+
+              const itemCo2 = (baseImpact * (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(sub.action_id) ? 1 : qty)).toFixed(1)
+              const pts = Number(sub.points_earned ?? sub.points ?? 0)
+
+              return (
+                <div key={sub.id} className="p-4 rounded-xl border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-50/50">
+                  <div>
+                    <div className="text-xs font-bold text-neutral-900">{sub.action_name}</div>
+                    <div className="font-mono text-[11px] text-neutral-500">
+                      Qty: {sub.quantity} • {new Date(sub.created_at).toLocaleDateString()} {sub.affiliation_name ? `• ${sub.affiliation_name}` : ''}
+                    </div>
+                    {sub.notes && <p className="text-[10px] text-neutral-400 font-mono italic mt-1">{sub.notes}</p>}
                   </div>
-                  {sub.notes && <p className="text-[10px] text-neutral-400 font-mono italic mt-1">{sub.notes}</p>}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                      ~{itemCo2} kg CO₂e
+                    </div>
+                    <div className="font-mono text-xs font-bold text-[#102f26] bg-[#f1f6f2] px-3 py-1.5 rounded-lg border border-[#102f26]/10">
+                      +{pts} pts
+                    </div>
+                  </div>
                 </div>
-                <div className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">
-                  +{Number(sub.points_earned ?? sub.points ?? 0)} pts
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
