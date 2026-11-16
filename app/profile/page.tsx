@@ -356,6 +356,23 @@ function ProfileContent() {
           ) : (
             submissions.map((sub) => {
               const pts = Number(sub.points_earned ?? sub.points ?? 0)
+              
+              // Calculate individual item CO2 impact matching global logic
+              const qty = Number(sub.quantity || 1)
+              const registryMatch = ACTION_REGISTRY.find((a) => a.id === sub.action_id)
+              let baseImpact = Number(registryMatch?.impactValue ?? 0.5)
+
+              if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(sub.action_id)) {
+                const distMatch = sub.notes?.match(/Distance:\s*([\d.]+)\s*km/)
+                const dist = distMatch ? parseFloat(distMatch[1]) : 5
+
+                if (sub.action_id === "active-transit") baseImpact = dist * 0.25
+                else if (sub.action_id === "public-transit") baseImpact = dist * 0.18
+                else if (sub.action_id === "ev-rideshare") baseImpact = dist * 0.32
+                else if (sub.action_id === "carpool-fossil") baseImpact = dist * 0.15
+              }
+
+              const itemCo2 = (baseImpact * qty).toFixed(1)
 
               return (
                 <div key={sub.id} className="p-4 rounded-xl bg-white border border-neutral-200/70 flex items-center justify-between gap-4 shadow-2xs">
@@ -377,8 +394,13 @@ function ProfileContent() {
                       </p>
                     )}
                   </div>
-                  <div className="font-mono text-xs font-bold text-emerald-800 shrink-0 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                    +{pts} pts
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                      -{itemCo2} kg CO₂e
+                    </span>
+                    <span className="font-mono text-xs font-bold text-white bg-[#0f382c] px-3 py-1.5 rounded-lg">
+                      +{pts} pts
+                    </span>
                   </div>
                 </div>
               )
