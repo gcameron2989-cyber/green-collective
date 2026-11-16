@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   category: string;
   participants: number;
   carbonOffsetKg: number;
+  userId?: string;
 }
 
 const VANCOUVER_NEIGHBOURHOODS = [
@@ -153,6 +154,7 @@ export default function CompetitionPage() {
             category: 'BEST 301 Student',
             participants: 1,
             carbonOffsetKg: Math.round(data.carbon * 10) / 10,
+            userId: userId,
           }))
           .sort((a, b) => b.carbonOffsetKg - a.carbonOffsetKg)
           .map((item, idx) => ({ ...item, rank: idx + 1 }));
@@ -295,7 +297,15 @@ export default function CompetitionPage() {
                         </span>
                         <div>
                           <h3 className="text-lg font-medium tracking-tight text-[#102f26]">
-                            {boardTier === "best301" ? `@${entry.name}` : entry.name}
+                            {boardTier === "best301" && entry.userId ? (
+                              <Link href={`/profile/${entry.userId}`} className="hover:underline text-[#102f26]">
+                                @{entry.name}
+                              </Link>
+                            ) : boardTier === "best301" ? (
+                              `@${entry.name}`
+                            ) : (
+                              entry.name
+                            )}
                           </h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
                             {entry.category}
