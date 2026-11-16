@@ -172,7 +172,7 @@ export function calculateActionPoints(action: ActionItem, quantityOrDistance: nu
   return Math.round(action.points * quantityOrDistance);
 }
 
-/** Helper function to calculate total carbon impact for selected action IDs */
+/** Helper function to calculate total carbon impact for selected action IDs (Restored for page.tsx / habits/page.tsx) */
 export function calculateTotalImpact(selectedIds: string[]): number {
   return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
     (sum, action) => sum + action.impactValue,
@@ -180,7 +180,7 @@ export function calculateTotalImpact(selectedIds: string[]): number {
   );
 }
 
-/** Helper function to calculate total points for selected action IDs */
+/** Helper function to calculate total points for selected action IDs (Restored for page.tsx / habits/page.tsx) */
 export function calculateTotalPoints(selectedIds: string[]): number {
   return ACTION_REGISTRY.filter((action) => selectedIds.includes(action.id)).reduce(
     (sum, action) => sum + action.points,
