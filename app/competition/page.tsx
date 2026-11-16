@@ -15,6 +15,14 @@ interface LeaderboardEntry {
   userId?: string;
 }
 
+interface StudentContributor {
+  userId: string;
+  username: string;
+  totalPoints: number;
+  carbonOffsetKg: number;
+  actionsCount: number;
+}
+
 const VANCOUVER_NEIGHBOURHOODS = [
   "Arbutus Ridge", "Burnaby", "Downtown", "Dunbar-Southlands", "Fairview",
   "Grandview-Woodland", "Hastings-Sunrise", "Kensington-Cedar Cottage", "Kerrisdale",
@@ -32,6 +40,11 @@ export default function CompetitionPage() {
   const [localStandings, setLocalStandings] = useState<LeaderboardEntry[]>([]);
   const [best301Standings, setBest301Standings] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Drill-down Modal State
+  const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
+  const [entityMembers, setEntityMembers] = useState<StudentContributor[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState<boolean>(false);
   
   const supabase = createClient();
 
@@ -181,6 +194,71 @@ export default function CompetitionPage() {
     fetchLiveStandings();
   }, [supabase]);
 
+  // Handler to inspect members within a clicked Faculty or Neighborhood
+  const handleInspectEntity = async (entityName: string) => {
+    setSelectedEntity(entityName);
+    setLoadingMembers(true);
+
+    try {
+      const { data: profiles } = await supabase.from('profiles').select('id, username');
+      const usernameMap: { [userId: string]: string } = {};
+      profiles?.forEach((p) => {
+        if (p.id && p.username) usernameMap[p.id] = p.username;
+      });
+
+      const { data: actions } = await supabase.from('logged_actions').select('*');
+      const userImpactMap: { [userId: string]: { points: number; carbon: number; count: number } } = {};
+
+      actions?.forEach((act) => {
+        const matchesEntity =
+          (act.affiliation_name && act.affiliation_name.toLowerCase().includes(entityName.toLowerCase())) ||
+          (act.notes && act.notes.toLowerCase().includes(entityName.toLowerCase()));
+
+        if (matchesEntity && act.user_id) {
+          const qty = Number(act.quantity || 1);
+          const registryMatch = ACTION_REGISTRY.find((a) => a.id === act.action_id);
+          let baseImpact = Number(registryMatch?.impactValue ?? 0.5);
+          const pointsEarned = Number(act.points_earned ?? act.points ?? (registryMatch?.points ? registryMatch.points * qty : 10));
+
+          if (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id)) {
+            const distMatch = act.notes?.match(/Distance:\s*([\d.]+)\s*km/);
+            const dist = distMatch ? parseFloat(distMatch[1]) : 5;
+
+            if (act.action_id === "active-transit") baseImpact = dist * 0.25;
+            else if (act.action_id === "public-transit") baseImpact = dist * 0.18;
+            else if (act.action_id === "ev-rideshare") baseImpact = dist * 0.32;
+            else if (act.action_id === "carpool-fossil") baseImpact = dist * 0.15;
+          }
+
+          const carbon = baseImpact * (["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"].includes(act.action_id) ? 1 : qty);
+
+          if (!userImpactMap[act.user_id]) {
+            userImpactMap[act.user_id] = { points: 0, carbon: 0, count: 0 };
+          }
+          userImpactMap[act.user_id].points += pointsEarned;
+          userImpactMap[act.user_id].carbon += carbon;
+          userImpactMap[act.user_id].count += 1;
+        }
+      });
+
+      const computedContributors: StudentContributor[] = Object.entries(userImpactMap)
+        .map(([userId, data]) => ({
+          userId,
+          username: usernameMap[userId] || `Scholar_${userId.slice(0, 4)}`,
+          totalPoints: data.points,
+          carbonOffsetKg: Math.round(data.carbon * 10) / 10,
+          actionsCount: data.count,
+        }))
+        .sort((a, b) => b.totalPoints - a.totalPoints || b.carbonOffsetKg - a.carbonOffsetKg);
+
+      setEntityMembers(computedContributors);
+    } catch (err) {
+      console.error('Error fetching entity members:', err);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
   const currentStandings = boardTier === "institutional" ? institutionalStandings : boardTier === "local" ? localStandings : best301Standings;
   const totalCarbon = currentStandings.reduce((acc, curr) => acc + curr.carbonOffsetKg, 0);
   const totalPointsEarned = currentStandings.reduce((acc, curr) => acc + curr.totalPoints, 0);
@@ -207,7 +285,7 @@ export default function CompetitionPage() {
             Community &amp; Institutional Leaderboards
           </h1>
           <p className="mt-4 max-w-xl text-base text-[#526760] md:text-lg">
-            Track real-time challenge points and carbon diversion across local Vancouver neighborhood hubs, university faculties, and course cohorts.
+            Track real-time challenge points and carbon diversion across local Vancouver neighborhood hubs, university faculties, and course cohorts. Click any faculty or hub to inspect top contributors.
           </p>
         </div>
       </section>
@@ -314,11 +392,20 @@ export default function CompetitionPage() {
                             ) : boardTier === "best301" ? (
                               `@${entry.name}`
                             ) : (
-                              entry.name
+                              <button
+                                type="button"
+                                onClick={() => handleInspectEntity(entry.name)}
+                                className="hover:underline text-[#102f26] font-medium text-left flex items-center gap-2 group cursor-pointer"
+                              >
+                                <span>{entry.name}</span>
+                                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 group-hover:bg-[#102f26] group-hover:text-white transition">
+                                  Inspect Roster →
+                                </span>
+                              </button>
                             )}
                           </h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#526760] mt-0.5">
-                            {entry.category}
+                            {entry.category} {boardTier !== "best301" && `• ${entry.participants} active contributors`}
                           </p>
                         </div>
                       </div>
@@ -407,6 +494,70 @@ export default function CompetitionPage() {
           </div>
         )}
       </section>
+
+      {/* Drill-down Roster Modal */}
+      {selectedEntity && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans text-neutral-900">
+            <div className="flex justify-between items-center border-b pb-3 mb-4">
+              <div>
+                <span className="text-[10px] font-mono uppercase text-[#39705d] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Sub-Group Contributors
+                </span>
+                <h3 className="text-lg font-bold mt-1 text-[#102f26]">{selectedEntity}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEntity(null)}
+                className="text-gray-400 hover:text-black font-mono text-sm px-2 py-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingMembers ? (
+              <div className="py-12 text-center text-xs font-mono text-[#526760]">
+                Loading member standings...
+              </div>
+            ) : entityMembers.length === 0 ? (
+              <div className="py-12 text-center text-xs font-mono text-[#526760] border border-dashed rounded-xl">
+                No members have logged actions under this unit yet.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {entityMembers.map((member, idx) => (
+                  <div
+                    key={member.userId}
+                    className="p-3.5 bg-[#f9f8f6] border border-[#102f26]/10 rounded-xl flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono font-bold text-[#39705d] w-6">
+                        {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
+                      </span>
+                      <div>
+                        <Link href={`/profile/${member.userId}`} className="font-bold hover:underline text-[#102f26]">
+                          @{member.username}
+                        </Link>
+                        <div className="text-[10px] font-mono text-[#526760]">
+                          {member.actionsCount} actions logged
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-[#39705d] bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                        ~{member.carbonOffsetKg} kg CO₂e
+                      </span>
+                      <span className="font-mono text-xs font-bold text-[#102f26] bg-[#f1f6f2] px-2.5 py-1 rounded border border-[#102f26]/10">
+                        +{member.totalPoints} pts
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
