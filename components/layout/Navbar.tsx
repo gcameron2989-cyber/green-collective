@@ -52,6 +52,7 @@ export default function Navbar() {
   const navItems = [
     { href: '/log-action', label: 'Actions' },
     { href: '/competition', label: 'Leaderboard' },
+    { href: '/feed', label: 'Collective Feed' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/research', label: 'Research Hub' },
