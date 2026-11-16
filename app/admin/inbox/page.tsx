@@ -3,9 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+// Set your admin email address here
+const ADMIN_EMAIL = "gcameron2989@gmail.com"; // Replace with your actual admin email if different
+
 export default function MasterAdminHub() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ id: string; text: string } | null>(null);
@@ -13,7 +18,29 @@ export default function MasterAdminHub() {
   const supabase = createClient();
 
   useEffect(() => {
-    async function fetchAllSubmissions() {
+    async function checkAuthAndFetch() {
+      // 1. Check current logged-in user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.user) {
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+
+      const email = session.user.email;
+      setUserEmail(email);
+
+      // 2. Verify against your admin email whitelist
+      if (email !== ADMIN_EMAIL) {
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+
+      setAuthorized(true);
+
+      // 3. Fetch all five submission tables concurrently if authorized
       const [inquiriesRes, actionsRes, initiativesRes, marketRes, researchRes] = await Promise.all([
         supabase.from("contact_inquiries").select("*"),
         supabase.from("proposed_actions").select("*, profiles:user_id(full_name, email)"),
@@ -78,7 +105,7 @@ export default function MasterAdminHub() {
       setLoading(false);
     }
 
-    fetchAllSubmissions();
+    checkAuthAndFetch();
   }, [supabase]);
 
   const handleSendResponse = async (item: any) => {
@@ -119,20 +146,53 @@ export default function MasterAdminHub() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#f9f8f6] p-12 text-xs font-mono text-[#526760]">Loading master admin inbox...</div>;
+    return <div className="min-h-screen bg-[#f9f8f6] p-12 text-xs font-mono text-[#526760]">Verifying admin authorization...</div>;
+  }
+
+  if (!authorized) {
+    return (
+      <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] flex items-center justify-center p-6 font-sans">
+        <div className="max-w-md w-full bg-white border border-[#102f26]/15 rounded-2xl p-8 shadow-sm text-center space-y-4">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-red-600 block">
+            Access Restricted · 403 Forbidden
+          </span>
+          <h1 className="text-2xl font-extrabold tracking-tight">Admin Portal Locked</h1>
+          <p className="text-xs text-[#526760] leading-relaxed">
+            {userEmail 
+              ? `Signed in as ${userEmail}. This account does not have administrator privileges for Green Collective.`
+              : `You must be logged into an authorized administrator account to access this page.`}
+          </p>
+          <div className="pt-2">
+            <a
+              href="/login"
+              className="inline-block px-5 py-2.5 bg-[#102f26] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#39705d] transition shadow"
+            >
+              Sign In With Admin Account →
+            </a>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
     <main className="min-h-screen bg-[#f9f8f6] text-[#102f26] p-6 md:p-12 font-sans">
       <div className="max-w-5xl mx-auto space-y-8">
-        <div>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
-            Admin Hub · Master Management
-          </span>
-          <h1 className="text-3xl font-extrabold tracking-tight">Master Submissions &amp; Inbox Hub</h1>
-          <p className="text-xs text-[#526760] mt-1">
-            Manage contact forms, action proposals, campus initiatives, marketplace listings, and research submissions in one place.
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-[#39705d] block mb-1">
+              Admin Hub · Master Management
+            </span>
+            <h1 className="text-3xl font-extrabold tracking-tight">Master Submissions &amp; Inbox Hub</h1>
+            <p className="text-xs text-[#526760] mt-1">
+              Manage contact forms, action proposals, campus initiatives, marketplace listings, and research submissions in one place.
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-lg block font-bold">
+              Authenticated: {userEmail}
+            </span>
+          </div>
         </div>
 
         {items.length === 0 ? (
