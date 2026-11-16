@@ -55,7 +55,7 @@ export default function Navbar() {
     { href: '/feed', label: 'Collective' },
     { href: '/initiatives', label: 'Initiatives' },
     { href: '/marketplace', label: 'Marketplace' },
-    { href: '/research', label: 'Research Hub' },
+    { href: '/research', label: 'Research' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
   ];
