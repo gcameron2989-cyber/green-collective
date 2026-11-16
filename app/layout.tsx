@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/footer";
+import AdminBar from "@/components/AdminBar"; // <--- Import your admin bar
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://greencollective.ca"),
@@ -70,6 +71,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased min-h-screen bg-white text-neutral-900 flex flex-col justify-between selection:bg-emerald-100 selection:text-emerald-900">
         
+        {/* Admin Bar: Renders at the very top exclusively for your admin account */}
+        <AdminBar />
+
         {/* Enhanced Organization & WebSite Schema Markup for Entity SEO */}
         <script
           type="application/ld+json"
