@@ -25,10 +25,11 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     const fetchListings = async () => {
+      // Fetch only approved listings from marketplace_listings table
       const { data, error } = await supabase
-        .from('listings')
+        .from('marketplace_listings')
         .select('*')
-        .eq('status', 'active')
+        .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -114,7 +115,7 @@ export default function MarketplacePage() {
               No active listings found in this category
             </p>
             <p className="mt-2 text-sm text-[#526760]">
-              Be the first to list a sustainable item or material for the community.
+              Be the first to list a sustainable item or material for the community. (New submissions are subject to review).
             </p>
           </div>
         ) : (
@@ -127,10 +128,10 @@ export default function MarketplacePage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-[10px] uppercase tracking-wider text-[#39705d] bg-[#e2ede5] px-2.5 py-1">
-                      {item.listing_type.replace('_', ' ')}
+                      {item.listing_type ? item.listing_type.replace('_', ' ') : 'listing'}
                     </span>
                     <span className="font-mono text-xs font-bold text-[#102f26]">
-                      {item.price === 0 ? 'FREE / GIVEAWAY' : `$${item.price.toFixed(2)}`}
+                      {item.price === 0 ? 'FREE / GIVEAWAY' : `$${(item.price || 0).toFixed(2)}`}
                     </span>
                   </div>
                   <h3 className="text-xl font-medium text-[#102f26] group-hover:text-[#39705d] transition-colors">
