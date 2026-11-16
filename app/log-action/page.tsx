@@ -275,6 +275,21 @@ export default function LogActionPage() {
       console.error("Error submitting proposal:", error);
       alert("Failed to submit proposal. Please try again.");
     } else {
+      // Trigger confirmation email via Resend API route
+      try {
+        await fetch("/api/admin/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toEmail: currentUser.email,
+            name: currentUser.user_metadata?.full_name || "Eco-Champion",
+            actionType: "action proposal",
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to trigger confirmation email:", err);
+      }
+
       setProposalSubmitted(true);
       setProposalTitle("");
       setProposalDesc("");
@@ -307,7 +322,7 @@ export default function LogActionPage() {
 
       <section className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
-          {/* Propose New Action Section (Moved to Top) */}
+          {/* Propose New Action Section */}
           <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] rounded-2xl shadow-sm">
             <div className="flex justify-between items-center">
               <div>
@@ -327,7 +342,7 @@ export default function LogActionPage() {
               <form onSubmit={handleProposeAction} className="mt-6 space-y-4 border-t border-[#102f26]/10 pt-6">
                 {proposalSubmitted ? (
                   <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-mono rounded-xl text-center">
-                    ✓ Proposal submitted successfully! It has been sent for review.
+                    ✓ Proposal submitted successfully! A confirmation email has been sent to your inbox.
                   </div>
                 ) : (
                   <>
