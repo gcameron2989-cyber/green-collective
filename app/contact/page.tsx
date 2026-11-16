@@ -1,13 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client for the browser
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function ContactPage() {
   const [isPending, startTransition] = useTransition();
@@ -24,15 +17,23 @@ export default function ContactPage() {
     const message = formData.get('message') as string;
 
     startTransition(async () => {
-      const { error } = await supabase
-        .from('contact_inquiries')
-        .insert([{ name, email, message, status: 'unread' }]);
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message }),
+        });
 
-      if (error) {
-        console.error('Supabase error:', error);
-        setErrorMessage('Failed to send message. Please try again later.');
-      } else {
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to send message.');
+        }
+
         setSubmitted(true);
+      } catch (err: any) {
+        console.error('Contact submission error:', err);
+        setErrorMessage(err.message || 'Failed to send message. Please try again later.');
       }
     });
   }
@@ -96,7 +97,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-medium tracking-tight text-[#102f26]">Message received</h3>
                 <p className="text-sm text-[#526760] max-w-sm mx-auto">
-                  Thank you for reaching out. Your inquiry has been securely logged and our team will review it shortly.
+                  Thank you for reaching out. Your inquiry has been securely logged and a confirmation email has been dispatched to your inbox.
                 </p>
               </div>
             ) : (
