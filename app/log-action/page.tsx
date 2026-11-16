@@ -134,6 +134,7 @@ export default function LogActionPage() {
         const detail = ACTION_REGISTRY?.find((a) => a.id === id);
         if (!detail) return null;
 
+        const numericQty = Number(qty || 1);
         let calculatedCo2 = Number(detail.impactValue ?? 0);
         let calculatedPoints = Number(detail.points ?? 0);
 
@@ -141,17 +142,21 @@ export default function LogActionPage() {
           const dist = Number(commuteDistances[id] ?? 0);
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
-            calculatedPoints = Math.round(20 + dist * 2.2);
+            calculatedPoints = Math.round(dist * 15);
           } else if (id === "public-transit") {
             calculatedCo2 = Number((dist * 0.18).toFixed(2));
-            calculatedPoints = Math.round(15 + dist * 1.5);
+            calculatedPoints = Math.round(dist * 10);
           } else if (id === "ev-rideshare") {
             calculatedCo2 = Number((dist * 0.32).toFixed(2));
-            calculatedPoints = Math.round(30 + dist * 2.2);
+            calculatedPoints = Math.round(dist * 8);
           } else if (id === "carpool-fossil") {
             calculatedCo2 = Number((dist * 0.15).toFixed(2));
-            calculatedPoints = Math.round(15 + dist * 1.2);
+            calculatedPoints = Math.round(dist * 8);
           }
+        } else {
+          // Multiply standard items by quantity
+          calculatedCo2 = Number((detail.impactValue * numericQty).toFixed(2));
+          calculatedPoints = Math.round(detail.points * numericQty);
         }
 
         return {
@@ -159,15 +164,15 @@ export default function LogActionPage() {
           title: detail.name || id,
           co2SavedKg: calculatedCo2,
           points: calculatedPoints,
-          selectedQty: Number(qty || 1),
+          selectedQty: numericQty,
         };
       })
       .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
   }, [cart, commuteDistances]); 
 
-  const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + item.selectedQty, 0);
-  const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points * item.selectedQty, 0);
-  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg * item.selectedQty, 0);
+  const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + (TRANSPORT_IDS.includes(item.id) ? 1 : item.selectedQty), 0);
+  const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points, 0);
+  const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg, 0);
 
   const filteredActions =
     selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
@@ -192,7 +197,7 @@ export default function LogActionPage() {
             actionId: item.id,
             actionTitle: item.name,
             points: item.points,
-            quantity: item.selectedQty,
+            quantity: isDistanceBased ? dist : item.selectedQty,
             distanceKm: isDistanceBased ? dist : undefined,
             notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isBest301 && faculty === "Faculty of Forestry" ? " | BEST 301" : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
           };
@@ -254,7 +259,7 @@ export default function LogActionPage() {
             </span>
             <h1 className="text-3xl font-extrabold tracking-tight">Record Daily Sustainable Actions</h1>
             <p className="text-xs text-[#526760] max-w-xl mt-1">
-              Select all actions you completed today. Points are calculated using verified carbon factors and distance metrics.
+              Select all actions you completed today. Points and carbon savings scale dynamically with distance and quantity.
             </p>
           </div>
           <Link href="/profile" className="text-xs font-mono text-[#39705d] hover:underline" suppressHydrationWarning>
@@ -289,12 +294,26 @@ export default function LogActionPage() {
               const isTransport = TRANSPORT_IDS.includes(action.id);
               
               let cardImpact = Number(action.impactValue ?? 0);
+              let cardPoints = Number(action.points ?? 0);
+
               if (isTransport) {
                 const dist = Number(commuteDistances[action.id] ?? 0);
-                if (action.id === "active-transit") cardImpact = Number((dist * 0.25).toFixed(2));
-                else if (action.id === "public-transit") cardImpact = Number((dist * 0.18).toFixed(2));
-                else if (action.id === "ev-rideshare") cardImpact = Number((dist * 0.32).toFixed(2));
-                else if (action.id === "carpool-fossil") cardImpact = Number((dist * 0.15).toFixed(2));
+                if (action.id === "active-transit") {
+                  cardImpact = Number((dist * 0.25).toFixed(2));
+                  cardPoints = Math.round(dist * 15);
+                } else if (action.id === "public-transit") {
+                  cardImpact = Number((dist * 0.18).toFixed(2));
+                  cardPoints = Math.round(dist * 10);
+                } else if (action.id === "ev-rideshare") {
+                  cardImpact = Number((dist * 0.32).toFixed(2));
+                  cardPoints = Math.round(dist * 8);
+                } else if (action.id === "carpool-fossil") {
+                  cardImpact = Number((dist * 0.15).toFixed(2));
+                  cardPoints = Math.round(dist * 8);
+                }
+              } else {
+                cardImpact = Number((action.impactValue * (currentQty || 1)).toFixed(2));
+                cardPoints = Math.round(action.points * (currentQty || 1));
               }
 
               return (
@@ -309,7 +328,9 @@ export default function LogActionPage() {
                       <span className="text-[10px] font-mono uppercase bg-[#f1f6f2] text-[#39705d] px-2 py-0.5 rounded font-semibold">
                         {action.category}
                       </span>
-                      <span className="text-xs font-bold text-[#102f26]">+{action.points} pts</span>
+                      <span className="text-xs font-bold text-[#102f26]">
+                        +{isTransport ? cardPoints : action.points} pts {isTransport ? "/ trip" : `per ${action.unitLabel}`}
+                      </span>
                     </div>
                     <h2 className="text-base font-bold mb-2">{action.name}</h2>
                     <p className="text-xs text-[#526760] leading-relaxed mb-4">{action.description}</p>
@@ -337,7 +358,7 @@ export default function LogActionPage() {
 
                   <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
                     <span className="text-[11px] text-gray-500 font-medium">
-                      ~{cardImpact} kg CO₂e / {action.unitLabel}
+                      ~{cardImpact} kg CO₂e {isTransport ? "" : `/ ${action.unitLabel}`}
                     </span>
 
                     {isSelected ? (
@@ -581,14 +602,9 @@ export default function LogActionPage() {
                           </button>
                         </div>
                         <div className="text-[10px] text-[#526760] flex justify-between">
-                          <span>Quantity: {item.selectedQty}</span>
-                          <span className="font-bold text-[#102f26]">+{item.points * item.selectedQty} pts · ~{(item.co2SavedKg * item.selectedQty).toFixed(1)} kg CO₂</span>
+                          <span>{isTransport ? `Distance: ${commuteDistances[item.id] ?? 0} km` : `Quantity: ${item.selectedQty}`}</span>
+                          <span className="font-bold text-[#102f26]">+{item.points} pts · ~{item.co2SavedKg} kg CO₂</span>
                         </div>
-                        {isTransport && (
-                          <div className="text-[10px] text-[#39705d] pt-1">
-                            Commute Distance: {commuteDistances[item.id] ?? 0} km
-                          </div>
-                        )}
                       </div>
                     );
                   })}
