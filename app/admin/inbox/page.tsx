@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 // Set your admin email address here
-const ADMIN_EMAIL = "gcameron2989@gmail.com"; // Replace with your actual admin email if different
+const ADMIN_EMAIL = "gcameron2989@gmail.com";
 
 export default function MasterAdminHub() {
   const [items, setItems] = useState<any[]>([]);
@@ -40,13 +40,13 @@ export default function MasterAdminHub() {
 
       setAuthorized(true);
 
-      // 3. Fetch all five submission tables concurrently if authorized
+      // 3. Fetch all five submission tables concurrently if authorized (using research_posts)
       const [inquiriesRes, actionsRes, initiativesRes, marketRes, researchRes] = await Promise.all([
         supabase.from("contact_inquiries").select("*"),
         supabase.from("proposed_actions").select("*, profiles:user_id(full_name, email)"),
         supabase.from("proposed_initiatives").select("*, profiles:user_id(full_name, email)"),
         supabase.from("marketplace_listings").select("*, profiles:user_id(full_name, email)"),
-        supabase.from("research_submissions").select("*, profiles:user_id(full_name, email)"),
+        supabase.from("research_posts").select("*, profiles:user_id(full_name, email)"),
       ]);
 
       const inquiries = (inquiriesRes.data || []).map((item) => ({
@@ -91,10 +91,10 @@ export default function MasterAdminHub() {
       const research = (researchRes.data || []).map((item) => ({
         ...item,
         type: "research",
-        title: `Research Submission: ${item.title || item.project_title || "Study"}`,
+        title: `Research Publication: ${item.title || item.project_title || "Study"}`,
         userEmail: item.profiles?.email || item.user_email || "User",
         userName: item.profiles?.full_name || "Eco-Champion",
-        message: `Abstract/Details: ${item.abstract || item.description || item.details}`,
+        message: `Department: ${item.department}\nDescription: ${item.description || item.abstract}`,
         sortDate: new Date(item.created_at).getTime(),
       }));
 
