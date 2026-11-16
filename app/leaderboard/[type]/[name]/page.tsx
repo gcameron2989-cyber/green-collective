@@ -19,7 +19,7 @@ export default function SubLeaderboardPage({
   params: Promise<{ type: string; name: string }> 
 }) {
   const resolvedParams = use(params)
-  const tierType = resolvedParams.type // 'faculty' or 'neighborhood'
+  const tierType = resolvedParams.type 
   const entityName = decodeURIComponent(resolvedParams.name)
 
   const [standings, setStandings] = useState<StudentStanding[]>([])
@@ -30,14 +30,14 @@ export default function SubLeaderboardPage({
     const fetchSubgroupData = async () => {
       setLoading(true)
       try {
-        // 1. Fetch all profiles to map user IDs to usernames
+        // 1. Fetch all profiles to map user IDs to usernames & fallback profiles table for institution/faculty
         const { data: profiles } = await supabase.from('profiles').select('id, username')
         const usernameMap: { [id: string]: string } = {}
         profiles?.forEach((p) => {
           if (p.id && p.username) usernameMap[p.id] = p.username
         })
 
-        // 2. Fetch logged actions matching this faculty or neighborhood
+        // 2. Fetch all logged actions
         const { data: actions, error } = await supabase
           .from('logged_actions')
           .select('*')
@@ -47,9 +47,10 @@ export default function SubLeaderboardPage({
         const userImpactMap: { [userId: string]: { points: number; carbon: number; count: number } } = {}
 
         actions?.forEach((act) => {
-          const matchesEntity = tierType === 'faculty' 
-            ? (act.affiliation_name?.includes(entityName) || act.notes?.includes(entityName))
-            : (act.affiliation_name?.includes(entityName) || act.notes?.includes(entityName))
+          // Flexible match across affiliation_name or notes
+          const matchesEntity = 
+            (act.affiliation_name && act.affiliation_name.toLowerCase().includes(entityName.toLowerCase())) ||
+            (act.notes && act.notes.toLowerCase().includes(entityName.toLowerCase()))
 
           if (matchesEntity && act.user_id) {
             const qty = Number(act.quantity || 1)
@@ -80,7 +81,7 @@ export default function SubLeaderboardPage({
 
         const computedStandings: StudentStanding[] = Object.entries(userImpactMap).map(([userId, data]) => ({
           userId,
-          username: usernameMap[userId] || `Scholar_${userId.slice(0, 4)}`,
+          username: usernameMap[userId] || `Contributor_${userId.slice(0, 4)}`,
           totalPoints: data.points,
           carbonOffsetKg: Math.round(data.carbon * 10) / 10,
           actionsCount: data.count,
@@ -106,17 +107,17 @@ export default function SubLeaderboardPage({
         <div className="mx-auto max-w-5xl px-6 py-16">
           <div className="mb-4 flex items-center justify-between">
             <span className="font-mono text-[11px] uppercase tracking-widest text-[#39705d]">
-              {tierType === 'faculty' ? 'UBC Faculty Sub-Leaderboard' : 'Vancouver Hub Sub-Leaderboard'}
+              {tierType === 'org' ? 'Organization Sub-Leaderboard' : 'Sub-Group Rankings'}
             </span>
-            <Link href="/competition" className="font-mono text-xs text-[#526760] hover:underline">
-              ← Back to Main Leaderboards
+            <Link href="/leaderboard" className="font-mono text-xs text-[#526760] hover:underline">
+              ← Back to Global Rankings
             </Link>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#102f26]">
             {entityName}
           </h1>
           <p className="mt-2 text-sm text-[#526760]">
-            Top individual contributors and member rankings within this unit.
+            Top individual contributors and member rankings within this organization.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8">
@@ -143,11 +144,11 @@ export default function SubLeaderboardPage({
 
         {loading ? (
           <div className="p-12 bg-white border border-[#102f26]/15 text-center font-mono text-xs text-[#526760]">
-            Loading subgroup standings...
+            Calculating subgroup standings...
           </div>
         ) : standings.length === 0 ? (
           <div className="p-12 bg-white border border-dashed border-[#102f26]/20 text-center font-mono text-xs text-[#526760]">
-            No members have logged actions under {entityName} yet.
+            No members have logged actions under {entityName} yet. Try logging an action with this organization/faculty selected!
           </div>
         ) : (
           <div className="space-y-3">
