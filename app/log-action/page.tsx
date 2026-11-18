@@ -125,13 +125,15 @@ export default function LogActionPage() {
   }, [facultySearch]);
 
   const setActionQuantity = (actionId: string, qty: number) => {
+    // Hard cap quantity at 5 per entry to prevent spam/exploits
+    const clampedQty = Math.max(0, Math.min(qty, 5));
     startTransition(() => {
       setCart((prev) => {
         const next = { ...prev };
-        if (qty <= 0) {
+        if (clampedQty <= 0) {
           delete next[actionId];
         } else {
-          next[actionId] = qty;
+          next[actionId] = clampedQty;
         }
         return next;
       });
@@ -149,7 +151,10 @@ export default function LogActionPage() {
         let calculatedPoints = Number(detail.points ?? 0);
 
         if (TRANSPORT_IDS.includes(id)) {
-          const dist = parseFloat(commuteDistances[id]) || 0;
+          // Cap distance between 1 and 50 km per trip to prevent unreasonable spikes
+          const rawDist = parseFloat(commuteDistances[id]) || 0;
+          const dist = Math.max(1, Math.min(rawDist, 50));
+
           if (id === "active-transit") {
             calculatedCo2 = Number((dist * 0.25).toFixed(2));
             calculatedPoints = Math.round(dist * 15);
@@ -201,7 +206,8 @@ export default function LogActionPage() {
       try {
         const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
           const isDistanceBased = TRANSPORT_IDS.includes(item.id);
-          const dist = parseFloat(commuteDistances[item.id]) || 0;
+          const rawDist = parseFloat(commuteDistances[item.id]) || 0;
+          const dist = Math.max(1, Math.min(rawDist, 50));
           return {
             actionId: item.id,
             actionTitle: item.name,
@@ -275,7 +281,6 @@ export default function LogActionPage() {
       console.error("Error submitting proposal:", error);
       alert("Failed to submit proposal. Please try again.");
     } else {
-      // Trigger confirmation email via Resend API route
       try {
         await fetch("/api/admin/send-confirmation", {
           method: "POST",
@@ -322,7 +327,6 @@ export default function LogActionPage() {
 
       <section className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
-          {/* Propose New Action Section */}
           <div className="p-6 border border-[#102f26]/15 bg-[#f1f6f2] rounded-2xl shadow-sm">
             <div className="flex justify-between items-center">
               <div>
@@ -436,7 +440,8 @@ export default function LogActionPage() {
               let cardPoints = Number(action.points ?? 0);
 
               if (isTransport) {
-                const dist = parseFloat(commuteDistances[action.id]) || 0;
+                const rawDist = parseFloat(commuteDistances[action.id]) || 0;
+                const dist = Math.max(1, Math.min(rawDist, 50));
                 if (action.id === "active-transit") {
                   cardImpact = Number((dist * 0.25).toFixed(2));
                   cardPoints = Math.round(dist * 15);
@@ -476,11 +481,11 @@ export default function LogActionPage() {
 
                     {isTransport && (
                       <div className="mb-4 p-3 bg-[#f1f6f2] rounded-xl border border-[#102f26]/10 flex items-center justify-between text-xs">
-                        <span className="font-medium text-[#526760]">Commute Distance (km):</span>
+                        <span className="font-medium text-[#526760]">Commute Distance (max 50 km):</span>
                         <input
                           type="number"
-                          min="0"
-                          max="500"
+                          min="1"
+                          max="50"
                           value={commuteDistances[action.id]}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -557,7 +562,6 @@ export default function LogActionPage() {
           </div>
 
           <div className="space-y-4 pt-2 border-t border-gray-100 text-xs">
-            {/* Neighborhood Selector */}
             <div className="relative">
               <label className="block font-mono uppercase text-[11px] text-[#526760] mb-1.5">
                 Vancouver Neighborhood / Municipality *
@@ -602,7 +606,6 @@ export default function LogActionPage() {
               )}
             </div>
 
-            {/* UBC Student Toggle */}
             <div className="pt-2 border-t border-gray-100">
               <label className="flex items-center justify-between cursor-pointer">
                 <span className="font-mono uppercase text-[11px] text-[#526760]">Are you a UBC student/staff?</span>
@@ -615,7 +618,6 @@ export default function LogActionPage() {
               </label>
             </div>
 
-            {/* Faculty Selector & BEST 301 Sub-toggle */}
             {isUbcStudent && (
               <div className="relative pt-1 space-y-3">
                 <div>
@@ -761,7 +763,7 @@ export default function LogActionPage() {
                           </button>
                         </div>
                         <div className="text-[10px] text-[#526760] flex justify-between">
-                          <span>{isTransport ? `Distance: ${parseFloat(commuteDistances[item.id]) || 0} km` : `Quantity: ${item.selectedQty}`}</span>
+                          <span>{isTransport ? `Distance: ${Math.min(parseFloat(commuteDistances[item.id]) || 0, 50)} km` : `Quantity: ${item.selectedQty}`}</span>
                           <span className="font-bold text-[#102f26]">+{item.points} pts · ~{item.co2SavedKg} kg CO₂</span>
                         </div>
                       </div>
