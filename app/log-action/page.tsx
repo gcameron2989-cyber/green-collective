@@ -291,22 +291,23 @@ export default function LogActionPage() {
       return;
     }
 
+    const hasFaculty = isUbcStudent && Boolean(faculty);
+    const includeBest301 = isBest301 && hasFaculty && faculty === "Faculty of Forestry";
+
     // Persist choices right before submitting
     try {
       localStorage.setItem(STORAGE_KEY_NEIGHBOURHOOD, neighbourhood);
       localStorage.setItem(STORAGE_KEY_IS_UBC, String(isUbcStudent));
-      if (isUbcStudent && faculty) {
+      if (hasFaculty) {
         localStorage.setItem(STORAGE_KEY_FACULTY, faculty);
       }
-      localStorage.setItem(STORAGE_KEY_BEST_301, String(isBest301 && isUbcStudent && faculty === "Faculty of Forestry"));
+      localStorage.setItem(STORAGE_KEY_BEST_301, String(includeBest301));
     } catch {}
 
     setStatusMsg(null);
 
     startTransition(async () => {
       try {
-        const hasFaculty = isUbcStudent && Boolean(faculty);
-
         const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
           const isDistanceBased = TRANSPORT_IDS.includes(item.id);
           const rawDist = parseFloat(commuteDistances[item.id]) || 0;
@@ -320,35 +321,22 @@ export default function LogActionPage() {
             quantity: tripQty,
             distanceKm: isDistanceBased ? dist : undefined,
             notes: `Neighborhood: ${neighbourhood}${hasFaculty ? ` | Faculty: ${faculty}` : ""}${
-              isBest301 && hasFaculty && faculty === "Faculty of Forestry" ? " | BEST 301" : ""
+              includeBest301 ? " | BEST 301" : ""
             }`,
           };
         });
 
-        const res1 = await logBatchUserActions({
+        // Insert a single row per action so entries are never duplicated across sectors
+        const res = await logBatchUserActions({
           items: itemsToSubmit,
-          sector: "community",
-          affiliationType: "neighbourhood",
-          affiliationName: neighbourhood,
+          sector: hasFaculty ? "campus" : "community",
+          affiliationType: hasFaculty ? "faculty" : "neighbourhood",
+          affiliationName: hasFaculty ? faculty : neighbourhood,
         });
 
-        if (!res1.success) {
-          setStatusMsg({ type: "error", text: res1.error || "Failed to log community action." });
+        if (!res.success) {
+          setStatusMsg({ type: "error", text: res.error || "Failed to log actions." });
           return;
-        }
-
-        if (hasFaculty) {
-          const res2 = await logBatchUserActions({
-            items: itemsToSubmit,
-            sector: "campus",
-            affiliationType: "faculty",
-            affiliationName: faculty,
-          });
-
-          if (!res2.success) {
-            setStatusMsg({ type: "error", text: res2.error || "Failed to log campus action." });
-            return;
-          }
         }
 
         setStatusMsg({
