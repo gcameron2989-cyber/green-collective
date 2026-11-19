@@ -72,7 +72,7 @@ export default function LogActionPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const [cart, setCart] = useState<Record<string, number>>({});
-  
+
   // Track distances as strings so the input field can be completely blank if cleared
   const [commuteDistances, setCommuteDistances] = useState<Record<string, string>>({
     "active-transit": "5",
@@ -107,9 +107,12 @@ export default function LogActionPage() {
   useEffect(() => {
     setIsMounted(true);
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) setUser(data.user);
-    }).catch(() => {});
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (data?.user) setUser(data.user);
+      })
+      .catch(() => {});
   }, []);
 
   const filteredNeighborhoods = useMemo(() => {
@@ -146,7 +149,7 @@ export default function LogActionPage() {
         const detail = ACTION_REGISTRY?.find((a) => a.id === id);
         if (!detail) return null;
 
-        const numericQty = Number(qty || 1);
+        const numericQty = Math.max(1, Math.min(Number(qty || 1), 5));
         let calculatedCo2 = Number(detail.impactValue ?? 0);
         let calculatedPoints = Number(detail.points ?? 0);
 
@@ -182,14 +185,19 @@ export default function LogActionPage() {
         };
       })
       .filter(Boolean) as (ActionItem & { title: string; co2SavedKg: number; selectedQty: number })[];
-  }, [cart, commuteDistances]); 
+  }, [cart, commuteDistances]);
 
-  const totalSelectedCount = selectedItemsDetails.reduce((acc, item) => acc + (TRANSPORT_IDS.includes(item.id) ? 1 : item.selectedQty), 0);
+  const totalSelectedCount = selectedItemsDetails.reduce(
+    (acc, item) => acc + (TRANSPORT_IDS.includes(item.id) ? 1 : item.selectedQty),
+    0
+  );
   const totalPoints = selectedItemsDetails.reduce((acc, item) => acc + item.points, 0);
   const totalCO2 = selectedItemsDetails.reduce((acc, item) => acc + item.co2SavedKg, 0);
 
   const filteredActions =
-    selectedCategory === "All" ? (ACTION_REGISTRY || []) : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
+    selectedCategory === "All"
+      ? ACTION_REGISTRY || []
+      : (ACTION_REGISTRY || []).filter((a) => a.category === selectedCategory);
 
   const handleBatchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,13 +216,17 @@ export default function LogActionPage() {
           const isDistanceBased = TRANSPORT_IDS.includes(item.id);
           const rawDist = parseFloat(commuteDistances[item.id]) || 0;
           const dist = Math.max(1, Math.min(rawDist, 50));
+          const tripQty = Math.max(1, Math.min(item.selectedQty, 5));
+
           return {
             actionId: item.id,
             actionTitle: item.name,
             points: item.points,
-            quantity: isDistanceBased ? dist : item.selectedQty,
+            quantity: isDistanceBased ? tripQty : tripQty,
             distanceKm: isDistanceBased ? dist : undefined,
-            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${isBest301 && faculty === "Faculty of Forestry" ? " | BEST 301" : ""}${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${
+              isBest301 && faculty === "Faculty of Forestry" ? " | BEST 301" : ""
+            }${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
           };
         });
 
@@ -261,8 +273,10 @@ export default function LogActionPage() {
   const handleProposeAction = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+
     if (!currentUser) {
       window.location.href = "/login";
       return;
@@ -274,7 +288,7 @@ export default function LogActionPage() {
       description: proposalDesc,
       category: proposalCategory,
       estimated_impact: parseFloat(proposalImpact) || 1.0,
-      status: 'pending'
+      status: "pending",
     });
 
     if (error) {
@@ -331,7 +345,9 @@ export default function LogActionPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="text-sm font-bold text-[#102f26]">Can&apos;t find the eco-action you&apos;re looking for?</h3>
-                <p className="text-xs text-[#526760] mt-0.5">Propose a new verifiable action for administrative review and platform integration.</p>
+                <p className="text-xs text-[#526760] mt-0.5">
+                  Propose a new verifiable action for administrative review and platform integration.
+                </p>
               </div>
               <button
                 type="button"
@@ -379,7 +395,9 @@ export default function LogActionPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Description & Verification Method</label>
+                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">
+                        Description & Verification Method
+                      </label>
                       <textarea
                         required
                         rows={2}
@@ -390,7 +408,9 @@ export default function LogActionPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">Estimated CO₂ Offset (kg per instance)</label>
+                      <label className="block text-xs font-mono uppercase text-[#526760] mb-1">
+                        Estimated CO₂ Offset (kg per instance)
+                      </label>
                       <input
                         type="number"
                         step="0.1"
@@ -435,7 +455,7 @@ export default function LogActionPage() {
               const currentQty = cart[action.id] || 0;
               const isSelected = currentQty > 0;
               const isTransport = TRANSPORT_IDS.includes(action.id);
-              
+
               let cardImpact = Number(action.impactValue ?? 0);
               let cardPoints = Number(action.points ?? 0);
 
@@ -464,7 +484,9 @@ export default function LogActionPage() {
                 <div
                   key={action.id}
                   className={`bg-white border rounded-2xl p-6 shadow-sm flex flex-col justify-between transition-all ${
-                    isSelected ? "border-[#39705d] ring-2 ring-[#39705d]/10 bg-[#fbfdfb]" : "border-[#102f26]/10 hover:border-[#102f26]/30"
+                    isSelected
+                      ? "border-[#39705d] ring-2 ring-[#39705d]/10 bg-[#fbfdfb]"
+                      : "border-[#102f26]/10 hover:border-[#102f26]/30"
                   }`}
                 >
                   <div>
@@ -577,7 +599,9 @@ export default function LogActionPage() {
                 }}
                 className="w-full p-2.5 text-xs rounded-xl border border-gray-200 bg-white font-medium mb-1"
               />
-              <div className="text-[10px] text-gray-500 mb-1">Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span></div>
+              <div className="text-[10px] text-gray-500 mb-1">
+                Selected: <span className="font-bold text-[#102f26]">{neighbourhood}</span>
+              </div>
 
               {isNeighborhoodDropdownOpen && (
                 <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
@@ -635,8 +659,10 @@ export default function LogActionPage() {
                     }}
                     className="w-full p-2.5 text-xs rounded-xl border border-emerald-200 bg-emerald-50/30 font-medium mb-1"
                   />
-                  <div className="text-[10px] text-gray-500 mb-1">Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span></div>
-                  
+                  <div className="text-[10px] text-gray-500 mb-1">
+                    Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span>
+                  </div>
+
                   {isFacultyDropdownOpen && (
                     <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
                       {filteredFaculties.map((f) => (
@@ -663,7 +689,9 @@ export default function LogActionPage() {
                 {faculty === "Faculty of Forestry" && (
                   <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200/80">
                     <label className="flex items-center justify-between cursor-pointer">
-                      <span className="font-mono uppercase text-[10px] font-bold text-emerald-900">Are you in BEST 301?</span>
+                      <span className="font-mono uppercase text-[10px] font-bold text-emerald-900">
+                        Are you in BEST 301?
+                      </span>
                       <input
                         type="checkbox"
                         checked={isBest301}
@@ -711,8 +739,14 @@ export default function LogActionPage() {
 
       {/* Review Modal */}
       {isReviewOpen && (
-        <div className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4" suppressHydrationWarning>
-          <div className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans" suppressHydrationWarning>
+        <div
+          className="fixed inset-0 z-50 bg-[#102f26]/40 backdrop-blur-sm flex items-center justify-center p-4"
+          suppressHydrationWarning
+        >
+          <div
+            className="bg-white border border-[#102f26]/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-sans"
+            suppressHydrationWarning
+          >
             <div className="flex justify-between items-center border-b border-[#102f26]/10 pb-3 mb-4">
               <div>
                 <span className="text-[10px] font-mono uppercase text-[#39705d]">Batch Review</span>
@@ -741,9 +775,7 @@ export default function LogActionPage() {
 
             <form onSubmit={handleBatchSubmit} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold mb-2 text-[#102f26]">
-                  Selected Actions Summary:
-                </label>
+                <label className="block text-xs font-bold mb-2 text-[#102f26]">Selected Actions Summary:</label>
                 <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                   {selectedItemsDetails.map((item) => {
                     const isTransport = TRANSPORT_IDS.includes(item.id);
@@ -763,8 +795,14 @@ export default function LogActionPage() {
                           </button>
                         </div>
                         <div className="text-[10px] text-[#526760] flex justify-between">
-                          <span>{isTransport ? `Distance: ${Math.min(parseFloat(commuteDistances[item.id]) || 0, 50)} km` : `Quantity: ${item.selectedQty}`}</span>
-                          <span className="font-bold text-[#102f26]">+{item.points} pts · ~{item.co2SavedKg} kg CO₂</span>
+                          <span>
+                            {isTransport
+                              ? `Distance: ${Math.min(parseFloat(commuteDistances[item.id]) || 0, 50)} km`
+                              : `Quantity: ${item.selectedQty}`}
+                          </span>
+                          <span className="font-bold text-[#102f26]">
+                            +{item.points} pts · ~{item.co2SavedKg} kg CO₂
+                          </span>
                         </div>
                       </div>
                     );
@@ -775,9 +813,7 @@ export default function LogActionPage() {
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex justify-between items-center text-xs">
                 <div>
                   <span className="font-bold text-[#102f26]">Total Impact Generated:</span>
-                  <div className="text-[11px] text-[#39705d]">
-                    ~{totalCO2.toFixed(1)} kg CO₂ emissions avoided
-                  </div>
+                  <div className="text-[11px] text-[#39705d]">~{totalCO2.toFixed(1)} kg CO₂ emissions avoided</div>
                 </div>
                 <div className="text-[#102f26] font-black text-sm">+{totalPoints} pts</div>
               </div>
