@@ -66,6 +66,11 @@ const UBC_FACULTIES = [
 const CATEGORIES = ["All", "TRANSPORT", "FOOD", "ENERGY", "WASTE", "CIRCULARITY", "COMMUNITY"];
 const TRANSPORT_IDS = ["active-transit", "public-transit", "ev-rideshare", "carpool-fossil"];
 
+const STORAGE_KEY_NEIGHBOURHOOD = "gc_last_neighbourhood";
+const STORAGE_KEY_FACULTY = "gc_last_faculty";
+const STORAGE_KEY_IS_UBC = "gc_last_is_ubc";
+const STORAGE_KEY_BEST_301 = "gc_last_best_301";
+
 export default function LogActionPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -90,13 +95,13 @@ export default function LogActionPage() {
   const [proposalImpact, setProposalImpact] = useState("");
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
 
-  // Attribution State
+  // Attribution State (defaults to non-student so no faculty is required unless toggled on)
   const [neighbourhood, setNeighbourhood] = useState(VANCOUVER_NEIGHBOURHOODS[0]);
   const [neighbourhoodSearch, setNeighbourhoodSearch] = useState("");
   const [isNeighborhoodDropdownOpen, setIsNeighborhoodDropdownOpen] = useState(false);
 
-  const [isUbcStudent, setIsUbcStudent] = useState<boolean>(true);
-  const [faculty, setFaculty] = useState(UBC_FACULTIES[0]);
+  const [isUbcStudent, setIsUbcStudent] = useState<boolean>(false);
+  const [faculty, setFaculty] = useState<string>("");
   const [facultySearch, setFacultySearch] = useState("");
   const [isFacultyDropdownOpen, setIsFacultyDropdownOpen] = useState(false);
   const [isBest301, setIsBest301] = useState<boolean>(false);
@@ -106,6 +111,32 @@ export default function LogActionPage() {
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Restore last used attribution settings from localStorage
+    try {
+      const savedNeighbourhood = localStorage.getItem(STORAGE_KEY_NEIGHBOURHOOD);
+      if (savedNeighbourhood && VANCOUVER_NEIGHBOURHOODS.includes(savedNeighbourhood)) {
+        setNeighbourhood(savedNeighbourhood);
+      }
+
+      const savedIsUbc = localStorage.getItem(STORAGE_KEY_IS_UBC);
+      if (savedIsUbc !== null) {
+        setIsUbcStudent(savedIsUbc === "true");
+      }
+
+      const savedFaculty = localStorage.getItem(STORAGE_KEY_FACULTY);
+      if (savedFaculty && UBC_FACULTIES.includes(savedFaculty)) {
+        setFaculty(savedFaculty);
+      }
+
+      const savedBest301 = localStorage.getItem(STORAGE_KEY_BEST_301);
+      if (savedBest301 !== null) {
+        setIsBest301(savedBest301 === "true");
+      }
+    } catch {
+      // Ignore storage access errors in restricted contexts
+    }
+
     const supabase = createClient();
     supabase.auth
       .getUser()
@@ -114,6 +145,58 @@ export default function LogActionPage() {
       })
       .catch(() => {});
   }, []);
+
+  const handleSelectNeighbourhood = (n: string) => {
+    setNeighbourhood(n);
+    setNeighbourhoodSearch("");
+    setIsNeighborhoodDropdownOpen(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_NEIGHBOURHOOD, n);
+    } catch {}
+  };
+
+  const handleToggleUbcStudent = (checked: boolean) => {
+    setIsUbcStudent(checked);
+    try {
+      localStorage.setItem(STORAGE_KEY_IS_UBC, String(checked));
+    } catch {}
+
+    if (!checked) {
+      setIsBest301(false);
+      try {
+        localStorage.setItem(STORAGE_KEY_BEST_301, "false");
+      } catch {}
+    } else if (!faculty) {
+      const defaultFaculty = UBC_FACULTIES[0];
+      setFaculty(defaultFaculty);
+      try {
+        localStorage.setItem(STORAGE_KEY_FACULTY, defaultFaculty);
+      } catch {}
+    }
+  };
+
+  const handleSelectFaculty = (f: string) => {
+    setFaculty(f);
+    setFacultySearch("");
+    setIsFacultyDropdownOpen(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_FACULTY, f);
+    } catch {}
+
+    if (f !== "Faculty of Forestry") {
+      setIsBest301(false);
+      try {
+        localStorage.setItem(STORAGE_KEY_BEST_301, "false");
+      } catch {}
+    }
+  };
+
+  const handleToggleBest301 = (checked: boolean) => {
+    setIsBest301(checked);
+    try {
+      localStorage.setItem(STORAGE_KEY_BEST_301, String(checked));
+    } catch {}
+  };
 
   const filteredNeighborhoods = useMemo(() => {
     return VANCOUVER_NEIGHBOURHOODS.filter((n) =>
@@ -208,25 +291,37 @@ export default function LogActionPage() {
       return;
     }
 
+    // Persist choices right before submitting
+    try {
+      localStorage.setItem(STORAGE_KEY_NEIGHBOURHOOD, neighbourhood);
+      localStorage.setItem(STORAGE_KEY_IS_UBC, String(isUbcStudent));
+      if (isUbcStudent && faculty) {
+        localStorage.setItem(STORAGE_KEY_FACULTY, faculty);
+      }
+      localStorage.setItem(STORAGE_KEY_BEST_301, String(isBest301 && isUbcStudent && faculty === "Faculty of Forestry"));
+    } catch {}
+
     setStatusMsg(null);
 
     startTransition(async () => {
       try {
+        const hasFaculty = isUbcStudent && Boolean(faculty);
+
         const itemsToSubmit: BatchActionItem[] = selectedItemsDetails.map((item) => {
           const isDistanceBased = TRANSPORT_IDS.includes(item.id);
           const rawDist = parseFloat(commuteDistances[item.id]) || 0;
           const dist = Math.max(1, Math.min(rawDist, 50));
-          const tripQty = Math.max(1, Math.min(item.selectedQty, 5));
+          const tripQty = isDistanceBased ? 1 : Math.max(1, Math.min(item.selectedQty, 5));
 
           return {
             actionId: item.id,
             actionTitle: item.name,
             points: item.points,
-            quantity: isDistanceBased ? tripQty : tripQty,
+            quantity: tripQty,
             distanceKm: isDistanceBased ? dist : undefined,
-            notes: `Neighborhood: ${neighbourhood}${isUbcStudent ? ` | Faculty: ${faculty}` : ""}${
-              isBest301 && faculty === "Faculty of Forestry" ? " | BEST 301" : ""
-            }${isDistanceBased ? ` | Distance: ${dist} km` : ""}`,
+            notes: `Neighborhood: ${neighbourhood}${hasFaculty ? ` | Faculty: ${faculty}` : ""}${
+              isBest301 && hasFaculty && faculty === "Faculty of Forestry" ? " | BEST 301" : ""
+            }`,
           };
         });
 
@@ -242,7 +337,7 @@ export default function LogActionPage() {
           return;
         }
 
-        if (isUbcStudent) {
+        if (hasFaculty) {
           const res2 = await logBatchUserActions({
             items: itemsToSubmit,
             sector: "campus",
@@ -611,11 +706,7 @@ export default function LogActionPage() {
                         type="button"
                         key={n}
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setNeighbourhood(n);
-                          setNeighbourhoodSearch("");
-                          setIsNeighborhoodDropdownOpen(false);
-                        }}
+                        onClick={() => handleSelectNeighbourhood(n)}
                         className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
                           neighbourhood === n ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
                         }`}
@@ -630,16 +721,23 @@ export default function LogActionPage() {
               )}
             </div>
 
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-gray-100 space-y-1.5">
               <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-mono uppercase text-[11px] text-[#526760]">Are you a UBC student/staff?</span>
+                <span className="font-mono uppercase text-[11px] text-[#526760]">
+                  UBC student / staff (optional)
+                </span>
                 <input
                   type="checkbox"
                   checked={isUbcStudent}
-                  onChange={(e) => setIsUbcStudent(e.target.checked)}
+                  onChange={(e) => handleToggleUbcStudent(e.target.checked)}
                   className="w-4 h-4 accent-[#102f26] rounded cursor-pointer"
                 />
               </label>
+              {!isUbcStudent && (
+                <p className="text-[10px] text-[#526760]">
+                  Logging as community member — no faculty required.
+                </p>
+              )}
             </div>
 
             {isUbcStudent && (
@@ -659,22 +757,40 @@ export default function LogActionPage() {
                     }}
                     className="w-full p-2.5 text-xs rounded-xl border border-emerald-200 bg-emerald-50/30 font-medium mb-1"
                   />
-                  <div className="text-[10px] text-gray-500 mb-1">
-                    Selected Faculty: <span className="font-bold text-[#102f26]">{faculty}</span>
+                  <div className="text-[10px] text-gray-500 mb-1 flex items-center justify-between">
+                    <span>
+                      Selected Faculty:{" "}
+                      <span className="font-bold text-[#102f26]">{faculty || "None (Community only)"}</span>
+                    </span>
+                    {faculty && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectFaculty("")}
+                        className="text-[10px] text-red-500 hover:underline font-mono"
+                      >
+                        Clear
+                      </button>
+                    )}
                   </div>
 
                   {isFacultyDropdownOpen && (
                     <div className="absolute z-20 w-full max-h-48 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg space-y-0.5 p-1 mt-1">
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleSelectFaculty("")}
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
+                          faculty === "" ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        No faculty / Non-student
+                      </button>
                       {filteredFaculties.map((f) => (
                         <button
                           type="button"
                           key={f}
                           onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setFaculty(f);
-                            setFacultySearch("");
-                            setIsFacultyDropdownOpen(false);
-                          }}
+                          onClick={() => handleSelectFaculty(f)}
                           className={`w-full text-left px-3 py-1.5 text-xs rounded-lg transition ${
                             faculty === f ? "font-bold bg-emerald-50 text-emerald-900" : "text-gray-700 hover:bg-gray-50"
                           }`}
@@ -695,7 +811,7 @@ export default function LogActionPage() {
                       <input
                         type="checkbox"
                         checked={isBest301}
-                        onChange={(e) => setIsBest301(e.target.checked)}
+                        onChange={(e) => handleToggleBest301(e.target.checked)}
                         className="w-4 h-4 accent-emerald-700 rounded cursor-pointer"
                       />
                     </label>
